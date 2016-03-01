@@ -1,0 +1,92 @@
+#**********************
+# cmake configuration *
+#*******************************************************************************
+cmake_minimum_required( VERSION 2.8.11 )
+
+set( CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake/modules )
+
+# Graphics-Origin project
+project( Median-Path )
+set( Median-Path_VERSION_MAJOR 1 )
+set( Median-Path_VERSION_MINOR 0 )
+
+if( NOT CMAKE_BUILD_TYPE )
+  set( CMAKE_BUILD_TYPE "Release" 
+    CACHE STRING "Choose the type of build, options are: Debug Release." FORCE)
+endif(NOT CMAKE_BUILD_TYPE)
+
+#****************************
+# directories configuration *
+#*******************************************************************************
+set( MP_HEADERS_IN_DIR "${CMAKE_SOURCE_DIR}" )
+set( MP_SOURCES_IN_DIR "${CMAKE_SOURCE_DIR}/lib" )
+set( MP_TEST_IN_DIR "${CMAKE_SOURCE_DIR}/test" )
+set( MP_APPLICATIONS_IN_DIR "${CMAKE_SOURCE_DIR}/src" )
+set( MP_EXTLIBS_DIR "${CMAKE_SOURCE_DIR}/extlibs" )
+
+set( MP_EXECUTABLE_OUT_DIR "${CMAKE_BINARY_DIR}/${CMAKE_BUILD_TYPE}/bin" )
+set( MP_LIBRARY_OUT_DIR "${CMAKE_BINARY_DIR}/${CMAKE_BUILD_TYPE}/lib" )
+set( MP_TEST_OUT_DIR "${CMAKE_BINARY_DIR}/${CMAKE_BUILD_TYPE}/test" )
+set( MP_APPLICATIONS_OUT_DIR "${CMAKE_BINARY_DIR}/${CMAKE_BUILD_TYPE}/apps" )
+
+set( CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${MP_LIBRARY_OUT_DIR} )
+set( CMAKE_LIBRARY_OUTPUT_DIRECTORY ${MP_LIBRARY_OUT_DIR} )
+set( CMAKE_RUNTIME_OUTPUT_DIRECTORY ${MP_EXECUTABLE_OUT_DIR} )
+
+#*********************
+# projection options *
+#*******************************************************************************
+option(
+  MP_USE_CGAL
+  "Use CGAL libraries"
+  ON)
+  
+option(
+  MP_USE_CUDA
+  "Set to ON to use CUDA libraries. If set to false, some functionnalities won't be available"
+  ON)  
+  
+option(
+  MP_USE_GO_APPLICATION
+  "Set to ON to use GraphicsOrigin::application. If set to false, only command line tools would be available."
+  ON)
+
+option(
+  MP_USE_GO_GEOMETRY_WITH_CUDA
+  "Set to ON if GraphicsOrigin::geometry uses CUDA. If set to false, only command line tools would be available."
+  ON)
+  
+#***************
+# global flags *
+#*******************************************************************************
+set( CMAKE_CXX_FLAGS 
+  "${CMAKE_CXX_FLAGS} -frounding-math -std=c++14 -fPIC -fopenmp -DGLM_FORCE_SSE2 -DGLM_FORCE_RADIANS"
+  CACHE STRING "C++ compiler flags" FORCE )
+set( CMAKE_CXX_FLAGS_RELEASE 
+  "${CMAKE_CXX_FLAGS_RELEASE} -O3 -msse2 -UDEBUG -DNDEBUG -DCGAL_NDEBUG -DNO_DEBUG -DEIGEN_NO_DEBUG" 
+  CACHE STRING "C++ compiler extra flags for release build type" FORCE )
+set( CMAKE_CXX_FLAGS_DEBUG 
+  "${CMAKE_CXX_FLAGS_DEBUG} -O0 -ggdb -Wall -Wextra -DDEBUG" 
+  CACHE STRING "C++ compiler extra flags for debug build type" FORCE )
+
+set( CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -lgomp" )
+include_directories( "${MP_HEADERS_IN_DIR}" )
+  
+#*********************
+# external libraries *
+#*******************************************************************************
+set( GRAPHICS_ORIGIN_WITH_CUDA ${MP_USE_GO_GEOMETRY_WITH_CUDA} )
+set( GRAPHICS_ORIGIN_WITH_APPLICATION ${MP_USE_GO_APPLICATION} )
+set( GRAPHICS_ORIGIN_DIR  $ENV{GRAPHICS_ORIGIN_DIR}
+  CACHE FILEPATH "Variable to try to find Graphics-Origin installation path")
+find_package( GraphicsOrigin )  
+include_directories( ${GRAPHICS_ORIGIN_INCLUDE_DIRS} )
+
+configure_file( "${MP_SOURCES_IN_DIR}/median_path.h.in" "${MP_HEADERS_IN_DIR}/median-path/median_path.h")
+
+
+add_subdirectory( ${MP_APPLICATIONS_IN_DIR} )
+
+
+#add_subdirectory( "${GO_SOURCES_IN_DIR}/tools" )
+#add_subdirectory( "${GO_SOURCES_IN_DIR}/geometry" )

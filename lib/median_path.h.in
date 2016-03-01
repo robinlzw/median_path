@@ -1,0 +1,17 @@
+# ifndef MEDIAN_PATH_H
+# define MEDIAN_PATH_H
+#
+# define MEDIAN_PATH_MAJOR @Median-Path_VERSION_MAJOR@
+# define MEDIAN_PATH_MINOR @Median-Path_VERSION_MINOR@
+#
+# include <graphics-origin/graphics_origin.h>
+#
+# define MP_NAMESPACE median_path
+# define BEGIN_MP_NAMESPACE namespace MP_NAMESPACE {
+# define END_MP_NAMESPACE }
+#
+namespace median_path {
+  typedef graphics_origin::real real;
+  typedef graphics_origin::gpu_real gpu_real;
+}
+# endif
