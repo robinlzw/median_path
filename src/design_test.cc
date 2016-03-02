@@ -6,22 +6,8 @@
 # include "../median-path/median_skeleton.h"
 # include <graphics-origin/geometry/vec.h>
 # include <iostream>
-
-BEGIN_MP_NAMESPACE
-struct atom
-  : public GO_NAMESPACE::vec4 {
-
-  real get_radius() const
-  {
-    return w;
-  }
-
-  GO_NAMESPACE::vec3 get_center() const
-  {
-    return GO_NAMESPACE::vec3{ x, y, z };
-  }
-};
-END_MP_NAMESPACE
+# include <list>
+# include <stdint.h>
 
 int main( int argc, char* argv[] )
 {
@@ -29,7 +15,10 @@ int main( int argc, char* argv[] )
   (void)argv;
 
   std::cout << "sizeof vec4 = " << sizeof( GO_NAMESPACE::vec4 )
-      << "\n" << "sizeof atom = " << sizeof( MP_NAMESPACE::atom ) << std::endl;
+      << "\nsizeof atom = " << sizeof( MP_NAMESPACE::atom )
+      << "\nsizeof link = " << sizeof( MP_NAMESPACE::link )
+      << std::endl;
+
 
   MP_NAMESPACE::median_skeleton skeleton;
 
