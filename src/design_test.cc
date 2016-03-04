@@ -14,13 +14,19 @@ int main( int argc, char* argv[] )
   (void)argc;
   (void)argv;
 
-  std::cout << "sizeof vec4 = " << sizeof( GO_NAMESPACE::vec4 )
-      << "\nsizeof atom = " << sizeof( MP_NAMESPACE::atom )
-      << "\nsizeof link = " << sizeof( MP_NAMESPACE::link )
-      << std::endl;
+  typedef MP_NAMESPACE::skeleton_datastructure< uint32_t, 22, uint64_t, 44, uint64_t, 54 >
+    skeleton;
 
+  std::cout
+    <<   "sizeof skeleton = " << sizeof( skeleton )
+    << "\nsizeof atom     = " << sizeof( skeleton::atom )
+    << "\nsizeof link     = " << sizeof( skeleton::link )
+    << "\nsizeof face     = " << sizeof( skeleton::face )
+    <<std::endl;
 
-  MP_NAMESPACE::median_skeleton skeleton;
+  skeleton myskeleton( 10, 0, 0 );
+
+  myskeleton.add_atom_property<GO_NAMESPACE::gpu_vec4>( "color");
 
   return 0;
 }

@@ -42,7 +42,72 @@ BEGIN_MP_NAMESPACE
       + std::to_string( line ) + " of file " + file )
     {}
   };
+  struct skeleton_invalid_link_handle
+      : public std::runtime_error
+  {
+    skeleton_invalid_link_handle( const std::string& file, size_t line )
+      : std::runtime_error( "invalid link handle at line "
+      + std::to_string( line ) + " of file " + file )
+    {}
+  };
+  struct skeleton_invalid_face_handle
+      : public std::runtime_error
+  {
+    skeleton_invalid_face_handle( const std::string& file, size_t line )
+      : std::runtime_error( "invalid face handle at line "
+      + std::to_string( line ) + " of file " + file )
+    {}
+  };
 
+  struct skeleton_invalid_atom_pointer
+      : public std::runtime_error
+  {
+    skeleton_invalid_atom_pointer( const std::string& file, size_t line )
+      : std::runtime_error( "invalid atom pointer at line "
+      + std::to_string( line ) + " of file " + file )
+    {}
+  };
+  struct skeleton_invalid_link_pointer
+      : public std::runtime_error
+  {
+    skeleton_invalid_link_pointer( const std::string& file, size_t line )
+      : std::runtime_error( "invalid link pointer at line "
+      + std::to_string( line ) + " of file " + file )
+    {}
+  };
+  struct skeleton_invalid_face_pointer
+      : public std::runtime_error
+  {
+    skeleton_invalid_face_pointer( const std::string& file, size_t line )
+      : std::runtime_error( "invalid face pointer at line "
+      + std::to_string( line ) + " of file " + file )
+    {}
+  };
+
+  struct skeleton_invalid_atom_index
+      : public std::runtime_error
+  {
+    skeleton_invalid_atom_index( const std::string& file, size_t line )
+      : std::runtime_error( "invalid atom index at line "
+      + std::to_string( line ) + " of file " + file )
+    {}
+  };
+  struct skeleton_invalid_link_index
+      : public std::runtime_error
+  {
+    skeleton_invalid_link_index( const std::string& file, size_t line )
+      : std::runtime_error( "invalid link index at line "
+      + std::to_string( line ) + " of file " + file )
+    {}
+  };
+  struct skeleton_invalid_face_index
+      : public std::runtime_error
+  {
+    skeleton_invalid_face_index( const std::string& file, size_t line )
+      : std::runtime_error( "invalid face index at line "
+      + std::to_string( line ) + " of file " + file )
+    {}
+  };
 
 # define MP_THROW_EXCEPTION( name ) \
   throw name( __FILE__, __LINE__ )
