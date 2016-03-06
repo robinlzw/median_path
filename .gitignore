@@ -1,4 +1,7 @@
 median-path/median_path.h
+build/
+.cproject
+.project
 
 # Compiled Object files
 *.slo

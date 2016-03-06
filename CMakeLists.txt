@@ -20,14 +20,14 @@ endif(NOT CMAKE_BUILD_TYPE)
 #*******************************************************************************
 set( MP_HEADERS_IN_DIR "${CMAKE_SOURCE_DIR}" )
 set( MP_SOURCES_IN_DIR "${CMAKE_SOURCE_DIR}/lib" )
-set( MP_TEST_IN_DIR "${CMAKE_SOURCE_DIR}/test" )
+set( MP_TEST_IN_DIR "${CMAKE_SOURCE_DIR}/tests" )
 set( MP_APPLICATIONS_IN_DIR "${CMAKE_SOURCE_DIR}/src" )
 set( MP_EXTLIBS_DIR "${CMAKE_SOURCE_DIR}/extlibs" )
 
 set( MP_EXECUTABLE_OUT_DIR "${CMAKE_BINARY_DIR}/${CMAKE_BUILD_TYPE}/bin" )
 set( MP_LIBRARY_OUT_DIR "${CMAKE_BINARY_DIR}/${CMAKE_BUILD_TYPE}/lib" )
-set( MP_TEST_OUT_DIR "${CMAKE_BINARY_DIR}/${CMAKE_BUILD_TYPE}/test" )
 set( MP_APPLICATIONS_OUT_DIR "${CMAKE_BINARY_DIR}/${CMAKE_BUILD_TYPE}/apps" )
+set( MP_TEST_OUT_DIR "${MP_APPLICATIONS_OUT_DIR}" )
 
 set( CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${MP_LIBRARY_OUT_DIR} )
 set( CMAKE_LIBRARY_OUTPUT_DIRECTORY ${MP_LIBRARY_OUT_DIR} )
@@ -56,17 +56,22 @@ option(
   "Set to ON if GraphicsOrigin::geometry uses CUDA. If set to false, only command line tools would be available."
   ON)
   
+option( 
+  MP_BUILD_TESTS
+  "Set to ON to build the tests."
+  ON)
+  
 #***************
 # global flags *
 #*******************************************************************************
 set( CMAKE_CXX_FLAGS 
-  "${CMAKE_CXX_FLAGS} -frounding-math -std=c++14 -fPIC -fopenmp -DGLM_FORCE_SSE2 -DGLM_FORCE_RADIANS"
+  "-frounding-math -std=c++14 -fPIC -fopenmp -DGLM_FORCE_SSE2 -DGLM_FORCE_RADIANS -DBOOST_LOG_DYN_LINK -DBOOST_ALL_DYN_LINK"
   CACHE STRING "C++ compiler flags" FORCE )
 set( CMAKE_CXX_FLAGS_RELEASE 
-  "${CMAKE_CXX_FLAGS_RELEASE} -O3 -msse2 -UDEBUG -DNDEBUG -DCGAL_NDEBUG -DNO_DEBUG -DEIGEN_NO_DEBUG" 
+  "-O3 -msse2 -UDEBUG -DNDEBUG -DCGAL_NDEBUG -DNO_DEBUG -DEIGEN_NO_DEBUG" 
   CACHE STRING "C++ compiler extra flags for release build type" FORCE )
 set( CMAKE_CXX_FLAGS_DEBUG 
-  "${CMAKE_CXX_FLAGS_DEBUG} -O0 -ggdb -Wall -Wextra -DDEBUG" 
+  "-O0 -ggdb -Wall -Wextra -DDEBUG" 
   CACHE STRING "C++ compiler extra flags for debug build type" FORCE )
 
 set( CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -lgomp" )
@@ -84,9 +89,21 @@ include_directories( ${GRAPHICS_ORIGIN_INCLUDE_DIRS} )
 
 configure_file( "${MP_SOURCES_IN_DIR}/median_path.h.in" "${MP_HEADERS_IN_DIR}/median-path/median_path.h")
 
-
+add_subdirectory( ${MP_SOURCES_IN_DIR} )
 add_subdirectory( ${MP_APPLICATIONS_IN_DIR} )
 
-
-#add_subdirectory( "${GO_SOURCES_IN_DIR}/tools" )
-#add_subdirectory( "${GO_SOURCES_IN_DIR}/geometry" )
+if( ${MP_BUILD_TESTS} )
+  enable_testing()
+  set( Boost_USE_MULTITHREADED ON )
+  set( Boost_USE_STATIC_LIBS OFF )
+  set( Boost_USE_STATIC_RUNTIME OFF )
+  find_package( Boost
+    REQUIRED
+    COMPONENTS unit_test_framework )
+  if( Boost_FOUND )
+    set( MP_TEST_LIBRARIES 
+      ${Boost_LIBRARIES})
+	include_directories( "${Boost_INCLUDE_DIRS}" )
+	add_subdirectory( ${MP_TEST_IN_DIR} )
+  endif()
+endif()
