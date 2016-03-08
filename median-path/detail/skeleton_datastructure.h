@@ -343,15 +343,23 @@ BEGIN_MP_NAMESPACE
         : base_property_buffer( sizeof( value_type ), name )
       {}
 
-      void resize( size_t old_capacity, size_t new_capacity )
+      void resize( size_t old_capacity, size_t new_capacity ) override
       {
-        auto new_buffer = new value_type[ new_capacity ];
-        std::memcpy( (void*)new_buffer, (void*)base_property_buffer::m_buffer, sizeof( value_type ) * old_capacity );
-        delete[] reinterpret_cast< pointer_type >( base_property_buffer::m_buffer );
-        base_property_buffer::m_buffer = reinterpret_cast< unsigned char* >( new_buffer );
+        if( old_capacity )
+          {
+            auto new_buffer = new value_type[ new_capacity ];
+            std::memcpy( (void*)new_buffer, (void*)base_property_buffer::m_buffer, sizeof( value_type ) * old_capacity );
+            delete[] reinterpret_cast< pointer_type >( base_property_buffer::m_buffer );
+            base_property_buffer::m_buffer = reinterpret_cast< unsigned char* >( new_buffer );
+          }
+        else
+          {
+            ///fixme: why do we need to handle this case separately in Release mode?
+            base_property_buffer::m_buffer = reinterpret_cast< unsigned char* >( new value_type[ new_capacity ] );
+          }
       }
 
-      void clear( size_t current_capacity )
+      void clear( size_t current_capacity ) override
       {
         auto ptr = reinterpret_cast< pointer_type >( base_property_buffer::m_buffer );
         for( size_t i = 0; i < current_capacity; ++ i, ++ ptr )
@@ -360,7 +368,7 @@ BEGIN_MP_NAMESPACE
           }
       }
 
-      void move( size_t from, size_t to )
+      void move( size_t from, size_t to ) override
       {
         // copy to destination thanks to a move operator
         reinterpret_cast< pointer_type >( base_property_buffer::m_buffer )[ to ] =
