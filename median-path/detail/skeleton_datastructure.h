@@ -523,6 +523,10 @@ BEGIN_MP_NAMESPACE
     link_handle_type get_index( link& e );
     face_handle_type get_index( face& e );
 
+    atom_handle get_handle( atom& e );
+    link_handle get_handle( link& e );
+    face_handle get_handle( face& e );
+
     template< typename T >
     void add_atom_property( const std::string& name )
     {
@@ -1577,6 +1581,84 @@ BEGIN_MP_NAMESPACE
       MP_THROW_EXCEPTION( skeleton_invalid_face_handle );
 # endif
     return entry->face_index;
+  }
+
+  template<
+      typename atom_handle_type, uint8_t atom_handle_index_bits,
+      typename link_handle_type, uint8_t link_handle_index_bits,
+      typename face_handle_type, uint8_t face_handle_index_bits >
+  skeleton_datastructure<
+      atom_handle_type, atom_handle_index_bits,
+      link_handle_type, link_handle_index_bits,
+      face_handle_type, face_handle_index_bits>::atom_handle
+  skeleton_datastructure<
+    atom_handle_type, atom_handle_index_bits,
+    link_handle_type, link_handle_index_bits,
+    face_handle_type, face_handle_index_bits>::get_handle( atom& e )
+  {
+# ifndef MP_SKELETON_NO_CHECK
+    if( e < m_atoms || e >= m_atoms + m_atoms_size )
+      MP_THROW_EXCEPTION( skeleton_invalid_atom_pointer );
+# endif
+    const auto element_index = std::distance( m_atoms, &e );
+# ifndef MP_SKELETON_NO_CHECK
+    if( m_atoms + element_index != &e )
+      MP_THROW_EXCEPTION( skeleton_invalid_atom_pointer );
+# endif
+    auto idx = m_atom_index_to_handle_index[ element_index ];
+    return atom_handle( idx, m_atom_handles[ idx ].counter );
+  }
+
+  template<
+      typename atom_handle_type, uint8_t atom_handle_index_bits,
+      typename link_handle_type, uint8_t link_handle_index_bits,
+      typename face_handle_type, uint8_t face_handle_index_bits >
+  skeleton_datastructure<
+      atom_handle_type, atom_handle_index_bits,
+      link_handle_type, link_handle_index_bits,
+      face_handle_type, face_handle_index_bits>::link_handle
+  skeleton_datastructure<
+    atom_handle_type, atom_handle_index_bits,
+    link_handle_type, link_handle_index_bits,
+    face_handle_type, face_handle_index_bits>::get_handle( link& e )
+  {
+# ifndef MP_SKELETON_NO_CHECK
+    if( e < m_links || e >= m_links + m_links_size )
+      MP_THROW_EXCEPTION( skeleton_invalid_link_pointer );
+# endif
+    const auto element_index = std::distance( m_links, &e );
+# ifndef MP_SKELETON_NO_CHECK
+    if( m_links + element_index != &e )
+      MP_THROW_EXCEPTION( skeleton_invalid_link_pointer );
+# endif
+    auto idx = m_link_index_to_handle_index[ element_index ];
+    return link_handle( idx, m_link_handles[ idx ].counter );
+  }
+
+  template<
+      typename atom_handle_type, uint8_t atom_handle_index_bits,
+      typename link_handle_type, uint8_t link_handle_index_bits,
+      typename face_handle_type, uint8_t face_handle_index_bits >
+  skeleton_datastructure<
+      atom_handle_type, atom_handle_index_bits,
+      link_handle_type, link_handle_index_bits,
+      face_handle_type, face_handle_index_bits>::face_handle
+  skeleton_datastructure<
+    atom_handle_type, atom_handle_index_bits,
+    link_handle_type, link_handle_index_bits,
+    face_handle_type, face_handle_index_bits>::get_handle( face& e )
+  {
+# ifndef MP_SKELETON_NO_CHECK
+    if( e < m_faces || e >= m_faces + m_faces_size )
+      MP_THROW_EXCEPTION( skeleton_invalid_face_pointer );
+# endif
+    const auto element_index = std::distance( m_faces, &e );
+# ifndef MP_SKELETON_NO_CHECK
+    if( m_faces + element_index != &e )
+      MP_THROW_EXCEPTION( skeleton_invalid_face_pointer );
+# endif
+    auto idx = m_face_index_to_handle_index[ element_index ];
+    return face_handle( idx, m_face_handles[ idx ].counter );
   }
 
   template<

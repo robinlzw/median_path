@@ -88,7 +88,31 @@ BEGIN_MP_NAMESPACE
 
   void median_skeleton::remove( atom_handle handle )
   {
-    auto index = m_impl->get_index( handle );
+    if( handle.index < m_impl->m_atoms_capacity )
+      {
+        const auto entry = m_impl->m_atom_handles + handle.index;
+        if( entry->status == datastructure::STATUS_ALLOCATED && entry->counter == handle.counter )
+          {
+            auto index = entry->atom_index;
+            auto& links = m_impl->m_atom_properties[ atom_links_property_index ]->get<atom_links_property>( index );
+            auto& faces = m_impl->m_atom_properties[ atom_faces_property_index ]->get<atom_faces_property>( index );
+
+            // a link can have no face
+            // a face must have three links
+            // if we remove the faces first, most of the links would be removed too.
+            for( auto& fh : faces )
+              m_impl->remove( fh );
+            for( auto& lh : links )
+              m_impl->remove( lh );
+            // properties are automatically removed during this call:
+            m_impl->remove( handle );
+          }
+      }
+  }
+
+  void median_skeleton::remove( atom& e )
+  {
+    auto index = m_impl->get_index( e );
     auto& links = m_impl->m_atom_properties[ atom_links_property_index ]->get<atom_links_property>( index );
     auto& faces = m_impl->m_atom_properties[ atom_faces_property_index ]->get<atom_faces_property>( index );
 
@@ -100,14 +124,43 @@ BEGIN_MP_NAMESPACE
     for( auto& lh : links )
       m_impl->remove( lh );
     // properties are automatically removed during this call:
-    m_impl->remove( handle );
+    m_impl->remove( e );
   }
 
-  void median_skeleton::remove( atom& a )
+  median_skeleton::atom&
+  median_skeleton::get( atom_handle handle ) const
   {
-
+    return m_impl->get(handle);
   }
 
+  median_skeleton::atom&
+  median_skeleton::get_atom_by_index( uint32_t index ) const
+  {
+    return m_impl->get_atom_by_index( index );
+  }
+
+  uint32_t
+  median_skeleton::get_index( atom_handle handle ) const
+  {
+    return m_impl->get_index( handle );
+  }
+
+  median_skeleton::atom_handle
+  median_skeleton::get_handle( atom&e ) const
+  {
+    return m_impl->get_handle( e );
+  }
+
+  bool
+  median_skeleton::is_valid( atom_handle handle ) const
+  {
+    if( handle.index < m_impl->m_atoms_capacity )
+      {
+        const auto entry = m_impl->m_atom_handles + handle.index;
+        return entry->status == datastructure::STATUS_ALLOCATED && entry->counter == handle.counter;
+      }
+    return false;
+  }
 
 
 END_MP_NAMESPACE

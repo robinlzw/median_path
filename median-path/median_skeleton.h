@@ -26,6 +26,14 @@ BEGIN_MP_NAMESPACE
    * link data
    *   [0] std::vector< face_handle >
    * face data
+   *
+   * For most methods, you have the choice to identify skeleton elements by
+   * handles, references or indices. Handles are safer way to identify elements,
+   * but is also slower. References and indices are faster, but could throw
+   * exception if they are incorrect. Indeed, both references and indices are
+   * subject to change. Thus, you might have references or indices that were
+   * correct at the moment you obtained them, but operations that happened
+   * after invalidated them.
    */
   class median_skeleton {
     typedef skeleton_datastructure<
@@ -131,12 +139,65 @@ BEGIN_MP_NAMESPACE
      * @return An atom handle that points to the newly created atom. */
     atom_handle add( const vec4& ball );
 
+    /**@brief Remove an atom know by its handle.
+     *
+     * Remove an atom from the skeleton. Its faces and links will
+     * be destroyed too. If the handle is invalid (e.g. the atom
+     * is already removed), the error is silently ignored.
+     * @param handle Handle of the atom to remove.
+     */
     void remove( atom_handle handle );
-    void remove( atom& a );
-    atom& get_atom_by_index( uint32_t index ) const;
+
+    /**@brief Remove an atom known by a reference.
+     *
+     * Remove an atom from the skeleton. Its faces and links will
+     * be destroyed too. If the atom points to memory that is not
+     * tagged as a valid atom, an exception is thrown.
+     * @param e Reference to the atom to remove.
+     */
+    void remove( atom& e );
+
+    /**@brief Access to an atom known by an handle.
+     *
+     * Access to an atom thank to its handle. If the handle is
+     * incorrect, an exception is thrown. Be careful to not store this
+     * reference if you plan to add/remove atoms after, since it will
+     * invalidate the reference.
+     * @param handle Handle of the atom in the tight buffer.
+     */
     atom& get( atom_handle handle ) const;
+
+    /**@brief Access to an atom known by an index.
+     *
+     * Access to an atom thank to its index. If the index is
+     * incorrect, an exception is thrown. Be careful to not store this
+     * reference if you plan to add/remove atoms after, since it will
+     * invalidate the reference.
+     * @param index Index of the atom in the tight buffer.
+     */
+    atom& get_atom_by_index( uint32_t index ) const;
+
+    /**@brief Get the index of an atom known by its handle.
+     *
+     * Get the index of an atom known by an handle. If the handle does
+     * not point to a valid atom, an exception is thrown.
+     * @param handle Handle of the atom we want the index.
+     */
     uint32_t get_index( atom_handle handle ) const;
-    atom_handle get_handle( atom& a ) const;
+    /**@brief Get the handle of an atom.
+     *
+     * Get the handle of an atom. If the atom points to memory that is
+     * not tagged as a valid atom, an exception is thrown.
+     * @param e Reference to the atom we want to know the handle.
+     */
+    atom_handle get_handle( atom& e ) const;
+    /**@brief Check if an atom handle is valid.
+     *
+     * An atom handle is valid if it identifies a currently allocated
+     * atom in the tight buffer. This function check if an handle is
+     * valid.
+     * @param handle The handle to check.
+     */
     bool is_valid( atom_handle handle ) const;
 
     typedef std::function<void(atom&)> atom_processer;
