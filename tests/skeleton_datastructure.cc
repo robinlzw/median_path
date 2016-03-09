@@ -3,14 +3,9 @@
  */
 # include "test.h"
 # include <graphics-origin/tools/log.h>
-# include "../median-path/detail/skeleton_datastructure.h"
 
 BEGIN_MP_NAMESPACE
 
-  typedef skeleton_datastructure<
-    uint32_t, 22,
-    uint64_t, 44,
-    uint64_t, 54 > datastructure;
 
   static void
   default_no_throw()
@@ -153,6 +148,11 @@ BEGIN_MP_NAMESPACE
       }
   }
 
+
+
+
+  extern test_suite* create_clear_test_suite();
+
   static test_suite*
   create_construction_test_suite()
   {
@@ -177,6 +177,7 @@ BEGIN_MP_NAMESPACE
     test_suite* suite = BOOST_TEST_SUITE("SKELETON_DATASTRUCTURE");
     ADD_TO_SUITE( create_construction_test_suite );
     ADD_TO_SUITE( create_destruction_test_suite );
+    ADD_TO_SUITE( create_clear_test_suite );
     ADD_TO_MASTER( suite );
   }
 

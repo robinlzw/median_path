@@ -683,7 +683,6 @@ BEGIN_MP_NAMESPACE
           property->clear( m_atoms_capacity );
 
         m_atoms_size = 0;
-        m_atoms_capacity = atom_capacity;
         m_atoms_next_free_handle_slot = 0;
       }
     else
@@ -691,6 +690,10 @@ BEGIN_MP_NAMESPACE
         delete[] m_atoms;
         delete[] m_atom_handles;
         delete[] m_atom_index_to_handle_index;
+
+        m_atoms = nullptr;
+        m_atom_handles = nullptr;
+        m_atom_index_to_handle_index = nullptr;
 
         m_atoms_capacity = 0;
         m_atoms_size = 0;
@@ -729,7 +732,6 @@ BEGIN_MP_NAMESPACE
           property->clear( m_links_capacity );
 
         m_links_size = 0;
-        m_links_capacity = link_capacity;
         m_links_next_free_handle_slot = 0;
       }
     else
@@ -737,6 +739,10 @@ BEGIN_MP_NAMESPACE
         delete[] m_links;
         delete[] m_link_handles;
         delete[] m_link_index_to_handle_index;
+
+        m_links = nullptr;
+        m_link_handles = nullptr;
+        m_link_index_to_handle_index = nullptr;
 
         m_links_capacity = 0;
         m_links_size = 0;
@@ -775,7 +781,6 @@ BEGIN_MP_NAMESPACE
           property->clear( m_faces_capacity );
 
         m_faces_size = 0;
-        m_faces_capacity = face_capacity;
         m_faces_next_free_handle_slot = 0;
       }
     else
@@ -783,6 +788,10 @@ BEGIN_MP_NAMESPACE
         delete[] m_faces;
         delete[] m_face_handles;
         delete[] m_face_index_to_handle_index;
+
+        m_faces = nullptr;
+        m_face_handles = nullptr;
+        m_face_index_to_handle_index = nullptr;
 
         m_faces_capacity = 0;
         m_faces_size = 0;
