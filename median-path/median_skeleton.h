@@ -17,17 +17,14 @@ BEGIN_MP_NAMESPACE
 
   /**@brief A median skeleton class.
    *
-   *
-   * atom,
-   * link,
-   * face
-   *
-   * atom data:
-   *   [0] std::vector< link_handle >
-   *   [1] std::vector< face_handle >
-   * link data
-   *   [0] std::vector< face_handle >
-   * face data
+   * A skeleton is a thin structure, centered in a shape, that jointly describes
+   * the topology and the geometry of such shape. It is composed of atoms, which
+   * in the case of a median skeleton, are maximum inscribed balls. Those balls
+   * are represented here by a tight buffer of vec4: xyz for the atom position
+   * (aka center or skeleton point or medial point) and w for the atom radius.
+   * The topology of the shape is captured by the atom neighborhoods and explicitly
+   * stored in links and faces connecting atoms. Atoms, links and faces are the
+   * skeleton elements.
    *
    * For most methods, you have the choice to identify skeleton elements by
    * handles, references or indices. Handles are safer way to identify elements,
@@ -35,7 +32,13 @@ BEGIN_MP_NAMESPACE
    * exception if they are incorrect. Indeed, both references and indices are
    * subject to change. Thus, you might have references or indices that were
    * correct at the moment you obtained them, but operations that happened
-   * after invalidated them.
+   * after invalidated them. Adding and removing elements are the operations that
+   * invalidate references and indices.
+   *
+   * Maximum capacities:
+   *   - 2^22 atoms
+   *   - 2^44 links
+   *   - 2^54 faces
    */
   class median_skeleton {
     typedef skeleton_datastructure<
