@@ -58,9 +58,69 @@ BEGIN_MP_NAMESPACE
     typedef uint64_t link_index;
     typedef uint64_t face_index;
 
-    typedef std::vector< link_handle > atom_links_property;
-    typedef std::vector< face_handle > atom_faces_property;
-    typedef std::vector< face_handle > link_faces_property;
+    /**@brief Map an atom to a face passing by this atom.
+     *
+     * Let us suppose that a face with handle f connects three links and three atoms
+     * in the following order: a1 --(l1)--> a2 --(l2)--> a3 --(l3)--> a1. This
+     * structure establish the map of the atom a1 to the face f:
+     * links = {l1,l2,l3}
+     * atoms = {a2,a3}
+     * face  = f
+     */
+    struct atom_face_element {
+      link_handle links[3];
+      atom_handle atoms[2];
+      face_handle face;
+
+      atom_face_element()
+        : links{ link_handle{}, link_handle{}, link_handle{} },
+          atoms{ atom_handle{}, atom_handle{} },
+          face{ face_handle{} }
+      {}
+
+      atom_face_element&
+      operator=( atom_face_element&& other )
+      {
+        links[0] = other.links[0]; links[1] = other.links[1]; links[2] = other.links[2];
+        atoms[0] = other.atoms[0]; atoms[1] = other.atoms[1];
+        face = other.face;
+        return *this;
+      }
+    };
+
+    /**@brief Map a link to a face passing by this link.
+     *
+     * Let us suppose that a face with handle f connects three links and three atoms
+     * in the following order: a1 --(l1)--> a2 --(l2)--> a3 --(l3)--> a1. This
+     * structure establish the map of the atom l1 to the face f:
+     * links = {l2,l3}
+     * opposite = a3
+     * face  = f
+     */
+    struct link_face_element {
+      link_handle links[2];
+      atom_handle opposite;
+      face_handle face;
+
+      link_face_element()
+        : links{ link_handle{}, link_handle{} },
+          opposite{ atom_handle{} },
+          face{ face_handle{} }
+      {}
+
+      link_face_element&
+      operator=( link_face_element&& other )
+      {
+        links[0] = other.links[0]; links[1] = other.links[1];
+        opposite = other.opposite;
+        face = other.face;
+        return *this;
+      }
+    };
+
+    typedef std::vector< std::pair<link_handle, atom_handle> > atom_links_property;
+    typedef std::vector< atom_face_element > atom_faces_property;
+    typedef std::vector< link_face_element > link_faces_property;
 
     /**@name Construction & Destruction
      * @{ */
@@ -241,7 +301,136 @@ BEGIN_MP_NAMESPACE
      */
     void remove( atom_filter&& filter, bool parallel = true );
 
+    /**@name Link management
+     * @{ */
+    /**@brief Add an link to the skeleton.
+     *
+     * Add an link between two atoms. If one of the handles is invalid,
+     * an exception is thrown. If the link already exists, its handle is returned.
+     * @param handle1 The handle of the first atom.
+     * @param handle2 The handle of the second atom.
+     * @return An link handle that points to the newly created link. */
+    link_handle add( atom_handle handle1, atom_handle handle2 );
+    /**@brief Add an link to the skeleton.
+     *
+     * Add an link between two atoms. If one of the atom references is invalid,
+     * an exception is thrown. If the link already exists, its handle is returned.
+     * @param atom1 Reference to the first atom.
+     * @param atom2 Reference to the second atom.
+     * @return An link handle that points to the newly created link. */
+    link_handle add( atom& atom1, atom& atom2 );
+    /**@brief Add an link to the skeleton.
+     *
+     * Add an link between two atoms. If one of the atom indices is invalid,
+     * an exception is thrown. If the link already exists, its handle is
+     * returned.
+     * @param idx1 Index of the first atom.
+     * @param idx2 Index of the second atom.
+     * @return An link handle that points to the newly created link. */
+    link_handle add( atom_index idx1, atom_index idx2 );
+    /**@brief Remove an link know by its handle.
+     *
+     * Remove an link from the skeleton. Its faces will
+     * be destroyed too. Also, its atoms will be notified that they are
+     * no longer connected by the corresponding link and faces.
+     * If the handle is invalid (e.g. the link
+     * is already removed), the error is silently ignored.
+     * @param handle Handle of the link to remove.
+     */
+    void remove( link_handle handle );
+
+    /**@brief Remove an link known by a reference.
+     *
+     * Remove an link from the skeleton. Its faces will
+     * be destroyed too. Also, its atoms will be notified that they are
+     * no longer connected by the corresponding link and faces.
+     * If the link points to memory that is not
+     * tagged as a valid link, an exception is thrown.
+     * @param e Reference to the link to remove.
+     */
+    void remove( link& e );
+
+    /**@brief Access to an link known by an handle.
+     *
+     * Access to an link thank to its handle. If the handle is
+     * incorrect, an exception is thrown. Be careful to not store this
+     * reference if you plan to add/remove links after, since it will
+     * invalidate the reference.
+     * @param handle Handle of the link in the tight buffer.
+     */
+    link& get( link_handle handle ) const;
+
+    /**@brief Access to an link known by an index.
+     *
+     * Access to an link thank to its index. If the index is
+     * incorrect, an exception is thrown. Be careful to not store this
+     * reference if you plan to add/remove links after, since it will
+     * invalidate the reference.
+     * @param index Index of the link in the tight buffer.
+     */
+    link& get_link_by_index( link_index index ) const;
+
+    /**@brief Get the index of an link known by its handle.
+     *
+     * Get the index of an link known by an handle. If the handle does
+     * not point to a valid link, an exception is thrown.
+     * @param handle Handle of the link we want the index.
+     */
+    link_index get_index( link_handle handle ) const;
+    /**@brief Get the handle of an link.
+     *
+     * Get the handle of an link. If the link points to memory that is
+     * not tagged as a valid link, an exception is thrown.
+     * @param e Reference to the link we want to know the handle.
+     */
+    link_handle get_handle( link& e ) const;
+    /**@brief Check if an link handle is valid.
+     *
+     * An link handle is valid if it identifies a currently allocated
+     * link in the tight buffer. This function check if an handle is
+     * valid.
+     * @param handle The handle to check.
+     */
+    bool is_valid( link_handle handle ) const;
+
+    /**@brief A function to process links.
+     *
+     * A function of such a type can be applied on all valid links of a skeleton.
+     */
+    typedef std::function<void(link&)> link_processer;
+
+    /**@brief Apply a process function on all links.
+     *
+     * This method apply, in parallel or not, a function on each
+     * valid link.
+     * @param function The function to apply.
+     * @param parallel A flag to activate a parallel processing.
+     */
+    void process( link_processer&& function, bool parallel = true );
+
+    /**@brief A function to select links to remove.
+     *
+     * A function of such a type is used to identify links to remove from a
+     * skeleton.
+     */
+    typedef std::function<bool(link&)> link_filter;
+    /**@brief Filter links according to a filter function.
+     *
+     * This method select links to remove thanks to a filter function. The
+     * evaluation of the filter function can be done in parallel. This method
+     * guarantees that the links are still stored in a tight buffer after
+     * removals. This function will invalidate references and indices to links.
+     * @param filter The filter function used to select links to remove.
+     * @param parallel A flag to activate a parallel evaluation of the filter function.
+     */
+    void remove( link_filter&& filter, bool parallel = true );
+
   private:
+
+    void remove_link_to_face( link_index idx, face_handle handle );
+    void remove_atom_to_face( atom_index idx, face_handle handle );
+    void remove_atom_to_link( atom_index idx, link_handle handle );
+
     datastructure* m_impl;
   };
 

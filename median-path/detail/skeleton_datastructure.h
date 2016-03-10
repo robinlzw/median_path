@@ -385,15 +385,6 @@ BEGIN_MP_NAMESPACE
           }
       }
 
-      void clear( size_t current_capacity ) override
-      {
-        auto ptr = reinterpret_cast< pointer_type >( base_property_buffer::m_buffer );
-        for( size_t i = 0; i < current_capacity; ++ i, ++ ptr )
-          {
-            *ptr = std::move( value_type() );
-          }
-      }
-
       void move( size_t from, size_t to ) override
       {
         // copy to destination thanks to a move operator
@@ -999,8 +990,8 @@ BEGIN_MP_NAMESPACE
   {
     if( m_atoms_size == m_atoms_capacity )
         grow_atoms( std::min(
-          size_t(max_atom_handle_index),
-          m_atoms_capacity + std::max( m_atoms_capacity, size_t{10} ) ) );
+          max_atom_handle_index,
+          m_atoms_capacity + std::max( m_atoms_capacity, atom_handle_type{10} ) ) );
       /* fetch the handle entry */
       const auto handle_index = m_atoms_next_free_handle_slot;
       auto entry = m_atom_handles + handle_index;
@@ -1043,8 +1034,8 @@ BEGIN_MP_NAMESPACE
   {
     if( m_links_size == m_links_capacity )
       grow_links( std::min(
-        size_t(max_link_handle_index),
-        m_links_capacity + std::max( m_links_capacity, size_t{10} ) ) );
+        max_link_handle_index,
+        m_links_capacity + std::max( m_links_capacity, link_handle_type{10} ) ) );
     /* fetch the handle entry */
     const auto handle_index = m_links_next_free_handle_slot;
     auto entry = m_link_handles + handle_index;
@@ -1087,8 +1078,8 @@ BEGIN_MP_NAMESPACE
   {
     if( m_faces_size == m_faces_capacity )
       grow_faces( std::min(
-        size_t(max_face_handle_index),
-        m_faces_capacity + std::max( m_faces_capacity, size_t{10} ) ) );
+        max_face_handle_index,
+        m_faces_capacity + std::max( m_faces_capacity, face_handle_type{10} ) ) );
     /* fetch the handle entry */
     const auto handle_index = m_faces_next_free_handle_slot;
     auto entry = m_face_handles + handle_index;
@@ -1133,7 +1124,7 @@ BEGIN_MP_NAMESPACE
       MP_THROW_EXCEPTION( skeleton_invalid_atom_handle );
 # endif
 
-    auto index = entry->index;
+    auto index = entry->atom_index;
 
     // update the entry
     entry->next_free_index = m_atoms_next_free_handle_slot;
@@ -1189,7 +1180,7 @@ BEGIN_MP_NAMESPACE
       MP_THROW_EXCEPTION( skeleton_invalid_link_handle );
 # endif
 
-    auto index = entry->index;
+    auto index = entry->link_index;
 
     // update the entry
     entry->next_free_index = m_links_next_free_handle_slot;
@@ -1245,7 +1236,7 @@ BEGIN_MP_NAMESPACE
       MP_THROW_EXCEPTION( skeleton_invalid_face_handle );
 # endif
 
-    auto index = entry->index;
+    auto index = entry->face_index;
 
     // update the entry
     entry->next_free_index = m_faces_next_free_handle_slot;
@@ -1446,7 +1437,7 @@ BEGIN_MP_NAMESPACE
     face_handle_type, face_handle_index_bits>::remove( atom& e )
   {
 # ifndef MP_SKELETON_NO_CHECK
-    if( e < m_atoms || e >= m_atoms + m_atoms_size )
+    if( &e < m_atoms || &e >= m_atoms + m_atoms_size )
       MP_THROW_EXCEPTION( skeleton_invalid_atom_pointer );
 # endif
     const auto index = std::distance( m_atoms, &e );
@@ -1504,7 +1495,7 @@ BEGIN_MP_NAMESPACE
     face_handle_type, face_handle_index_bits>::remove( link& e )
   {
 # ifndef MP_SKELETON_NO_CHECK
-    if( e < m_links || e >= m_links + m_links_size )
+    if( &e < m_links || &e >= m_links + m_links_size )
       MP_THROW_EXCEPTION( skeleton_invalid_link_pointer );
 # endif
     const auto index = std::distance( m_links, &e );
@@ -1562,7 +1553,7 @@ BEGIN_MP_NAMESPACE
     face_handle_type, face_handle_index_bits>::remove( face& e )
   {
 # ifndef MP_SKELETON_NO_CHECK
-    if( e < m_faces || e >= m_faces + m_faces_size )
+    if( &e < m_faces || &e >= m_faces + m_faces_size )
       MP_THROW_EXCEPTION( skeleton_invalid_face_pointer );
 # endif
     const auto index = std::distance( m_faces, &e );
@@ -1756,7 +1747,7 @@ BEGIN_MP_NAMESPACE
       typename atom_handle_type, uint8_t atom_handle_index_bits,
       typename link_handle_type, uint8_t link_handle_index_bits,
       typename face_handle_type, uint8_t face_handle_index_bits >
-  skeleton_datastructure<
+  typename skeleton_datastructure<
       atom_handle_type, atom_handle_index_bits,
       link_handle_type, link_handle_index_bits,
       face_handle_type, face_handle_index_bits>::atom_handle
@@ -1766,7 +1757,7 @@ BEGIN_MP_NAMESPACE
     face_handle_type, face_handle_index_bits>::get_handle( atom& e )
   {
 # ifndef MP_SKELETON_NO_CHECK
-    if( e < m_atoms || e >= m_atoms + m_atoms_size )
+    if( &e < m_atoms || &e >= m_atoms + m_atoms_size )
       MP_THROW_EXCEPTION( skeleton_invalid_atom_pointer );
 # endif
     const auto element_index = std::distance( m_atoms, &e );
@@ -1782,7 +1773,7 @@ BEGIN_MP_NAMESPACE
       typename atom_handle_type, uint8_t atom_handle_index_bits,
       typename link_handle_type, uint8_t link_handle_index_bits,
       typename face_handle_type, uint8_t face_handle_index_bits >
-  skeleton_datastructure<
+  typename skeleton_datastructure<
       atom_handle_type, atom_handle_index_bits,
       link_handle_type, link_handle_index_bits,
       face_handle_type, face_handle_index_bits>::link_handle
@@ -1792,7 +1783,7 @@ BEGIN_MP_NAMESPACE
     face_handle_type, face_handle_index_bits>::get_handle( link& e )
   {
 # ifndef MP_SKELETON_NO_CHECK
-    if( e < m_links || e >= m_links + m_links_size )
+    if( &e < m_links || &e >= m_links + m_links_size )
       MP_THROW_EXCEPTION( skeleton_invalid_link_pointer );
 # endif
     const auto element_index = std::distance( m_links, &e );
@@ -1808,7 +1799,7 @@ BEGIN_MP_NAMESPACE
       typename atom_handle_type, uint8_t atom_handle_index_bits,
       typename link_handle_type, uint8_t link_handle_index_bits,
       typename face_handle_type, uint8_t face_handle_index_bits >
-  skeleton_datastructure<
+  typename skeleton_datastructure<
       atom_handle_type, atom_handle_index_bits,
       link_handle_type, link_handle_index_bits,
       face_handle_type, face_handle_index_bits>::face_handle
@@ -1840,7 +1831,7 @@ BEGIN_MP_NAMESPACE
     face_handle_type, face_handle_index_bits>::get_index( atom& e )
   {
 # ifndef MP_SKELETON_NO_CHECK
-    if( e < m_atoms || e >= m_atoms + m_atoms_size )
+    if( &e < m_atoms || &e >= m_atoms + m_atoms_size )
       MP_THROW_EXCEPTION( skeleton_invalid_atom_pointer );
 # endif
     const auto element_index = std::distance( m_atoms, &e );
@@ -1861,7 +1852,7 @@ BEGIN_MP_NAMESPACE
     face_handle_type, face_handle_index_bits>::get_index( link& e )
   {
 # ifndef MP_SKELETON_NO_CHECK
-    if( e < m_links || e >= m_links + m_links_size )
+    if( &e < m_links || &e >= m_links + m_links_size )
       MP_THROW_EXCEPTION( skeleton_invalid_link_pointer );
 # endif
     const auto element_index = std::distance( m_links, &e );
