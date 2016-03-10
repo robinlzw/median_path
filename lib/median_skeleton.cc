@@ -681,4 +681,126 @@ BEGIN_MP_NAMESPACE
       }
   }
 
+
+  void
+  median_skeleton::remove( link_filter&& filter, bool parallel )
+  {
+    const link_index size = m_impl->m_links_size;
+    /* a flag buffer is necessary if the filter function relies on reference
+     * to links or link index. For example, if the filter function remove
+     * links with indices 1 and 3, with 4 links in total in the buffer. When
+     * link #1 is removed, the link #3 is move into it. Thus, when the former
+     * link #3 (now #1) is tested, the filter function will not recognize it. */
+    bool* flags = new bool[ size ];
+    if( parallel )
+      {
+        # pragma omp parallel for schedule(dynamic)
+        for( link_index i = 0; i < size; ++ i )
+          {
+            flags[ i ] = filter( m_impl->m_links[i] );
+          }
+      }
+    else
+      {
+        for( link_index i = 0; i < size; ++ i )
+          {
+            flags[ i ] = filter( m_impl->m_links[i] );
+          }
+      }
+
+    /* INVARIANT:
+     * - all links with indices in [[0, left[[ are not removed
+     * - all links with indices in [[left, right[[ need to be checked
+     * - all links with indices in [[right, size[[ should be cleaned (all
+     * objects referring to an link should be destroyed)
+     * Thus, in the end (i.e. when left == right ), we have:
+     * - links with indices in [[0,left[[ are clean and tight
+     * - links with indices in [[left, size[[ should be cleaned
+     * - left is the new size of links
+     */
+    link_index next_free_slot = m_impl->m_links_next_free_handle_slot;
+    link_index left = 0, right = size;
+    while( left < right )
+      {
+        if( flags[ left ] )
+          {
+            // look for a valid link in the end of the buffer
+            --right;
+            while( left < right && flags[ right ] )
+              {
+                const auto entry_index = m_impl->m_link_index_to_handle_index[ right ];
+                auto entry = m_impl->m_link_handles + entry_index;
+                entry->next_free_index = next_free_slot;
+                entry->status = datastructure::STATUS_FREE;
+                next_free_slot = entry_index;
+                --right;
+              }
+
+            if( left != right )
+              {
+                // update the left_entry
+                const auto left_entry_index = m_impl->m_link_index_to_handle_index[ left ];
+                auto left_entry = m_impl->m_link_handles + left_entry_index;
+                left_entry->next_free_index = next_free_slot;
+                left_entry->status = datastructure::STATUS_FREE;
+                next_free_slot = left_entry_index;
+
+                // move the last link into this one to keep the buffer tight
+                m_impl->m_links[left] = std::move( m_impl->m_links[right] );
+                for( auto& property : m_impl->m_link_properties )
+                  property->move( right, left );
+
+                const auto right_entry_index = m_impl->m_link_index_to_handle_index[ right ];
+                auto right_entry = m_impl->m_link_handles + right_entry_index;
+                right_entry->link_index = left;
+                m_impl->m_link_index_to_handle_index[ left ] = right_entry_index;
+              }
+          }
+        else ++ left;
+      }
+    delete[] flags;
+
+    // cleaning links in [[left, size[[
+    for ( link_index index = left; index < size; ++ index )
+      {
+        link& e = m_impl->m_links[ index ];
+        atom_index idx1 = m_impl->m_atom_handles[ e.h1.index ].atom_index;
+        atom_index idx2 = m_impl->m_atom_handles[ e.h2.index ].atom_index;
+
+        // we start by destroying all the faces built with this link
+        auto& faces = m_impl->m_link_properties[ link_faces_property_index ]->get<link_faces_property>( index );
+        for( auto& face : faces )
+          {
+            // remove mapping link -> face from the two other links
+            for( int i = 0; i < 2; ++ i )
+              {
+                remove_link_to_face(
+                    m_impl->m_link_handles[ face.links[i].index ].link_index,
+                    face.face );
+              }
+            // remove mapping atom -> face from the three atoms
+            remove_atom_to_face( idx1, face.face );
+            remove_atom_to_face( idx2, face.face );
+            remove_atom_to_face(
+                m_impl->m_atom_handles[ face.opposite.index ].atom_index,
+                face.face );
+            // remove the face from the tight buffer
+            m_impl->remove( face.face ); // this removes all other properties of that face
+          }
+        link_faces_property().swap( faces ); // all mappings link -> face for this link are removed
+
+        // remove that link
+        auto handle = link_handle( m_impl->m_link_index_to_handle_index[ index ], 0 );
+        handle.counter = m_impl->m_link_handles[ handle.index ].counter;
+        remove_atom_to_link( idx1, handle );
+        remove_atom_to_link( idx2, handle );
+      }
+    // destroy properties of atoms in [[left, size[[
+    for( auto& property : m_impl->m_atom_properties )
+      property->destroy( left, size );
+
+    m_impl->m_atoms_size = left;
+    m_impl->m_atoms_next_free_handle_slot = next_free_slot;
+  }
+
 END_MP_NAMESPACE

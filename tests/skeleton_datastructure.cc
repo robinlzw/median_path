@@ -2,7 +2,6 @@
  *      Author: T. Delame (tdelame@gmail.com)
  */
 # include "test.h"
-# include <graphics-origin/tools/log.h>
 
 BEGIN_MP_NAMESPACE
 
@@ -124,6 +123,7 @@ BEGIN_MP_NAMESPACE
 
   extern test_suite* create_clear_test_suite();
   extern test_suite* create_construction_test_suite();
+  extern test_suite* create_element_test_suite();
 
   static test_suite*
   create_destruction_test_suite()
@@ -140,6 +140,7 @@ BEGIN_MP_NAMESPACE
     ADD_TO_SUITE( create_construction_test_suite );
     ADD_TO_SUITE( create_destruction_test_suite );
     ADD_TO_SUITE( create_clear_test_suite );
+    ADD_TO_SUITE( create_element_test_suite );
     ADD_TO_MASTER( suite );
   }
 
