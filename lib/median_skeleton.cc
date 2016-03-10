@@ -272,6 +272,12 @@ BEGIN_MP_NAMESPACE
     return m_impl->get_index( handle );
   }
 
+  median_skeleton::atom_index
+  median_skeleton::get_index( atom& e ) const
+  {
+    return m_impl->get_index( e );
+  }
+
   median_skeleton::atom_handle
   median_skeleton::get_handle( atom&e ) const
   {
@@ -382,6 +388,7 @@ BEGIN_MP_NAMESPACE
                 auto right_entry = m_impl->m_atom_handles + right_entry_index;
                 right_entry->atom_index = left;
                 m_impl->m_atom_index_to_handle_index[ left ] = right_entry_index;
+                ++left;
               }
           }
         else ++ left;
@@ -643,6 +650,12 @@ BEGIN_MP_NAMESPACE
     return m_impl->get_index( handle );
   }
 
+  median_skeleton::link_index
+  median_skeleton::get_index( link& e ) const
+  {
+    return m_impl->get_index( e );
+  }
+
   median_skeleton::link_handle
   median_skeleton::get_handle( link& e ) const
   {
@@ -754,6 +767,7 @@ BEGIN_MP_NAMESPACE
                 auto right_entry = m_impl->m_link_handles + right_entry_index;
                 right_entry->link_index = left;
                 m_impl->m_link_index_to_handle_index[ left ] = right_entry_index;
+                ++left;
               }
           }
         else ++ left;
@@ -799,8 +813,8 @@ BEGIN_MP_NAMESPACE
     for( auto& property : m_impl->m_atom_properties )
       property->destroy( left, size );
 
-    m_impl->m_atoms_size = left;
-    m_impl->m_atoms_next_free_handle_slot = next_free_slot;
+    m_impl->m_links_size = left;
+    m_impl->m_links_next_free_handle_slot = next_free_slot;
   }
 
 END_MP_NAMESPACE

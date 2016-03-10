@@ -253,6 +253,13 @@ BEGIN_MP_NAMESPACE
      * @param handle Handle of the atom we want the index.
      */
     atom_index get_index( atom_handle handle ) const;
+    /**@brief Get the index of an atom known by a reference.
+     *
+     * Get the index of an atom known by a reference. If the reference does
+     * not point to a valid atom, an exception is thrown.
+     * @param e Reference of the atom we want the index.
+     */
+    atom_index get_index( atom& e ) const;
     /**@brief Get the handle of an atom.
      *
      * Get the handle of an atom. If the atom points to memory that is
@@ -377,6 +384,13 @@ BEGIN_MP_NAMESPACE
      * @param handle Handle of the link we want the index.
      */
     link_index get_index( link_handle handle ) const;
+    /**@brief Get the index of an link known by a reference.
+     *
+     * Get the index of an link known by a reference. If the reference does
+     * not point to a valid link, an exception is thrown.
+     * @param e Reference of the link we want the index.
+     */
+    link_index get_index( link& e ) const;
     /**@brief Get the handle of an link.
      *
      * Get the handle of an link. If the link points to memory that is
