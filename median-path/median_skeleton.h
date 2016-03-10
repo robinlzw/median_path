@@ -15,7 +15,9 @@ BEGIN_MP_NAMESPACE
   using graphics_origin::vec3;
   using graphics_origin::vec4;
 
-  /**
+  /**@brief A median skeleton class.
+   *
+   *
    * atom,
    * link,
    * face
@@ -49,6 +51,10 @@ BEGIN_MP_NAMESPACE
     typedef datastructure::link_handle link_handle;
     typedef datastructure::face_handle face_handle;
 
+    typedef uint32_t atom_index;
+    typedef uint64_t link_index;
+    typedef uint64_t face_index;
+
     typedef std::vector< link_handle > atom_links_property;
     typedef std::vector< face_handle > atom_faces_property;
     typedef std::vector< face_handle > link_faces_property;
@@ -64,7 +70,7 @@ BEGIN_MP_NAMESPACE
      * @param face_capacity Requested face capacity
      */
     median_skeleton(
-      uint32_t atom_capacity = 0,
+      atom_index atom_capacity = 0,
       uint64_t link_capacity = 0,
       uint64_t face_capacity = 0 );
     /**@brief Copy constructor
@@ -95,9 +101,9 @@ BEGIN_MP_NAMESPACE
      * @param link_capacity Requested link capacity
      * @param face_capacity Requested face capacity */
     void clear(
-      uint32_t atom_capacity = 0,
-      uint64_t link_capacity = 0,
-      uint64_t face_capacity = 0 );
+      atom_index atom_capacity = 0,
+      link_index link_capacity = 0,
+      face_index face_capacity = 0 );
 
     /**@brief Load a skeleton from a file.
      *
@@ -114,11 +120,11 @@ BEGIN_MP_NAMESPACE
     bool save( const std::string& filename );
 
     /**@brief Get the current number of atoms */
-    uint32_t get_number_of_atoms() const noexcept;
+    atom_index get_number_of_atoms() const noexcept;
     /**@brief Get the current number of links */
-    uint64_t get_number_of_links() const noexcept;
+    link_index get_number_of_links() const noexcept;
     /**@brief Get the current number of faces */
-    uint64_t get_number_of_faces() const noexcept;
+    face_index get_number_of_faces() const noexcept;
 
     /**@name Atom management
      * @{ */
@@ -175,7 +181,7 @@ BEGIN_MP_NAMESPACE
      * invalidate the reference.
      * @param index Index of the atom in the tight buffer.
      */
-    atom& get_atom_by_index( uint32_t index ) const;
+    atom& get_atom_by_index( atom_index index ) const;
 
     /**@brief Get the index of an atom known by its handle.
      *
@@ -183,7 +189,7 @@ BEGIN_MP_NAMESPACE
      * not point to a valid atom, an exception is thrown.
      * @param handle Handle of the atom we want the index.
      */
-    uint32_t get_index( atom_handle handle ) const;
+    atom_index get_index( atom_handle handle ) const;
     /**@brief Get the handle of an atom.
      *
      * Get the handle of an atom. If the atom points to memory that is
@@ -200,8 +206,38 @@ BEGIN_MP_NAMESPACE
      */
     bool is_valid( atom_handle handle ) const;
 
+    /**@brief A function to process atoms.
+     *
+     * A function of such a type can be applied on all valid atoms of a skeleton.
+     */
     typedef std::function<void(atom&)> atom_processer;
+
+    /**@brief Apply a process function on all atoms.
+     *
+     * This method apply, in parallel or not, a function on each
+     * valid atom.
+     * @param function The function to apply.
+     * @param parallel A flag to activate a parallel processing.
+     */
+    void process( atom_processer&& function, bool parallel = true );
+
+    /**@brief A function to select atoms to remove.
+     *
+     * A function of such a type is used to identify atoms to remove from a
+     * skeleton.
+     */
     typedef std::function<bool(atom&)> atom_filter;
+    /**@brief Filter atoms according to a filter function.
+     *
+     * This method select atoms to remove thanks to a filter function. The
+     * evaluation of the filter function can be done in parallel. This method
+     * guarantees that the atoms are still stored in a tight buffer after
+     * removals. This function will invalidate references and indices to atoms.
+     * @param filter The filter function used to select atoms to remove.
+     * @param parallel A flag to activate a parallel evaluation of the filter function.
+     */
+    void remove( atom_filter&& filter, bool parallel = true );
+
   private:
     datastructure* m_impl;
   };

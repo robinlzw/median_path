@@ -291,12 +291,14 @@ BEGIN_MP_NAMESPACE
     /**************************************************************************
      * ELEMENT DATA TYPES:                                                    *
      *  - a common structure to be stored in a container                      *
-     *  - four virtual functions to be able to call the constructor and       *
+     *  - six virtual functions to be able to call the constructor and        *
      *  destructors of the actual types:                                      *
      *     a) the property buffer destructor                                  *
      *     b) the property buffer resize                                      *
      *     c) the property buffer clear                                       *
      *     d) move an element inside the property buffer                      *
+     *     e) destroy a particular element in the buffer                      *
+     *     f) destroy a range of particular elements in the buffer            *
      **************************************************************************/
     struct base_property_buffer {
       base_property_buffer( size_t size, const std::string& name )
@@ -312,14 +314,22 @@ BEGIN_MP_NAMESPACE
         return reinterpret_cast< T* >( m_buffer )[ index ];
       }
 
+      void clear( size_t current_capacity )
+      {
+        destroy( 0, current_capacity );
+      }
+
       virtual
       void resize( size_t old_capacity, size_t new_capacity ) = 0;
 
       virtual
-      void clear( size_t current_capacity ) = 0;
+      void move( size_t from, size_t to ) = 0;
 
       virtual
-      void move( size_t from, size_t to ) = 0;
+      void destroy( size_t index ) = 0;
+
+      virtual
+      void destroy( size_t from, size_t end ) = 0;
 
       const size_t m_sizeof_element;
       const std::string m_name;
@@ -342,6 +352,22 @@ BEGIN_MP_NAMESPACE
       derived_property_buffer( const std::string& name )
         : base_property_buffer( sizeof( value_type ), name )
       {}
+
+      void destroy( size_t index ) override
+      {
+        reinterpret_cast< pointer_type >( base_property_buffer::m_buffer )[ index ] = std::move( value_type() );
+      }
+
+      void destroy( size_t from, size_t end ) override
+      {
+        auto start = reinterpret_cast< pointer_type >( base_property_buffer::m_buffer ) + from,
+            last = reinterpret_cast< pointer_type >( base_property_buffer::m_buffer ) + end;
+        while( start < last )
+          {
+            *start = std::move( value_type() );
+            ++start;
+          }
+      }
 
       void resize( size_t old_capacity, size_t new_capacity ) override
       {
@@ -563,18 +589,17 @@ BEGIN_MP_NAMESPACE
     face_handle_entry* m_face_handles;
     std::vector< base_property_buffer* > m_face_properties;
 
+    atom_handle_type m_atoms_capacity;
+    atom_handle_type m_atoms_size;
+    atom_handle_type m_atoms_next_free_handle_slot;
 
-    size_t m_atoms_capacity;
-    size_t m_atoms_size;
-    size_t m_atoms_next_free_handle_slot;
+    link_handle_type m_links_capacity;
+    link_handle_type m_links_size;
+    link_handle_type m_links_next_free_handle_slot;
 
-    size_t m_links_capacity;
-    size_t m_links_size;
-    size_t m_links_next_free_handle_slot;
-
-    size_t m_faces_capacity;
-    size_t m_faces_size;
-    size_t m_faces_next_free_handle_slot;
+    face_handle_type m_faces_capacity;
+    face_handle_type m_faces_size;
+    face_handle_type m_faces_next_free_handle_slot;
   };
 
   template<
@@ -669,11 +694,6 @@ BEGIN_MP_NAMESPACE
   {
     if( atom_capacity < m_atoms_capacity )
       {
-        ///fixme: is it really necessary?
-//        # pragma omp parallel for
-//        for( size_t i = 0; i < m_atoms_capacity; ++ i )
-//          m_atoms[ i ] = atom{};
-
         # pragma omp parallel for
         for( size_t i = 0; i < m_atoms_capacity; ++ i )
           {
@@ -718,11 +738,6 @@ BEGIN_MP_NAMESPACE
   {
     if( link_capacity < m_links_capacity )
       {
-        ///fixme: is it really necessary?
-//        # pragma omp parallel for
-//        for( size_t i = 0; i < m_links_capacity; ++ i )
-//          m_links[ i ] = link{};
-
         # pragma omp parallel for
         for( size_t i = 0; i < m_links_capacity; ++ i )
           {
@@ -767,11 +782,6 @@ BEGIN_MP_NAMESPACE
   {
     if( face_capacity < m_faces_capacity )
       {
-        ///fixme: is it really necessary?
-//        # pragma omp parallel for
-//        for( size_t i = 0; i < m_faces_capacity; ++ i )
-//          m_faces[ i ] = face{};
-
         # pragma omp parallel for
         for( size_t i = 0; i < m_faces_capacity; ++ i )
           {
@@ -1122,22 +1132,39 @@ BEGIN_MP_NAMESPACE
     if( entry->counter != h.counter )
       MP_THROW_EXCEPTION( skeleton_invalid_atom_handle );
 # endif
+
+    auto index = entry->index;
+
+    // update the entry
     entry->next_free_index = m_atoms_next_free_handle_slot;
     entry->status = STATUS_FREE;
-    auto& e = m_atoms[ entry->atom_index ];
-    e.~atom();
     m_atoms_next_free_handle_slot = h.index;
-    if( --m_atoms_size && entry->atom_index != m_atoms_size )
-      {
-        auto src_index = m_atoms_size;
-        auto dst_index = entry->atom_index;
 
-        m_atoms[ dst_index ] = std::move( m_atoms[ src_index ] );
-        m_atom_handles[ m_atom_index_to_handle_index[ dst_index ] ].atom_index = dst_index;
+    // move the last atom into this one to keep the buffer tight
+    if( --m_atoms_size && index != m_atoms_size )
+      {
+        // move the atom itself
+        m_atoms[ index ] = std::move( m_atoms[ m_atoms_size ] );
+
+        // move atom properties
         for( auto& property : m_atom_properties )
           {
-            property->move( src_index, dst_index );
+            property->move( m_atoms_size, index );
           }
+
+        // update the handle --> atom mapping
+        const auto entry_index = m_atom_index_to_handle_index[ m_atoms_size ];
+        entry = m_atom_handles + entry_index;
+        entry->atom_index = index;
+        // update the atom --> handle mapping
+        m_atom_index_to_handle_index[ index ] = entry_index;
+      }
+    // just delete this atom
+    else
+      {
+        m_atoms[index].~atom(); // not even necessary
+        for( auto& property : m_atom_properties )
+          property->destroy( index );
       }
   }
 
@@ -1161,22 +1188,39 @@ BEGIN_MP_NAMESPACE
     if( entry->counter != h.counter )
       MP_THROW_EXCEPTION( skeleton_invalid_link_handle );
 # endif
+
+    auto index = entry->index;
+
+    // update the entry
     entry->next_free_index = m_links_next_free_handle_slot;
     entry->status = STATUS_FREE;
-    auto& e = m_links[ entry->link_index ];
-    e.~link();
     m_links_next_free_handle_slot = h.index;
-    if( --m_links_size && entry->link_index != m_links_size )
-      {
-        auto src_index = m_links_size;
-        auto dst_index = entry->link_index;
 
-        m_links[ dst_index ] = std::move( m_links[ src_index ] );
-        m_link_handles[ m_link_index_to_handle_index[ dst_index ] ].link_index = dst_index;
+    // move the last link into this one to keep the buffer tight
+    if( --m_links_size && index != m_links_size )
+      {
+        // move the link itself
+        m_links[ index ] = std::move( m_links[ m_links_size ] );
+
+        // move link properties
         for( auto& property : m_link_properties )
           {
-            property->move( src_index, dst_index );
+            property->move( m_links_size, index );
           }
+
+        // update the handle --> link mapping
+        const auto entry_index = m_link_index_to_handle_index[ m_links_size ];
+        entry = m_link_handles + entry_index;
+        entry->link_index = index;
+        // update the link --> handle mapping
+        m_link_index_to_handle_index[ index ] = entry_index;
+      }
+    // just delete this link
+    else
+      {
+        m_links[index].~link(); // not even necessary
+        for( auto& property : m_link_properties )
+          property->destroy( index );
       }
   }
 
@@ -1200,22 +1244,39 @@ BEGIN_MP_NAMESPACE
     if( entry->counter != h.counter )
       MP_THROW_EXCEPTION( skeleton_invalid_face_handle );
 # endif
+
+    auto index = entry->index;
+
+    // update the entry
     entry->next_free_index = m_faces_next_free_handle_slot;
     entry->status = STATUS_FREE;
-    auto& e = m_faces[ entry->face_index ];
-    e.~face();
     m_faces_next_free_handle_slot = h.index;
-    if( --m_faces_size && entry->face_index != m_faces_size )
-      {
-        auto src_index = m_faces_size;
-        auto dst_index = entry->face_index;
 
-        m_faces[ dst_index ] = std::move( m_faces[ src_index ] );
-        m_face_handles[ m_face_index_to_handle_index[ dst_index ] ].face_index = dst_index;
+    // move the last face into this one to keep the buffer tight
+    if( --m_faces_size && index != m_faces_size )
+      {
+        // move the face itself
+        m_faces[ index ] = std::move( m_faces[ m_faces_size ] );
+
+        // move face properties
         for( auto& property : m_face_properties )
           {
-            property->move( src_index, dst_index );
+            property->move( m_faces_size, index );
           }
+
+        // update the handle --> face mapping
+        const auto entry_index = m_face_index_to_handle_index[ m_faces_size ];
+        entry = m_face_handles + entry_index;
+        entry->face_index = index;
+        // update the face --> handle mapping
+        m_face_index_to_handle_index[ index ] = entry_index;
+      }
+    // just delete this face
+    else
+      {
+        m_faces[index].~face(); // not even necessary
+        for( auto& property : m_face_properties )
+          property->destroy( index );
       }
   }
 
@@ -1232,23 +1293,42 @@ BEGIN_MP_NAMESPACE
       if( index >= m_atoms_size )
         MP_THROW_EXCEPTION( skeleton_invalid_atom_index );
 # endif
-      const auto entry_index = m_atom_index_to_handle_index[ index ];
-      auto entry = m_atom_handles + entry_index;
-      entry->next_free_index = m_atoms_next_free_handle_slot;
-      entry->status = STATUS_FREE;
-      m_atoms[index].~atom();
-      m_atoms_next_free_handle_slot = entry_index;
-      if( --m_atoms_size && entry->atom_index != m_atoms_size )
-        {
-          auto src_index = m_atoms_size;
-          auto dst_index = entry->atom_index;
+      // update the entry
+      {
+        const auto entry_index = m_atom_index_to_handle_index[ index ];
+        auto entry = m_atom_handles + entry_index;
+        if( entry->status == STATUS_FREE )
+          return;
+        entry->next_free_index = m_atoms_next_free_handle_slot;
+        entry->status = STATUS_FREE;
+        m_atoms_next_free_handle_slot = entry_index;
+      }
 
-          m_atoms[ dst_index ] = m_atoms[ src_index ];
-          m_atom_handles[ m_atom_index_to_handle_index[ dst_index ] ].atom_index = dst_index;
+      // move the last atom into this one to keep the buffer tight
+      if( --m_atoms_size && index != m_atoms_size )
+        {
+          // move the atom itself
+          m_atoms[ index ] = std::move( m_atoms[ m_atoms_size ] );
+
+          // move atom properties
           for( auto& property : m_atom_properties )
             {
-              property->move( src_index, dst_index );
+              property->move( m_atoms_size, index );
             }
+
+          // update the handle --> atom mapping
+          const auto entry_index = m_atom_index_to_handle_index[ m_atoms_size ];
+          auto entry = m_atom_handles + entry_index;
+          entry->atom_index = index;
+          // update the atom --> handle mapping
+          m_atom_index_to_handle_index[ index ] = entry_index;
+        }
+      // just delete this atom
+      else
+        {
+          m_atoms[index].~atom(); // not even necessary
+          for( auto& property : m_atom_properties )
+            property->destroy( index );
         }
   }
 
@@ -1265,23 +1345,42 @@ BEGIN_MP_NAMESPACE
       if( index >= m_links_size )
         MP_THROW_EXCEPTION( skeleton_invalid_link_index );
 # endif
-      const auto entry_index = m_link_index_to_handle_index[ index ];
-      auto entry = m_link_handles + entry_index;
-      entry->next_free_index = m_links_next_free_handle_slot;
-      entry->status = STATUS_FREE;
-      m_links[index].~link();
-      m_links_next_free_handle_slot = entry_index;
-      if( --m_links_size && entry->link_index != m_links_size )
-        {
-          auto src_index = m_links_size;
-          auto dst_index = entry->link_index;
+      // update the entry
+      {
+        const auto entry_index = m_link_index_to_handle_index[ index ];
+        auto entry = m_link_handles + entry_index;
+        if( entry->status == STATUS_FREE )
+          return;
+        entry->next_free_index = m_links_next_free_handle_slot;
+        entry->status = STATUS_FREE;
+        m_links_next_free_handle_slot = entry_index;
+      }
 
-          m_links[ dst_index ] = m_links[ src_index ];
-          m_link_handles[ m_link_index_to_handle_index[ dst_index ] ].link_index = dst_index;
+      // move the last link into this one to keep the buffer tight
+      if( --m_links_size && index != m_links_size )
+        {
+          // move the link itself
+          m_links[ index ] = std::move( m_links[ m_links_size ] );
+
+          // move link properties
           for( auto& property : m_link_properties )
             {
-              property->move( src_index, dst_index );
+              property->move( m_links_size, index );
             }
+
+          // update the handle --> link mapping
+          const auto entry_index = m_link_index_to_handle_index[ m_links_size ];
+          auto entry = m_link_handles + entry_index;
+          entry->link_index = index;
+          // update the link --> handle mapping
+          m_link_index_to_handle_index[ index ] = entry_index;
+        }
+      // just delete this link
+      else
+        {
+          m_links[index].~link(); // not even necessary
+          for( auto& property : m_link_properties )
+            property->destroy( index );
         }
   }
 
@@ -1298,23 +1397,42 @@ BEGIN_MP_NAMESPACE
       if( index >= m_faces_size )
         MP_THROW_EXCEPTION( skeleton_invalid_face_index );
 # endif
-      const auto entry_index = m_face_index_to_handle_index[ index ];
-      auto entry = m_face_handles + entry_index;
-      entry->next_free_index = m_faces_next_free_handle_slot;
-      entry->status = STATUS_FREE;
-      m_faces[index].~face();
-      m_faces_next_free_handle_slot = entry_index;
-      if( --m_faces_size && entry->face_index != m_faces_size )
-        {
-          auto src_index = m_faces_size;
-          auto dst_index = entry->face_index;
+      // update the entry
+      {
+        const auto entry_index = m_face_index_to_handle_index[ index ];
+        auto entry = m_face_handles + entry_index;
+        if( entry->status == STATUS_FREE )
+          return;
+        entry->next_free_index = m_faces_next_free_handle_slot;
+        entry->status = STATUS_FREE;
+        m_faces_next_free_handle_slot = entry_index;
+      }
 
-          m_faces[ dst_index ] = m_faces[ src_index ];
-          m_face_handles[ m_face_index_to_handle_index[ dst_index ] ].face_index = dst_index;
+      // move the last face into this one to keep the buffer tight
+      if( --m_faces_size && index != m_faces_size )
+        {
+          // move the face itself
+          m_faces[ index ] = std::move( m_faces[ m_faces_size ] );
+
+          // move face properties
           for( auto& property : m_face_properties )
             {
-              property->move( src_index, dst_index );
+              property->move( m_faces_size, index );
             }
+
+          // update the handle --> face mapping
+          const auto entry_index = m_face_index_to_handle_index[ m_faces_size ];
+          auto entry = m_face_handles + entry_index;
+          entry->face_index = index;
+          // update the face --> handle mapping
+          m_face_index_to_handle_index[ index ] = entry_index;
+        }
+      // just delete this face
+      else
+        {
+          m_faces[index].~face(); // not even necessary
+          for( auto& property : m_face_properties )
+            property->destroy( index );
         }
   }
 
@@ -1331,31 +1449,48 @@ BEGIN_MP_NAMESPACE
     if( e < m_atoms || e >= m_atoms + m_atoms_size )
       MP_THROW_EXCEPTION( skeleton_invalid_atom_pointer );
 # endif
-    const auto element_index = std::distance( m_atoms, &e );
+    const auto index = std::distance( m_atoms, &e );
 # ifndef MP_SKELETON_NO_CHECK
-    if( m_atoms + element_index != &e )
+    if( m_atoms + index != &e )
       MP_THROW_EXCEPTION( skeleton_invalid_atom_pointer );
 # endif
-    const auto entry_index = m_atom_index_to_handle_index[ element_index ];
-    auto entry = m_atom_handles + entry_index;
-    if( entry->status != STATUS_ALLOCATED )
-      return;
 
-    entry->next_free_index = m_atoms_next_free_handle_slot;
-    entry->status = STATUS_FREE;
-    e.~atom();
-    m_atoms_next_free_handle_slot = entry_index;
-    if( --m_atoms_size && entry->atom_index != m_atoms_size )
+    // update the entry
+    {
+      const auto entry_index = m_atom_index_to_handle_index[ index ];
+      auto entry = m_atom_handles + entry_index;
+      if( entry->status == STATUS_FREE )
+        return;
+      entry->next_free_index = m_atoms_next_free_handle_slot;
+      entry->status = STATUS_FREE;
+      m_atoms_next_free_handle_slot = entry_index;
+    }
+
+    // move the last atom into this one to keep the buffer tight
+    if( --m_atoms_size && index != m_atoms_size )
       {
-        auto src_index = m_atoms_size;
-        auto dst_index = entry->atom_index;
+        // move the atom itself
+        e = std::move( m_atoms[ m_atoms_size ] );
 
-        m_atoms[ dst_index ] = m_atoms[ src_index ];
-        m_atom_handles[ m_atom_index_to_handle_index[ dst_index ] ].atom_index = dst_index;
+        // move atom properties
         for( auto& property : m_atom_properties )
           {
-            property->move( src_index, dst_index );
+            property->move( m_atoms_size, index );
           }
+
+        // update the handle --> atom mapping
+        const auto entry_index = m_atom_index_to_handle_index[ m_atoms_size ];
+        auto entry = m_atom_handles + entry_index;
+        entry->atom_index = index;
+        // update the atom --> handle mapping
+        m_atom_index_to_handle_index[ index ] = entry_index;
+      }
+    // just delete this atom
+    else
+      {
+        e.~atom(); // not even necessary
+        for( auto& property : m_atom_properties )
+          property->destroy( index );
       }
   }
 
@@ -1372,31 +1507,48 @@ BEGIN_MP_NAMESPACE
     if( e < m_links || e >= m_links + m_links_size )
       MP_THROW_EXCEPTION( skeleton_invalid_link_pointer );
 # endif
-    const auto element_index = std::distance( m_links, &e );
+    const auto index = std::distance( m_links, &e );
 # ifndef MP_SKELETON_NO_CHECK
-    if( m_links + element_index != &e )
+    if( m_links + index != &e )
       MP_THROW_EXCEPTION( skeleton_invalid_link_pointer );
 # endif
-    const auto entry_index = m_link_index_to_handle_index[ element_index ];
-    auto entry = m_link_handles + entry_index;
-    if( entry->status != STATUS_ALLOCATED )
-      return;
 
-    entry->next_free_index = m_links_next_free_handle_slot;
-    entry->status = STATUS_FREE;
-    e.~link();
-    m_links_next_free_handle_slot = entry_index;
-    if( --m_links_size && entry->link_index != m_links_size )
+    // update the entry
+    {
+      const auto entry_index = m_link_index_to_handle_index[ index ];
+      auto entry = m_link_handles + entry_index;
+      if( entry->status == STATUS_FREE )
+        return;
+      entry->next_free_index = m_links_next_free_handle_slot;
+      entry->status = STATUS_FREE;
+      m_links_next_free_handle_slot = entry_index;
+    }
+
+    // move the last link into this one to keep the buffer tight
+    if( --m_links_size && index != m_links_size )
       {
-        auto src_index = m_links_size;
-        auto dst_index = entry->link_index;
+        // move the link itself
+        e = std::move( m_links[ m_links_size ] );
 
-        m_links[ dst_index ] = m_links[ src_index ];
-        m_link_handles[ m_link_index_to_handle_index[ dst_index ] ].link_index = dst_index;
+        // move link properties
         for( auto& property : m_link_properties )
           {
-            property->move( src_index, dst_index );
+            property->move( m_links_size, index );
           }
+
+        // update the handle --> link mapping
+        const auto entry_index = m_link_index_to_handle_index[ m_links_size ];
+        auto entry = m_link_handles + entry_index;
+        entry->link_index = index;
+        // update the link --> handle mapping
+        m_link_index_to_handle_index[ index ] = entry_index;
+      }
+    // just delete this link
+    else
+      {
+        e.~link(); // not even necessary
+        for( auto& property : m_link_properties )
+          property->destroy( index );
       }
   }
 
@@ -1413,31 +1565,48 @@ BEGIN_MP_NAMESPACE
     if( e < m_faces || e >= m_faces + m_faces_size )
       MP_THROW_EXCEPTION( skeleton_invalid_face_pointer );
 # endif
-    const auto element_index = std::distance( m_faces, &e );
+    const auto index = std::distance( m_faces, &e );
 # ifndef MP_SKELETON_NO_CHECK
-    if( m_faces + element_index != &e )
+    if( m_faces + index != &e )
       MP_THROW_EXCEPTION( skeleton_invalid_face_pointer );
 # endif
-    const auto entry_index = m_face_index_to_handle_index[ element_index ];
-    auto entry = m_face_handles + entry_index;
-    if( entry->status != STATUS_ALLOCATED )
-      return;
 
-    entry->next_free_index = m_faces_next_free_handle_slot;
-    entry->status = STATUS_FREE;
-    e.~face();
-    m_faces_next_free_handle_slot = entry_index;
-    if( --m_faces_size && entry->face_index != m_faces_size )
+    // update the entry
+    {
+      const auto entry_index = m_face_index_to_handle_index[ index ];
+      auto entry = m_face_handles + entry_index;
+      if( entry->status == STATUS_FREE )
+        return;
+      entry->next_free_index = m_faces_next_free_handle_slot;
+      entry->status = STATUS_FREE;
+      m_faces_next_free_handle_slot = entry_index;
+    }
+
+    // move the last face into this one to keep the buffer tight
+    if( --m_faces_size && index != m_faces_size )
       {
-        auto src_index = m_faces_size;
-        auto dst_index = entry->face_index;
+        // move the face itself
+        e = std::move( m_faces[ m_faces_size ] );
 
-        m_faces[ dst_index ] = m_faces[ src_index ];
-        m_face_handles[ m_face_index_to_handle_index[ dst_index ] ].face_index = dst_index;
+        // move face properties
         for( auto& property : m_face_properties )
           {
-            property->move( src_index, dst_index );
+            property->move( m_faces_size, index );
           }
+
+        // update the handle --> face mapping
+        const auto entry_index = m_face_index_to_handle_index[ m_faces_size ];
+        auto entry = m_face_handles + entry_index;
+        entry->face_index = index;
+        // update the face --> handle mapping
+        m_face_index_to_handle_index[ index ] = entry_index;
+      }
+    // just delete this face
+    else
+      {
+        e.~face(); // not even necessary
+        for( auto& property : m_face_properties )
+          property->destroy( index );
       }
   }
 
