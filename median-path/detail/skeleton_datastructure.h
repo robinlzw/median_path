@@ -566,7 +566,7 @@ BEGIN_MP_NAMESPACE
     }
 
     atom* m_atoms;
-    size_t* m_atom_index_to_handle_index;
+    atom_handle_type* m_atom_index_to_handle_index;
     atom_handle_entry* m_atom_handles;
     std::vector< base_property_buffer* > m_atom_properties;
 
@@ -823,17 +823,17 @@ BEGIN_MP_NAMESPACE
     if( !m_atoms )
       {
         m_atoms = new atom[ new_capacity ];
-        m_atom_index_to_handle_index = new size_t[ new_capacity ];
+        m_atom_index_to_handle_index = new atom_handle_type[ new_capacity ];
         m_atom_handles = new atom_handle_entry[ new_capacity ];
       }
     // resize buffers
     else
       {
         auto new_element_buffer = new atom[ new_capacity ];
-        auto new_element_to_handle = new size_t[ new_capacity ];
+        auto new_element_to_handle = new atom_handle_type[ new_capacity ];
         auto new_handle_buffer = new atom_handle_entry[ new_capacity ];
         # pragma omp parallel for
-        for( size_t i = 0; i < m_atoms_capacity; ++ i )
+        for( atom_handle_type i = 0; i < m_atoms_capacity; ++ i )
           {
             new_element_buffer[ i ] = std::move( m_atoms[ i ] );
             new_element_to_handle[ i ] = m_atom_index_to_handle_index[ i ];
@@ -992,26 +992,28 @@ BEGIN_MP_NAMESPACE
         grow_atoms( std::min(
           max_atom_handle_index,
           m_atoms_capacity + std::max( m_atoms_capacity, atom_handle_type{10} ) ) );
-      /* fetch the handle entry */
-      const auto handle_index = m_atoms_next_free_handle_slot;
-      auto entry = m_atom_handles + handle_index;
-      /* update the entry */
-      ++entry->counter;
-      if( entry->counter > max_atom_handle_counter )
-        entry->counter = 0;
-      entry->atom_index = m_atoms_size;
-      entry->next_free_index = 0;
-      entry->status = STATUS_ALLOCATED;
-      /* map the element index to the handle entry */
-      m_atom_index_to_handle_index[ m_atoms_size ] = handle_index;
-      /* prepare the result */
-      std::pair< atom_handle, atom& > result = {
-          atom_handle( handle_index, entry->counter ),
-          m_atoms[ m_atoms_size ] };
-      /* update this */
-      m_atoms_next_free_handle_slot = entry->next_free_index;
-      ++m_atoms_size;
-      return result;
+
+    /* fetch the handle entry */
+    const auto handle_index = m_atoms_next_free_handle_slot;
+    auto entry = m_atom_handles + handle_index;
+    m_atoms_next_free_handle_slot = entry->next_free_index;
+
+    /* update the entry */
+    ++entry->counter;
+    if( entry->counter > max_atom_handle_counter )
+      entry->counter = 0;
+    entry->atom_index = m_atoms_size;
+    entry->next_free_index = 0;
+    entry->status = STATUS_ALLOCATED;
+    /* map the element index to the handle entry */
+    m_atom_index_to_handle_index[ m_atoms_size ] = handle_index;
+    /* prepare the result */
+    std::pair< atom_handle, atom& > result = {
+        atom_handle( handle_index, entry->counter ),
+        m_atoms[ m_atoms_size ] };
+    /* update this */
+    ++m_atoms_size;
+    return result;
   }
 
   template<
@@ -1039,6 +1041,7 @@ BEGIN_MP_NAMESPACE
     /* fetch the handle entry */
     const auto handle_index = m_links_next_free_handle_slot;
     auto entry = m_link_handles + handle_index;
+    m_links_next_free_handle_slot = entry->next_free_index;
     /* update the entry */
     ++entry->counter;
     if( entry->counter > max_link_handle_counter )
@@ -1053,7 +1056,6 @@ BEGIN_MP_NAMESPACE
         link_handle( handle_index, entry->counter ),
         m_links[ m_links_size ] };
     /* update this */
-    m_links_next_free_handle_slot = entry->next_free_index;
     ++m_links_size;
     return result;
   }
@@ -1083,6 +1085,7 @@ BEGIN_MP_NAMESPACE
     /* fetch the handle entry */
     const auto handle_index = m_faces_next_free_handle_slot;
     auto entry = m_face_handles + handle_index;
+    m_faces_next_free_handle_slot = entry->next_free_index;
     /* update the entry */
     ++entry->counter;
     if( entry->counter > max_face_handle_counter )
@@ -1097,7 +1100,7 @@ BEGIN_MP_NAMESPACE
         face_handle( handle_index, entry->counter ),
         m_faces[ m_faces_size ] };
     /* update this */
-    m_faces_next_free_handle_slot = entry->next_free_index;
+
     ++m_faces_size;
     return result;
   }

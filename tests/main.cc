@@ -7,6 +7,7 @@
 BEGIN_MP_NAMESPACE
 
   extern void add_skeleton_datastructure_test_suite();
+  extern void add_median_skeleton_test_suite();
 
   static bool
   initialize_tests()
@@ -14,6 +15,7 @@ BEGIN_MP_NAMESPACE
     GO_NAMESPACE::tools::init_log("fulltest.log");
     master_test_suite().p_name.value = "Median Path test suite";
     add_skeleton_datastructure_test_suite();
+    add_median_skeleton_test_suite();
     return true;
   }
 
