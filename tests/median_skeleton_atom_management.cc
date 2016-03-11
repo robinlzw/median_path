@@ -197,6 +197,32 @@ BEGIN_MP_NAMESPACE
       }
   }
 
+  static void process_atoms()
+  {
+    median_skeleton s;
+    median_skeleton::atom_handle handles[200];
+    for( int i = 0; i < 200; ++ i )
+      {
+        handles[i] = s.add( vec4{ i, 2 *i, 3 * i, 4 * i } );
+      }
+
+    s.process( [&s](median_skeleton::atom& a )
+     {
+        a.y /= 2.0;
+        a.z /= 3.0;
+        a.w /= 4.0;
+     });
+    for( int i = 0; i < 200; ++ i )
+      {
+        auto& atom = s.get( handles[i] );
+        REAL_CHECK_CLOSE( atom.x, i, 1e-9, 1e-6 );
+        REAL_CHECK_CLOSE( atom.y, i, 1e-9, 1e-6 );
+        REAL_CHECK_CLOSE( atom.z, i, 1e-9, 1e-6 );
+        REAL_CHECK_CLOSE( atom.w, i, 1e-9, 1e-6 );
+      }
+
+  }
+
   test_suite* atom_management_test_suite()
   {
     test_suite* suite = BOOST_TEST_SUITE( "atom_management" );
@@ -210,6 +236,7 @@ BEGIN_MP_NAMESPACE
     ADD_TEST_CASE( remove_one_atom );
     ADD_TEST_CASE( remove_even_atoms );
     ADD_TEST_CASE( remove_even_atoms_by_filter );
+    ADD_TEST_CASE( process_atoms );
     return suite;
   }
 
