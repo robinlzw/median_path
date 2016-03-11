@@ -150,17 +150,17 @@ BEGIN_MP_NAMESPACE
   static void remove_even_atoms()
   {
     median_skeleton s;
-    median_skeleton::atom_handle handles[200];
-    for( int i = 0; i < 200; ++ i )
+    median_skeleton::atom_handle handles[20];
+    for( int i = 0; i < 20; ++ i )
       {
         handles[i] = s.add( vec4{ i, 2 *i, 3 * i, 4 * i } );
       }
-    for( int i = 0; i < 100; ++ i )
+    for( int i = 0; i < 10; ++ i )
       {
         s.remove( handles[ 2 * i ] );
       }
-    BOOST_REQUIRE_EQUAL( s.get_number_of_atoms(), 100 );
-    for( int i = 0; i < 100; ++ i )
+    BOOST_REQUIRE_EQUAL( s.get_number_of_atoms(), 10 );
+    for( int i = 0; i < 10; ++ i )
       {
         BOOST_REQUIRE( !s.is_valid( handles[2 * i] ) );
         auto& atom = s.get( handles[2 * i + 1] );
@@ -188,7 +188,6 @@ BEGIN_MP_NAMESPACE
     BOOST_REQUIRE_EQUAL( s.get_number_of_atoms(), 100 );
     for( int i = 0; i < 100; ++ i )
       {
-        LOG( debug, "for " << i << ": " << s.is_valid( handles[ 2 * i ] ) );
         BOOST_CHECK( !s.is_valid( handles[2 * i] ) );
         auto& atom = s.get( handles[2 * i + 1] );
         REAL_CHECK_CLOSE( atom.x,     (2 * i + 1), 1e-9, 1e-6 );

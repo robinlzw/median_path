@@ -358,6 +358,13 @@ BEGIN_MP_NAMESPACE
       {
         if( flags[ left ] )
           {
+            // update the left_entry
+            const auto left_entry_index = m_impl->m_atom_index_to_handle_index[ left ];
+            auto left_entry = m_impl->m_atom_handles + left_entry_index;
+            left_entry->next_free_index = next_free_slot;
+            left_entry->status = datastructure::STATUS_FREE;
+            next_free_slot = left_entry_index;
+
             // look for a valid atom in the end of the buffer
             --right;
             while( left < right && flags[ right ] )
@@ -372,13 +379,6 @@ BEGIN_MP_NAMESPACE
 
             if( left != right )
               {
-                // update the left_entry
-                const auto left_entry_index = m_impl->m_atom_index_to_handle_index[ left ];
-                auto left_entry = m_impl->m_atom_handles + left_entry_index;
-                left_entry->next_free_index = next_free_slot;
-                left_entry->status = datastructure::STATUS_FREE;
-                next_free_slot = left_entry_index;
-
                 // move the last atom into this one to keep the buffer tight
                 m_impl->m_atoms[left] = std::move( m_impl->m_atoms[right] );
                 for( auto& property : m_impl->m_atom_properties )
@@ -737,6 +737,13 @@ BEGIN_MP_NAMESPACE
       {
         if( flags[ left ] )
           {
+            // update the left_entry
+            const auto left_entry_index = m_impl->m_link_index_to_handle_index[ left ];
+            auto left_entry = m_impl->m_link_handles + left_entry_index;
+            left_entry->next_free_index = next_free_slot;
+            left_entry->status = datastructure::STATUS_FREE;
+            next_free_slot = left_entry_index;
+
             // look for a valid link in the end of the buffer
             --right;
             while( left < right && flags[ right ] )
@@ -751,13 +758,6 @@ BEGIN_MP_NAMESPACE
 
             if( left != right )
               {
-                // update the left_entry
-                const auto left_entry_index = m_impl->m_link_index_to_handle_index[ left ];
-                auto left_entry = m_impl->m_link_handles + left_entry_index;
-                left_entry->next_free_index = next_free_slot;
-                left_entry->status = datastructure::STATUS_FREE;
-                next_free_slot = left_entry_index;
-
                 // move the last link into this one to keep the buffer tight
                 m_impl->m_links[left] = std::move( m_impl->m_links[right] );
                 for( auto& property : m_impl->m_link_properties )
