@@ -137,7 +137,7 @@ BEGIN_MP_NAMESPACE
       add_saver( new median_loader );
     }
     static void release_loaders_and_savers() __attribute__((constructor));
-    static void release_laoders_and_savers()
+    static void release_loaders_and_savers()
     {
       while( !get_loaders().empty() )
         {

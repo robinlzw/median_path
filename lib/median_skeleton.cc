@@ -138,6 +138,20 @@ BEGIN_MP_NAMESPACE
     return m_impl->m_faces_size;
   }
 
+  median_skeleton::atom_index median_skeleton::get_atoms_capacity() const noexcept
+  {
+    return m_impl->m_atoms_capacity;
+  }
+  median_skeleton::link_index median_skeleton::get_links_capacity() const noexcept
+  {
+    return m_impl->m_links_capacity;
+  }
+  median_skeleton::face_index median_skeleton::get_faces_capacity() const noexcept
+  {
+    return m_impl->m_faces_capacity;
+  }
+
+
   median_skeleton::atom_handle
   median_skeleton::add( const vec3& position, const real& radius )
   {
@@ -815,6 +829,229 @@ BEGIN_MP_NAMESPACE
 
     m_impl->m_links_size = left;
     m_impl->m_links_next_free_handle_slot = next_free_slot;
+  }
+
+  median_skeleton::face_handle
+  median_skeleton::add( atom& atom1, atom& atom2, atom& atom3 )
+  {
+    if( &atom1 >= m_impl->m_atoms && &atom2 >= m_impl->m_atoms && &atom3 >= m_impl->m_atoms
+     && &atom1 < m_impl->m_atoms + m_impl->m_atoms_size
+     && &atom2 < m_impl->m_atoms + m_impl->m_atoms_size
+     && &atom3 < m_impl->m_atoms + m_impl->m_atoms_size )
+      {
+        atom_index idx1 = std::distance( m_impl->m_atoms, &atom1 );
+        atom_index idx2 = std::distance( m_impl->m_atoms, &atom2 );
+        atom_index idx3 = std::distance( m_impl->m_atoms, &atom3 );
+        if( m_impl->m_atoms + idx1 == &atom1 && m_impl->m_atoms + idx2 == &atom2 && m_impl->m_atoms + idx3 == &atom3 )
+          {
+            return do_add_face( idx1, idx2, idx3 );
+          }
+      }
+    MP_THROW_EXCEPTION( skeleton_invalid_atom_pointer );
+  }
+
+  median_skeleton::face_handle
+  median_skeleton::add( atom_index idx1, atom_index idx2, atom_index idx3 )
+  {
+    if( idx1 < m_impl->m_atoms_size && idx2 < m_impl->m_atoms_size && idx3 < m_impl->m_atoms_size )
+      {
+        return do_add_face( idx1, idx2, idx3 );
+      }
+    MP_THROW_EXCEPTION( skeleton_invalid_atom_index );
+  }
+
+  median_skeleton::face_handle
+  median_skeleton::do_add_face( atom_index idx1, atom_index idx2, atom_index idx3 )
+  {
+    auto& faces1 = m_impl->m_atom_properties[ atom_faces_property_index ]->get< atom_faces_property >( idx1 );
+    for( auto& face : faces1 )
+      {
+        if( ( face.atoms[0] == idx2 && face.atoms[1] == idx3 )
+         && ( face.atoms[0] == idx3 && face.atoms[1] == idx2 ) )
+          {
+            return face.face;
+          }
+      }
+
+    auto result = m_impl->create_face();
+
+    result.second.atoms[0].index = m_impl->m_atom_index_to_handle_index[ idx1 ];
+    result.second.atoms[0].counter = m_impl->m_atom_handles[ result.second.atoms[0].index ].counter;
+    result.second.atoms[1].index = m_impl->m_atom_index_to_handle_index[ idx2 ];
+    result.second.atoms[1].counter = m_impl->m_atom_handles[ result.second.atoms[1].index ].counter;
+    result.second.atoms[2].index = m_impl->m_atom_index_to_handle_index[ idx3 ];
+    result.second.atoms[2].counter = m_impl->m_atom_handles[ result.second.atoms[2].index ].counter;
+
+    // fetch the face links, creating them if needed
+    {
+      auto& links1 = m_impl->m_atom_properties[ atom_links_property_index ]->get<atom_links_property>( idx1 );
+      auto& links2 = m_impl->m_atom_properties[ atom_links_property_index ]->get<atom_links_property>( idx2 );
+      auto& links3 = m_impl->m_atom_properties[ atom_links_property_index ]->get<atom_links_property>( idx3 );
+
+      // search for link 1 -- 2
+      for( auto& link : links1 )
+        {
+          if( link.second == result.second.atoms[1] )
+            {
+              result.second.links[0] = link.first;
+              break;
+            }
+        }
+      // create the link 1 -- 2 if it does not exist
+      if( !result.second.links[0].is_valid() )
+        {
+          auto pair = m_impl->create_link();
+
+          pair.second.h1 = result.second.atoms[0];
+          pair.second.h2 = result.second.atoms[1];
+
+          links1.push_back( std::make_pair( pair.first, pair.second.h2 ));
+          links2.push_back( std::make_pair( pair.first, pair.second.h1 ));
+
+          result.second.links[0] = pair.first;
+        }
+
+      // search for link 2 -- 3
+      for( auto& link : links2 )
+        {
+          if( link.second == result.second.atoms[2] )
+            {
+              result.second.links[1] = link.first;
+              break;
+            }
+        }
+      // create the link 2 -- 3 if it does not exist
+      if( !result.second.links[1].is_valid() )
+        {
+          auto pair = m_impl->create_link();
+
+          pair.second.h1 = result.second.atoms[1];
+          pair.second.h2 = result.second.atoms[2];
+
+          links2.push_back( std::make_pair( pair.first, pair.second.h2 ));
+          links3.push_back( std::make_pair( pair.first, pair.second.h1 ));
+
+          result.second.links[1] = pair.first;
+        }
+
+      // search for the link 3 -- 1
+      for( auto& link : links3 )
+        {
+          if( link.second == result.second.atoms[0] )
+            {
+              result.second.links[2] = link.first;
+              break;
+            }
+        }
+      // create the link 0 -- 1 if it does not exist
+      if( !result.second.links[2].is_valid() )
+        {
+          auto pair = m_impl->create_link();
+
+          pair.second.h1 = result.second.atoms[2];
+          pair.second.h2 = result.second.atoms[0];
+
+          links3.push_back( std::make_pair( pair.first, pair.second.h2 ));
+          links1.push_back( std::make_pair( pair.first, pair.second.h1 ));
+
+          result.second.links[2] = pair.first;
+        }
+    }
+
+    // set the atom face elements
+    {
+      m_impl->m_atom_properties[ atom_faces_property_index ]
+         ->get< atom_faces_property >( idx1 ).push_back(
+            atom_face_element( result.second, result.first, 0 )
+      );
+      m_impl->m_atom_properties[ atom_faces_property_index ]
+         ->get< atom_faces_property >( idx2 ).push_back(
+            atom_face_element( result.second, result.first, 1 )
+      );
+      m_impl->m_atom_properties[ atom_faces_property_index ]
+         ->get< atom_faces_property >( idx3 ).push_back(
+            atom_face_element( result.second, result.first, 2 )
+      );
+    }
+
+    // set the link face elements
+    m_impl->m_link_properties[link_faces_property_index]
+      ->get< link_faces_property >(
+        m_impl->m_link_handles[result.second.links[0].index].link_index
+      ).push_back (
+        link_face_element (result.second, result.first, 0)
+    );
+    m_impl->m_link_properties[link_faces_property_index]
+      ->get< link_faces_property >(
+        m_impl->m_link_handles[result.second.links[1].index].link_index
+      ).push_back (
+        link_face_element (result.second, result.first, 1)
+    );
+    m_impl->m_link_properties[link_faces_property_index]
+      ->get< link_faces_property >(
+        m_impl->m_link_handles[result.second.links[2].index].link_index
+      ).push_back (
+        link_face_element (result.second, result.first, 2)
+    );
+
+    return result.first;
+  }
+
+  median_skeleton::face_handle
+  median_skeleton::add( atom_handle handle1, atom_handle handle2, atom_handle handle3 )
+  {
+    if( handle1.index < m_impl->m_atoms_capacity
+        && handle2.index < m_impl->m_atoms_capacity
+        && handle3.index < m_impl->m_atoms_capacity )
+      {
+        const auto entry1 = m_impl->m_atom_handles + handle1.index;
+        const auto entry2 = m_impl->m_atom_handles + handle2.index;
+        const auto entry3 = m_impl->m_atom_handles + handle3.index;
+        if(( entry1->status == datastructure::STATUS_ALLOCATED && entry1->counter == handle1.counter )
+         &&( entry2->status == datastructure::STATUS_ALLOCATED && entry2->counter == handle2.counter )
+         &&( entry3->status == datastructure::STATUS_ALLOCATED && entry3->counter == handle3.counter ))
+          {
+            return do_add_face( entry1->atom_index, entry2->atom_index, entry3->atom_index );
+          }
+      }
+    MP_THROW_EXCEPTION( skeleton_invalid_atom_handle );
+  }
+
+  void
+  median_skeleton::remove( face_handle handle )
+  {
+    if( handle.index < m_impl->m_faces_capacity )
+      {
+        const auto face_entry =  m_impl->m_face_handles + handle.index;
+        if( face_entry->status == datastructure::STATUS_ALLOCATED && face_entry->counter == handle.counter )
+          {
+            do_remove_face( face_entry->face_index, handle );
+          }
+      }
+  }
+
+  void
+  median_skeleton::remove( face& e )
+  {
+    auto face_index = get_index( e );
+    auto handle_idx = m_impl->m_face_index_to_handle_index[ face_index ];
+    do_remove_face( face_index, face_handle( idx, m_impl->m_face_handles[ handle_idex ].counter ) );
+  }
+
+  void
+  median_skeleton::do_remove_face( face_index idx, face_handle handle )
+  {
+    auto& face = m_impl->m_faces[ face_index ];
+
+    remove_atom_to_face( m_impl->m_atom_handles[ face.atoms[0].index ].atom_index, handle );
+    remove_atom_to_face( m_impl->m_atom_handles[ face.atoms[1].index ].atom_index, handle );
+    remove_atom_to_face( m_impl->m_atom_handles[ face.atoms[2].index ].atom_index, handle );
+
+    remove_link_to_face( m_impl->m_link_handles[ face.links[0].index ].link_index, handle );
+    remove_link_to_face( m_impl->m_link_handles[ face.links[1].index ].link_index, handle );
+    remove_link_to_face( m_impl->m_link_handles[ face.links[2].index ].link_index, handle );
+
+    m_impl->remove( handle ); // this removes all other properties of that face
   }
 
 END_MP_NAMESPACE

@@ -6,6 +6,8 @@
 
 # include "median_path.h"
 
+# include <string>
+
 BEGIN_MP_NAMESPACE
   class median_skeleton;
 

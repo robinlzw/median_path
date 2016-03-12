@@ -72,11 +72,32 @@ BEGIN_MP_NAMESPACE
       atom_handle atoms[2];
       face_handle face;
 
+      atom_face_element( datastructure::face& f, face_handle fh, ushort i )
+        : face{ fh }
+      {
+        ushort i_plus_one = (i + 1) % 3;
+        ushort i_plus_two = (i + 2) % 3;
+
+        links[0] = f.links[ i ];
+        links[1] = f.links[ i_plus_one ];
+        links[2] = f.links[ i_plus_two ];
+
+        atoms[0] = f.atoms[ i_plus_one ];
+        atoms[1] = f.atoms[ i_plus_two ];
+      }
+
       atom_face_element()
         : links{ link_handle{}, link_handle{}, link_handle{} },
           atoms{ atom_handle{}, atom_handle{} },
           face{ face_handle{} }
       {}
+
+      atom_face_element( atom_face_element&& other )
+        : face{ other.face }
+      {
+        links[0] = other.links[0]; links[1] = other.links[1]; links[2] = other.links[2];
+        atoms[0] = other.atoms[0]; atoms[1] = other.atoms[1];
+      }
 
       atom_face_element&
       operator=( atom_face_element&& other )
@@ -86,6 +107,7 @@ BEGIN_MP_NAMESPACE
         face = other.face;
         return *this;
       }
+
     };
 
     /**@brief Map a link to a face passing by this link.
@@ -102,11 +124,28 @@ BEGIN_MP_NAMESPACE
       atom_handle opposite;
       face_handle face;
 
+      link_face_element( datastructure::face& f, face_handle fh, ushort i )
+        : face{ fh }
+      {
+        ushort i_plus_one = (i + 1) % 3;
+        ushort i_plus_two = (i + 2) % 3;
+        links[0] = f.links[ i_plus_one ];
+        links[1] = f.links[ i_plus_two ];
+        opposite = f.atoms[ i_plus_two ];
+      }
+
       link_face_element()
         : links{ link_handle{}, link_handle{} },
           opposite{ atom_handle{} },
           face{ face_handle{} }
       {}
+
+      link_face_element( link_face_element&& other )
+        : face{ other.face }
+      {
+        links[0] = other.links[0]; links[1] = other.links[1];
+        opposite = other.opposite;
+      }
 
       link_face_element&
       operator=( link_face_element&& other )
@@ -188,6 +227,9 @@ BEGIN_MP_NAMESPACE
     link_index get_number_of_links() const noexcept;
     /**@brief Get the current number of faces */
     face_index get_number_of_faces() const noexcept;
+    atom_index get_atoms_capacity() const noexcept;
+    link_index get_links_capacity() const noexcept;
+    face_index get_faces_capacity() const noexcept;
 
     /**@name Atom management
      * @{ */
@@ -310,34 +352,34 @@ BEGIN_MP_NAMESPACE
 
     /**@name Link management
      * @{ */
-    /**@brief Add an link to the skeleton.
+    /**@brief Add a link to the skeleton.
      *
-     * Add an link between two atoms. If one of the handles is invalid,
+     * Add a link between two atoms. If one of the handles is invalid,
      * an exception is thrown. If the link already exists, its handle is returned.
      * @param handle1 The handle of the first atom.
      * @param handle2 The handle of the second atom.
      * @return An link handle that points to the newly created link. */
     link_handle add( atom_handle handle1, atom_handle handle2 );
-    /**@brief Add an link to the skeleton.
+    /**@brief Add a link to the skeleton.
      *
-     * Add an link between two atoms. If one of the atom references is invalid,
+     * Add a link between two atoms. If one of the atom references is invalid,
      * an exception is thrown. If the link already exists, its handle is returned.
      * @param atom1 Reference to the first atom.
      * @param atom2 Reference to the second atom.
      * @return An link handle that points to the newly created link. */
     link_handle add( atom& atom1, atom& atom2 );
-    /**@brief Add an link to the skeleton.
+    /**@brief Add a link to the skeleton.
      *
-     * Add an link between two atoms. If one of the atom indices is invalid,
+     * Add a link between two atoms. If one of the atom indices is invalid,
      * an exception is thrown. If the link already exists, its handle is
      * returned.
      * @param idx1 Index of the first atom.
      * @param idx2 Index of the second atom.
      * @return An link handle that points to the newly created link. */
     link_handle add( atom_index idx1, atom_index idx2 );
-    /**@brief Remove an link know by its handle.
+    /**@brief Remove a link know by its handle.
      *
-     * Remove an link from the skeleton. Its faces will
+     * Remove a link from the skeleton. Its faces will
      * be destroyed too. Also, its atoms will be notified that they are
      * no longer connected by the corresponding link and faces.
      * If the handle is invalid (e.g. the link
@@ -346,9 +388,9 @@ BEGIN_MP_NAMESPACE
      */
     void remove( link_handle handle );
 
-    /**@brief Remove an link known by a reference.
+    /**@brief Remove a link known by a reference.
      *
-     * Remove an link from the skeleton. Its faces will
+     * Remove a link from the skeleton. Its faces will
      * be destroyed too. Also, its atoms will be notified that they are
      * no longer connected by the corresponding link and faces.
      * If the link points to memory that is not
@@ -357,9 +399,9 @@ BEGIN_MP_NAMESPACE
      */
     void remove( link& e );
 
-    /**@brief Access to an link known by an handle.
+    /**@brief Access to a link known by an handle.
      *
-     * Access to an link thank to its handle. If the handle is
+     * Access to a link thank to its handle. If the handle is
      * incorrect, an exception is thrown. Be careful to not store this
      * reference if you plan to add/remove links after, since it will
      * invalidate the reference.
@@ -367,9 +409,9 @@ BEGIN_MP_NAMESPACE
      */
     link& get( link_handle handle ) const;
 
-    /**@brief Access to an link known by an index.
+    /**@brief Access to a link known by an index.
      *
-     * Access to an link thank to its index. If the index is
+     * Access to a link thank to its index. If the index is
      * incorrect, an exception is thrown. Be careful to not store this
      * reference if you plan to add/remove links after, since it will
      * invalidate the reference.
@@ -377,28 +419,28 @@ BEGIN_MP_NAMESPACE
      */
     link& get_link_by_index( link_index index ) const;
 
-    /**@brief Get the index of an link known by its handle.
+    /**@brief Get the index of a link known by its handle.
      *
-     * Get the index of an link known by an handle. If the handle does
+     * Get the index of a link known by an handle. If the handle does
      * not point to a valid link, an exception is thrown.
      * @param handle Handle of the link we want the index.
      */
     link_index get_index( link_handle handle ) const;
-    /**@brief Get the index of an link known by a reference.
+    /**@brief Get the index of a link known by a reference.
      *
-     * Get the index of an link known by a reference. If the reference does
+     * Get the index of a link known by a reference. If the reference does
      * not point to a valid link, an exception is thrown.
      * @param e Reference of the link we want the index.
      */
     link_index get_index( link& e ) const;
-    /**@brief Get the handle of an link.
+    /**@brief Get the handle of a link.
      *
-     * Get the handle of an link. If the link points to memory that is
+     * Get the handle of a link. If the link points to memory that is
      * not tagged as a valid link, an exception is thrown.
      * @param e Reference to the link we want to know the handle.
      */
     link_handle get_handle( link& e ) const;
-    /**@brief Check if an link handle is valid.
+    /**@brief Check if a link handle is valid.
      *
      * An link handle is valid if it identifies a currently allocated
      * link in the tight buffer. This function check if an handle is
@@ -435,11 +477,148 @@ BEGIN_MP_NAMESPACE
      * guarantees that the links are still stored in a tight buffer after
      * removals. This function will invalidate references and indices to links.
      * @param filter The filter function used to select links to remove.
-     * @param parallel A flag to activate a parallel evaluation of the filter function.
-     */
+     * @param parallel A flag to activate a parallel evaluation of the filter function. */
     void remove( link_filter&& filter, bool parallel = true );
 
+    /**@name Face management
+    * @{ */
+    /**@brief Add a face to the skeleton.
+     *
+     * Add a face between three atoms. If one of the handles is invalid,
+     * an exception is thrown. If the face already exists, its handle is returned.
+     * The links between the three atoms are added if they do not exist.
+     * @param handle1 The handle of the first atom.
+     * @param handle2 The handle of the second atom.
+     * @param handle3 The handle of the third atom.
+     * @return An face handle that points to the newly created face. */
+    face_handle add( atom_handle handle1, atom_handle handle2, atom_handle handle3 );
+    /**@brief Add a face to the skeleton.
+     *
+     * Add a face between three atoms. If one of the atom references is invalid,
+     * an exception is thrown. If the face already exists, its handle is returned.
+     * The links between the three atoms are added if they do not exist.
+     * @param atom1 Reference to the first atom.
+     * @param atom2 Reference to the second atom.
+     * @param atom3 Reference to the third atom.
+     * @return An face handle that points to the newly created face. */
+    face_handle add( atom& atom1, atom& atom2, atom& atom3 );
+    /**@brief Add a face to the skeleton.
+     *
+     * Add a face between three atoms. If one of the atom indices is invalid,
+     * an exception is thrown. If the face already exists, its handle is
+     * returned.
+     * The links between the three atoms are added if they do not exist.
+     * @param idx1 Index of the first atom.
+     * @param idx2 Index of the second atom.
+     * @param idx3 Index of the third atom.
+     * @return An face handle that points to the newly created face. */
+    face_handle add( atom_index idx1, atom_index idx2, atom_index idx3 );
+    /**@brief Remove a face know by its handle.
+     *
+     * Remove a face from the skeleton. Its atoms and links will be
+     * notified that they are no longer connected by the corresponding face.
+     * If the handle is invalid (e.g. the face is already removed), the error
+     * is silently ignored.
+     * @param handle Handle of the face to remove.
+     */
+    void remove( face_handle handle );
+
+    /**@brief Remove a face known by a reference.
+     *
+     * Remove a face from the skeleton. Its atoms and links will be
+     * notified that they are no longer connected by the corresponding face.
+     * If the face points to memory that is not
+     * tagged as a valid face, an exception is thrown.
+     * @param e Reference to the face to remove.
+     */
+    void remove( face& e );
+
+    /**@brief Access to a face known by an handle.
+     *
+     * Access to a face thank to its handle. If the handle is
+     * incorrect, an exception is thrown. Be careful to not store this
+     * reference if you plan to add/remove faces after, since it will
+     * invalidate the reference.
+     * @param handle Handle of the face in the tight buffer.
+     */
+    face& get( face_handle handle ) const;
+
+    /**@brief Access to a face known by an index.
+     *
+     * Access to a face thank to its index. If the index is
+     * incorrect, an exception is thrown. Be careful to not store this
+     * reference if you plan to add/remove faces after, since it will
+     * invalidate the reference.
+     * @param index Index of the face in the tight buffer.
+     */
+    face& get_face_by_index( face_index index ) const;
+
+    /**@brief Get the index of a face known by its handle.
+     *
+     * Get the index of a face known by an handle. If the handle does
+     * not point to a valid face, an exception is thrown.
+     * @param handle Handle of the face we want the index.
+     */
+    face_index get_index( face_handle handle ) const;
+    /**@brief Get the index of a face known by a reference.
+     *
+     * Get the index of a face known by a reference. If the reference does
+     * not point to a valid face, an exception is thrown.
+     * @param e Reference of the face we want the index.
+     */
+    face_index get_index( face& e ) const;
+    /**@brief Get the handle of a face.
+     *
+     * Get the handle of a face. If the face points to memory that is
+     * not tagged as a valid face, an exception is thrown.
+     * @param e Reference to the face we want to know the handle.
+    */
+    face_handle get_handle( face& e ) const;
+    /**@brief Check if a face handle is valid.
+     *
+     * An face handle is valid if it identifies a currently allocated
+     * face in the tight buffer. This function check if an handle is
+     * valid.
+     * @param handle The handle to check.
+     */
+    bool is_valid( face_handle handle ) const;
+
+    /**@brief A function to process faces.
+     *
+     * A function of such a type can be applied on all valid faces of a skeleton.
+     */
+    typedef std::function<void(face&)> face_processer;
+
+    /**@brief Apply a process function on all faces.
+     *
+     * This method apply, in parallel or not, a function on each
+     * valid face.
+     * @param function The function to apply.
+     * @param parallel A flag to activate a parallel processing.
+    */
+    void process( face_processer&& function, bool parallel = true );
+
+    /**@brief A function to select faces to remove.
+     *
+     * A function of such a type is used to identify faces to remove from a
+     * skeleton.
+     */
+    typedef std::function<bool(face&)> face_filter;
+    /**@brief Filter faces according to a filter function.
+     *
+     * This method select faces to remove thanks to a filter function. The
+     * evaluation of the filter function can be done in parallel. This method
+     * guarantees that the faces are still stored in a tight buffer after
+     * removals. This function will invalidate references and indices to faces.
+     * @param filter The filter function used to select faces to remove.
+     * @param parallel A flag to activate a parallel evaluation of the filter function.
+     */
+    void remove( face_filter&& filter, bool parallel = true );
+
   private:
+
+    face_handle do_add_face( atom_index idx1, atom_index idx2, atom_index idx3 );
+    void do_remove_face( face_index idx, face_handle handle );
 
     void remove_link_to_face( link_index idx, face_handle handle );
     void remove_atom_to_face( atom_index idx, face_handle handle );
