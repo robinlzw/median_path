@@ -2,9 +2,9 @@
  *     Author: T.Delame (tdelame@gmail.com)
  */
 # include <median-path/median_skeleton.h>
-# include <graphics-origin/tools/log.h>
+# include <median-path/io.h>
 
-# include <thrust/scan.h>
+# include <graphics-origin/tools/log.h>
 
 BEGIN_MP_NAMESPACE
 
@@ -115,14 +115,12 @@ BEGIN_MP_NAMESPACE
 
   bool median_skeleton::load( const std::string& filename )
   {
-    LOG( debug, "TODO: load a file not implemented");
-    return false;
+    return io::load( *this, filename );
   }
 
   bool median_skeleton::save( const std::string& filename )
   {
-    LOG( debug, "TODO: save a file not implemented");
-    return false;
+    return io::save( *this, filename );
   }
 
   median_skeleton::atom_index median_skeleton::get_number_of_atoms() const noexcept
@@ -823,8 +821,8 @@ BEGIN_MP_NAMESPACE
         remove_atom_to_link( idx1, handle );
         remove_atom_to_link( idx2, handle );
       }
-    // destroy properties of atoms in [[left, size[[
-    for( auto& property : m_impl->m_atom_properties )
+    // destroy properties of links in [[left, size[[
+    for( auto& property : m_impl->m_link_properties )
       property->destroy( left, size );
 
     m_impl->m_links_size = left;
@@ -1025,7 +1023,9 @@ BEGIN_MP_NAMESPACE
         const auto face_entry =  m_impl->m_face_handles + handle.index;
         if( face_entry->status == datastructure::STATUS_ALLOCATED && face_entry->counter == handle.counter )
           {
-            do_remove_face( face_entry->face_index, handle );
+            remove_face_special_properties( face_entry->face_index );
+            m_impl->remove_face_by_index( face_entry->face_index );
+            m_impl->remove( handle );
           }
       }
   }
@@ -1033,13 +1033,13 @@ BEGIN_MP_NAMESPACE
   void
   median_skeleton::remove( face& e )
   {
-    auto face_index = get_index( e );
-    auto handle_idx = m_impl->m_face_index_to_handle_index[ face_index ];
-    do_remove_face( face_index, face_handle( idx, m_impl->m_face_handles[ handle_idex ].counter ) );
+    auto index = get_index( e );
+    remove_face_special_properties( e );
+    m_impl->remove_face_by_index( index );
   }
 
   void
-  median_skeleton::do_remove_face( face_index idx, face_handle handle )
+  median_skeleton::remove_face_special_properties( face_index idx )
   {
     auto& face = m_impl->m_faces[ face_index ];
 
@@ -1050,8 +1050,160 @@ BEGIN_MP_NAMESPACE
     remove_link_to_face( m_impl->m_link_handles[ face.links[0].index ].link_index, handle );
     remove_link_to_face( m_impl->m_link_handles[ face.links[1].index ].link_index, handle );
     remove_link_to_face( m_impl->m_link_handles[ face.links[2].index ].link_index, handle );
+  }
 
-    m_impl->remove( handle ); // this removes all other properties of that face
+  median_skeleton::face&
+  median_skeleton::get( face_handle handle ) const
+  {
+    return m_impl->get( handle );
+  }
+
+  median_skeleton::face&
+  median_skeleton::get_face_by_index( face_index index ) const
+  {
+    return m_impl->get_face_by_index( index );
+  }
+
+  median_skeleton::face_index
+  median_skeleton::get_index( face_handle handle ) const
+  {
+    return m_impl->get_index( handle );
+  }
+
+  median_skeleton::face_index
+  median_skeleton::get_index( face& e ) const
+  {
+    return m_impl->get_index( e );
+  }
+
+  median_skeleton::face_handle
+  median_skeleton::get_handle( face& e ) const
+  {
+    return m_impl->get_handle( e );
+  }
+
+  bool
+  median_skeleton::is_valid( face_handle handle ) const
+  {
+    if( handle.index < m_impl->m_faces_capacity )
+      {
+        const auto entry = m_impl->m_face_handles + handle.index;
+        return entry->status == datastructure::STATUS_ALLOCATED && entry->counter == handle.counter;
+      }
+    return false;
+  }
+
+  void
+  median_skeleton::process( face_processer&& function, bool parallel )
+  {
+    // TODO: use arguments in the pragma to use or not threads
+    if( parallel )
+      {
+        # pragma omp parallel for schedule(dynamic)
+        for( face_index i = 0; i < m_impl->m_faces_size; ++ i )
+          {
+            function( m_impl->m_faces[i]);
+          }
+      }
+    else
+      {
+        for( face_index i = 0; i < m_impl->m_faces_size; ++ i )
+          {
+            function( m_impl->m_faces[i]);
+          }
+      }
+  }
+
+  void
+  median_skeleton::remove( face_filter&& filter, bool parallel )
+  {
+    const face_index size = m_impl->m_faces_size;
+    /* a flag buffer is necessary if the filter function relies on reference
+     * to faces or face index. For example, if the filter function remove
+     * faces with indices 1 and 3, with 4 faces in total in the buffer. When
+     * face #1 is removed, the face #3 is move into it. Thus, when the former
+     * face #3 (now #1) is tested, the filter function will not recognize it. */
+    bool* flags = new bool[ size ];
+    if( parallel )
+      {
+        # pragma omp parallel for schedule(dynamic)
+        for( face_index i = 0; i < size; ++ i )
+          {
+            flags[ i ] = filter( m_impl->m_faces[i] );
+          }
+      }
+    else
+      {
+        for( face_index i = 0; i < size; ++ i )
+          {
+            flags[ i ] = filter( m_impl->m_faces[i] );
+          }
+      }
+
+    /* INVARIANT:
+     * - all faces with indices in [[0, left[[ are not removed
+     * - all faces with indices in [[left, right[[ need to be checked
+     * - all faces with indices in [[right, size[[ should be cleaned (all
+     * objects referring to an face should be destroyed)
+     * Thus, in the end (i.e. when left == right ), we have:
+     * - faces with indices in [[0,left[[ are clean and tight
+     * - faces with indices in [[left, size[[ should be cleaned
+     * - left is the new size of faces
+     */
+    face_index next_free_slot = m_impl->m_faces_next_free_handle_slot;
+    face_index left = 0, right = size;
+    while( left < right )
+      {
+        if( flags[ left ] )
+          {
+            // update the left_entry
+            const auto left_entry_index = m_impl->m_face_index_to_handle_index[ left ];
+            auto left_entry = m_impl->m_face_handles + left_entry_index;
+            left_entry->next_free_index = next_free_slot;
+            left_entry->status = datastructure::STATUS_FREE;
+            next_free_slot = left_entry_index;
+
+            // look for a valid face in the end of the buffer
+            --right;
+            while( left < right && flags[ right ] )
+              {
+                const auto entry_index = m_impl->m_face_index_to_handle_index[ right ];
+                auto entry = m_impl->m_face_handles + entry_index;
+                entry->next_free_index = next_free_slot;
+                entry->status = datastructure::STATUS_FREE;
+                next_free_slot = entry_index;
+                --right;
+              }
+
+            if( left != right )
+              {
+                // move the last face into this one to keep the buffer tight
+                m_impl->m_faces[left] = std::move( m_impl->m_faces[right] );
+                for( auto& property : m_impl->m_face_properties )
+                  property->move( right, left );
+
+                const auto right_entry_index = m_impl->m_face_index_to_handle_index[ right ];
+                auto right_entry = m_impl->m_face_handles + right_entry_index;
+                right_entry->face_index = left;
+                m_impl->m_face_index_to_handle_index[ left ] = right_entry_index;
+                ++left;
+              }
+          }
+        else ++ left;
+      }
+    delete[] flags;
+
+    // cleaning faces in [[left, size[[
+    for ( face_index index = left; index < size; ++ index )
+      {
+        remove_face_special_properties( index );
+      }
+    // destroy properties of atoms in [[left, size[[
+    for( auto& property : m_impl->m_face_properties )
+      property->destroy( left, size );
+
+    m_impl->m_faces_size = left;
+    m_impl->m_faces_next_free_handle_slot = next_free_slot;
   }
 
 END_MP_NAMESPACE

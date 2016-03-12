@@ -618,7 +618,7 @@ BEGIN_MP_NAMESPACE
   private:
 
     face_handle do_add_face( atom_index idx1, atom_index idx2, atom_index idx3 );
-    void do_remove_face( face_index idx, face_handle handle );
+    void remove_face_special_properties( face_index idx );
 
     void remove_link_to_face( link_index idx, face_handle handle );
     void remove_atom_to_face( atom_index idx, face_handle handle );
