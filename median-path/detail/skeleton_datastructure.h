@@ -1876,7 +1876,7 @@ BEGIN_MP_NAMESPACE
     face_handle_type, face_handle_index_bits>::get_index( face& e )
   {
 # ifndef MP_SKELETON_NO_CHECK
-    if( e < m_faces || e >= m_faces + m_faces_size )
+    if( &e < m_faces || &e >= m_faces + m_faces_size )
       MP_THROW_EXCEPTION( skeleton_invalid_face_pointer );
 # endif
     const auto element_index = std::distance( m_faces, &e );
