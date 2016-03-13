@@ -619,8 +619,29 @@ BEGIN_MP_NAMESPACE
 
     void remove_atom_special_properties( atom_index idx );
 
+    link_handle do_add_link( atom_index idx1, atom_index idx2 );
+    void remove_link_topology_properties( link_index idx, link_handle handle );
+    void remove_link_indices( bool* flags );
+
+
     face_handle do_add_face( atom_index idx1, atom_index idx2, atom_index idx3 );
-    void remove_face_special_properties( face_index idx, face_handle handle );
+
+    /**@brief Remove all references to a face in atom and links topology properties.
+     *
+     * Remove all atom_face_element and link_face_element referring to the face
+     * with the specified index and handle.
+     * @param idx Index of the face.
+     * @param handle Handle of the face.
+     */
+    void remove_face_topology_properties( face_index idx, face_handle handle  );
+    /**@brief Remove all tagged faces.
+     *
+     * This function guarantees to remove each face with index i such that
+     * flags[i] is true, while keeping the whole skeleton in a valid state.
+     * In particular, the face buffer remains tight, atom_faces_property
+     * and link_faces_property are updated.
+     * @param flags Identify the indices of faces to remove. */
+    void remove_faces_indices( bool* flags );
 
     void remove_link_to_face( link_index idx, face_handle handle );
     void remove_atom_to_face( atom_index idx, face_handle handle );

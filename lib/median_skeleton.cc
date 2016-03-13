@@ -12,6 +12,15 @@ BEGIN_MP_NAMESPACE
   static const uint8_t atom_faces_property_index = 1;
   static const uint8_t link_faces_property_index = 0;
 
+  /**TODO: When removing topologies, we should be sure the handles are still correct.
+   * Inside the filter functions, we could remove topology as soon as we detect
+   * an element to remove OR to mark topologies that should be removed and filter them
+   * directly (might be more efficient).
+   *
+   *
+   */
+
+
   void
   median_skeleton::remove_link_to_face( link_index idx, face_handle handle )
   {
@@ -294,28 +303,63 @@ BEGIN_MP_NAMESPACE
   void
   median_skeleton::remove( atom_filter&& filter, bool parallel )
   {
-    const atom_index size = m_impl->m_atoms_size;
+    /* When an atom is removed:
+     *   all its links and faces should be removed
+     *     - this is job of remove_link_indices(...), which guarantees
+     *     that the tagged links no longer exist, either in the tight
+     *     buffer or in topology properties. Since a face is destroyed
+     *     once one of its links is removed, this is sufficient to call
+     *     that function.
+     *   it must be exchanged with the last atom A of the tight buffer
+     *     - its handle will not be valid anymore
+     *     - the handle of A need to point to the new memory
+     *     - the index to handle index of A should be updated
+     */
+
+
+    const atom_index atom_size = m_impl->m_atoms_size;
     /* a flag buffer is necessary if the filter function relies on reference
      * to atoms or atom index. For example, if the filter function remove
      * atoms with indices 1 and 3, with 4 atoms in total in the buffer. When
      * atom #1 is removed, the atom #3 is move into it. Thus, when the former
      * atom #3 (now #1) is tested, the filter function will not recognize it. */
-    bool* flags = new bool[ size ];
+    bool* flags = new bool[ atom_size ];
     if( parallel )
       {
         # pragma omp parallel for schedule(dynamic)
-        for( atom_index i = 0; i < size; ++ i )
+        for( atom_index i = 0; i < atom_size; ++ i )
           {
             flags[ i ] = filter( m_impl->m_atoms[i] );
           }
       }
     else
       {
-        for( atom_index i = 0; i < size; ++ i )
+        for( atom_index i = 0; i < atom_size; ++ i )
           {
             flags[ i ] = filter( m_impl->m_atoms[i] );
           }
       }
+
+    {
+      const link_index link_size = m_impl->m_links_size;
+      bool* link_flags = new bool[ link_size ];
+      # pragma omp parallel for
+      for( link_index i = 0; i < link_size; ++ i )
+        link_flags[i] = false;
+      # pragma omp parallel for
+      for( atom_index i = 0; i < atom_size; ++ i )
+        {
+          if( flags[ i ] )
+            {
+              auto& alinks = m_impl->m_atom_properties[ atom_links_property_index ]->get<atom_links_property>( i );
+              for( auto& alink : alinks )
+                {
+                  link_flags[ m_impl->m_link_handles[ alink.first.index ].link_index ] = true;
+                }
+            }
+        }
+      remove_link_indices(link_flags);
+    }
 
     /* INVARIANT:
      * - all atoms with indices in [[0, left[[ are not removed
@@ -328,7 +372,7 @@ BEGIN_MP_NAMESPACE
      * - left is the new size of atoms
      */
     atom_index next_free_slot = m_impl->m_atoms_next_free_handle_slot;
-    atom_index left = 0, right = size;
+    atom_index left = 0, right = atom_size;
     while( left < right )
       {
         if( flags[ left ] )
@@ -370,14 +414,9 @@ BEGIN_MP_NAMESPACE
       }
     delete[] flags;
 
-    // cleaning atoms in [[left, size[[
-    for ( atom_index index = left; index < size; ++ index )
-      {
-        remove_atom_special_properties( index );
-      }
     // destroy properties of atoms in [[left, size[[
     for( auto& property : m_impl->m_atom_properties )
-      property->destroy( left, size );
+      property->destroy( left, atom_size );
 
     m_impl->m_atoms_size = left;
     m_impl->m_atoms_next_free_handle_slot = next_free_slot;
@@ -393,25 +432,7 @@ BEGIN_MP_NAMESPACE
         if(( entry1->status == datastructure::STATUS_ALLOCATED && entry1->counter == handle1.counter )
          &&( entry2->status == datastructure::STATUS_ALLOCATED && entry2->counter == handle2.counter ) )
           {
-            auto& links1 = m_impl->m_atom_properties[ atom_links_property_index ]->get<atom_links_property>( entry1->atom_index );
-            // check for existing link
-            for( auto& link : links1 )
-              {
-                if( link.second == handle2 )
-                  return link.first;
-              }
-            auto& links2 = m_impl->m_atom_properties[ atom_links_property_index ]->get<atom_links_property>( entry2->atom_index );
-
-            // set the link data
-            auto result = m_impl->create_link();
-            result.second.h1 = handle1;
-            result.second.h2 = handle2;
-
-            // set the link property for corresponding atoms
-            links1.push_back( std::make_pair( result.first, handle2 ) );
-            links2.push_back( std::make_pair( result.first, handle1 ) );
-
-            return result.first;
+            return do_add_link( entry1->atom_index, entry2->atom_index );
           }
       }
     MP_THROW_EXCEPTION( skeleton_invalid_atom_handle );
@@ -427,29 +448,7 @@ BEGIN_MP_NAMESPACE
         atom_index idx2 = std::distance( m_impl->m_atoms, &atom2 );
         if( m_impl->m_atoms + idx1 == &atom1 && m_impl->m_atoms + idx2 == &atom2 )
           {
-            auto entry_index2 = m_impl->m_atom_index_to_handle_index[ idx2 ];
-            atom_handle handle2( entry_index2, m_impl->m_atom_handles[ entry_index2 ].counter );
-            auto& links1 = m_impl->m_atom_properties[ atom_links_property_index ]->get<atom_links_property>( idx1 );
-            // check for existing link
-            for( auto& link : links1 )
-              {
-                if( link.second == handle2 )
-                  return link.first;
-              }
-            auto entry_index1 = m_impl->m_atom_index_to_handle_index[ idx1 ];
-            atom_handle handle1( entry_index1, m_impl->m_atom_handles[ entry_index1 ].counter );
-            auto& links2 = m_impl->m_atom_properties[ atom_links_property_index ]->get<atom_links_property>( idx2 );
-
-            // set the link data
-            auto result = m_impl->create_link();
-            result.second.h1 = handle1;
-            result.second.h2 = handle2;
-
-            // set the link property for corresponding atoms
-            links1.push_back( std::make_pair( result.first, handle2 ) );
-            links2.push_back( std::make_pair( result.first, handle1 ) );
-
-            return result.first;
+            return do_add_link( idx1, idx2 );
           }
       }
     MP_THROW_EXCEPTION( skeleton_invalid_atom_handle );
@@ -460,31 +459,36 @@ BEGIN_MP_NAMESPACE
   {
     if( idx1 < m_impl->m_atoms_size && idx2 < m_impl->m_atoms_size )
       {
-        auto entry_index2 = m_impl->m_atom_index_to_handle_index[ idx2 ];
-        atom_handle handle2( entry_index2, m_impl->m_atom_handles[ entry_index2 ].counter );
-        auto& links1 = m_impl->m_atom_properties[ atom_links_property_index ]->get<atom_links_property>( idx1 );
-        // check for existing link
-        for( auto& link : links1 )
-          {
-            if( link.second == handle2 )
-              return link.first;
-          }
-        auto entry_index1 = m_impl->m_atom_index_to_handle_index[ idx1 ];
-        atom_handle handle1( entry_index1, m_impl->m_atom_handles[ entry_index1 ].counter );
-        auto& links2 = m_impl->m_atom_properties[ atom_links_property_index ]->get<atom_links_property>( idx2 );
-
-        // set the link data
-        auto result = m_impl->create_link();
-        result.second.h1 = handle1;
-        result.second.h2 = handle2;
-
-        // set the link property for corresponding atoms
-        links1.push_back( std::make_pair( result.first, handle2 ) );
-        links2.push_back( std::make_pair( result.first, handle1 ) );
-
-        return result.first;
+        return do_add_link( idx1, idx2 );
       }
     MP_THROW_EXCEPTION( skeleton_invalid_atom_index );
+  }
+
+  median_skeleton::link_handle
+  median_skeleton::do_add_link( atom_index idx1, atom_index idx2 )
+  {
+    auto entry_index2 = m_impl->m_atom_index_to_handle_index[ idx2 ];
+    atom_handle handle2( entry_index2, m_impl->m_atom_handles[ entry_index2 ].counter );
+    auto& links1 = m_impl->m_atom_properties[ atom_links_property_index ]->get<atom_links_property>( idx1 );
+    // check for existing link
+    for( auto& link : links1 )
+      {
+        if( link.second == handle2 )
+          return link.first;
+      }
+    auto entry_index1 = m_impl->m_atom_index_to_handle_index[ idx1 ];
+    atom_handle handle1( entry_index1, m_impl->m_atom_handles[ entry_index1 ].counter );
+    auto& links2 = m_impl->m_atom_properties[ atom_links_property_index ]->get<atom_links_property>( idx2 );
+
+    // set the link data
+    auto result = m_impl->create_link();
+    result.second.h1 = handle1;
+    result.second.h2 = handle2;
+
+    // set the link property for corresponding atoms
+    links1.push_back( std::make_pair( result.first, handle2 ) );
+    links2.push_back( std::make_pair( result.first, handle1 ) );
+    return result.first;
   }
 
   void
@@ -499,7 +503,6 @@ BEGIN_MP_NAMESPACE
             auto& link = m_impl->m_links[ link_index ];
             atom_index idx1 = m_impl->m_atom_handles[ link.h1.index ].atom_index;
             atom_index idx2 = m_impl->m_atom_handles[ link.h2.index ].atom_index;
-
 
             // we start by destroying all the faces built with this link
             auto& faces = m_impl->m_link_properties[ link_faces_property_index ]->get<link_faces_property>( link_index );
@@ -538,7 +541,6 @@ BEGIN_MP_NAMESPACE
 
     atom_index idx1 = m_impl->m_atom_handles[ e.h1.index ].atom_index;
     atom_index idx2 = m_impl->m_atom_handles[ e.h2.index ].atom_index;
-
 
     // we start by destroying all the faces built with this link
     auto& faces = m_impl->m_link_properties[ link_faces_property_index ]->get<link_faces_property>( link_index );
@@ -659,18 +661,71 @@ BEGIN_MP_NAMESPACE
           }
       }
 
+    remove_link_indices( flags );
+  }
+
+  void
+  median_skeleton::remove_link_indices( bool* flags )
+  {
+    /* When a link is removed:
+     *   all its faces should be removed
+     *     - the removal will update the atom_face_property and link_face_property
+     *     - the removal will change the face indices
+     *   its two atoms should be notified they are no longer connected
+     *     - the connection is identified by the link handle
+     *     - thus this notification should be done before modifying the link buffer
+     *   it must be exchanged with the last link l of the tight buffer
+     *     - its handle wont be valid anymore
+     *     - the handle of l need to point to the new memory
+     *     - the index to handle index of l should be updated
+     */
+
+
+    const link_index link_size = m_impl->m_links_size;
+    /* For each link to remove:
+     *  - all faces connected are tagged, then removed
+     *  - the two atoms are notified they are no longer connected
+     */
+    {
+      const face_index face_size = m_impl->m_faces_size;
+      bool* face_flags = new bool[ face_size ];
+      # pragma omp parallel for
+      for( face_index i = 0; i < face_size; ++ i )
+        face_flags[i] = false;
+
+      for( link_index i = 0; i < link_size; ++ i )
+        {
+          if( flags[i] )
+            {
+              auto& lfaces = m_impl->m_link_properties[ link_faces_property_index ]->get<link_faces_property>( i );
+              for( auto& lface : lfaces )
+                {
+                  face_flags[ m_impl->m_face_handles[ lface.face.index ].face_index ] = true;
+                }
+
+              auto& link = m_impl->m_links[i];
+              link_handle lhandle( m_impl->m_link_index_to_handle_index[ i ], 0 );
+              lhandle.counter = m_impl->m_link_handles[ lhandle.index ].counter;
+
+              remove_atom_to_link( m_impl->m_atom_handles[ link.h1.index ].atom_index, lhandle );
+              remove_atom_to_link( m_impl->m_atom_handles[ link.h2.index ].atom_index, lhandle );
+            }
+        }
+      // this will deal with the atom_face_property and link_face_property
+      remove_faces_indices( face_flags );
+    }
+
     /* INVARIANT:
      * - all links with indices in [[0, left[[ are not removed
      * - all links with indices in [[left, right[[ need to be checked
-     * - all links with indices in [[right, size[[ should be cleaned (all
-     * objects referring to an link should be destroyed)
+     * - all links with indices in [[right, size[[ should have their properties cleaned
+     *
      * Thus, in the end (i.e. when left == right ), we have:
      * - links with indices in [[0,left[[ are clean and tight
-     * - links with indices in [[left, size[[ should be cleaned
-     * - left is the new size of links
-     */
+     * - links with indices in [[left, size[[ should have their properties cleaned
+     * - left is the new size of links */
     link_index next_free_slot = m_impl->m_links_next_free_handle_slot;
-    link_index left = 0, right = size;
+    link_index left = 0, right = link_size;
     while( left < right )
       {
         if( flags[ left ] )
@@ -712,44 +767,9 @@ BEGIN_MP_NAMESPACE
       }
     delete[] flags;
 
-    // cleaning links in [[left, size[[
-    for ( link_index index = left; index < size; ++ index )
-      {
-        link& e = m_impl->m_links[ index ];
-        atom_index idx1 = m_impl->m_atom_handles[ e.h1.index ].atom_index;
-        atom_index idx2 = m_impl->m_atom_handles[ e.h2.index ].atom_index;
-
-        // we start by destroying all the faces built with this link
-        auto& faces = m_impl->m_link_properties[ link_faces_property_index ]->get<link_faces_property>( index );
-        for( auto& face : faces )
-          {
-            // remove mapping link -> face from the two other links
-            for( int i = 0; i < 2; ++ i )
-              {
-                remove_link_to_face(
-                    m_impl->m_link_handles[ face.links[i].index ].link_index,
-                    face.face );
-              }
-            // remove mapping atom -> face from the three atoms
-            remove_atom_to_face( idx1, face.face );
-            remove_atom_to_face( idx2, face.face );
-            remove_atom_to_face(
-                m_impl->m_atom_handles[ face.opposite.index ].atom_index,
-                face.face );
-            // remove the face from the tight buffer
-            m_impl->remove( face.face ); // this removes all other properties of that face
-          }
-        link_faces_property().swap( faces ); // all mappings link -> face for this link are removed
-
-        // remove that link
-        auto handle = link_handle( m_impl->m_link_index_to_handle_index[ index ], 0 );
-        handle.counter = m_impl->m_link_handles[ handle.index ].counter;
-        remove_atom_to_link( idx1, handle );
-        remove_atom_to_link( idx2, handle );
-      }
     // destroy properties of links in [[left, size[[
     for( auto& property : m_impl->m_link_properties )
-      property->destroy( left, size );
+      property->destroy( left, link_size );
 
     m_impl->m_links_size = left;
     m_impl->m_links_next_free_handle_slot = next_free_slot;
@@ -949,7 +969,7 @@ BEGIN_MP_NAMESPACE
         const auto face_entry =  m_impl->m_face_handles + handle.index;
         if( face_entry->status == datastructure::STATUS_ALLOCATED && face_entry->counter == handle.counter )
           {
-            remove_face_special_properties( face_entry->face_index, handle );
+            remove_face_topology_properties( face_entry->face_index, handle );
             m_impl->remove_face_by_index( face_entry->face_index );
           }
       }
@@ -961,12 +981,12 @@ BEGIN_MP_NAMESPACE
     auto index = get_index( e );
     auto handle_index = m_impl->m_face_index_to_handle_index[ index ];
     face_handle handle( handle_index, m_impl->m_face_handles[ handle_index ].counter );
-    remove_face_special_properties( index, handle );
+    remove_face_topology_properties( index, handle );
     m_impl->remove_face_by_index( index );
   }
 
   void
-  median_skeleton::remove_face_special_properties( face_index idx, face_handle handle )
+  median_skeleton::remove_face_topology_properties( face_index idx, face_handle handle )
   {
     auto& face = m_impl->m_faces[ idx ];
 
@@ -1042,6 +1062,81 @@ BEGIN_MP_NAMESPACE
   }
 
   void
+  median_skeleton::remove_faces_indices( bool* flags )
+  {
+    /* INVARIANT:
+     * - all faces with indices in [[0, left[[ are not removed
+     * - all faces with indices in [[left, right[[ need to be checked
+     * - all face properties in [[right, size[[ should be cleaned
+     *
+     * When a deleted face is detected, its references in atom and link
+     * properties are immediately removed. Indeed, such removals require
+     * to know the face handle and the face itself. If deleted faces are
+     * put in the end of the tight buffer, handles and faces need to be
+     * updated such that we could perform the removal in the end of the function.
+     *
+     * Thus, in the end (i.e. when left == right ), we have:
+     * - faces with indices in [[0,left[[ are clean and tight
+     * - face properties in [[left, size[[ should be cleaned
+     * - left is the new size of faces
+     */
+
+    const face_index size = m_impl->m_faces_size;
+    face_index next_free_slot = m_impl->m_faces_next_free_handle_slot;
+    face_index left = 0, right = size;
+    while( left < right )
+      {
+        if( flags[ left ] )
+          {
+            // update the left_entry
+            const auto left_entry_index = m_impl->m_face_index_to_handle_index[ left ];
+            auto left_entry = m_impl->m_face_handles + left_entry_index;
+            remove_face_topology_properties( left, face_handle( left_entry_index, left_entry->counter ) );
+            left_entry->next_free_index = next_free_slot;
+            left_entry->status = datastructure::STATUS_FREE;
+            next_free_slot = left_entry_index;
+
+            // look for a valid face in the end of the buffer
+            --right;
+            while( left < right && flags[ right ] )
+              {
+                const auto entry_index = m_impl->m_face_index_to_handle_index[ right ];
+                auto entry = m_impl->m_face_handles + entry_index;
+                remove_face_topology_properties( right, face_handle( entry_index, entry->counter ) );
+                entry->next_free_index = next_free_slot;
+                entry->status = datastructure::STATUS_FREE;
+                next_free_slot = entry_index;
+                --right;
+              }
+
+            if( left != right )
+              {
+                // move the last face into this one to keep the buffer tight
+                m_impl->m_faces[left] = std::move( m_impl->m_faces[right] );
+                for( auto& property : m_impl->m_face_properties )
+                  property->move( right, left );
+
+                const auto right_entry_index = m_impl->m_face_index_to_handle_index[ right ];
+                auto right_entry = m_impl->m_face_handles + right_entry_index;
+                right_entry->face_index = left;
+                m_impl->m_face_index_to_handle_index[ left ] = right_entry_index;
+                ++left;
+              }
+          }
+        else ++ left;
+      }
+    delete[] flags;
+
+    // cleaning face properties in [[left, size[[
+    for( auto& property : m_impl->m_face_properties )
+      property->destroy( left, size );
+
+    m_impl->m_faces_size = left;
+    m_impl->m_faces_next_free_handle_slot = next_free_slot;
+  }
+
+
+  void
   median_skeleton::remove( face_filter&& filter, bool parallel )
   {
     const face_index size = m_impl->m_faces_size;
@@ -1067,72 +1162,7 @@ BEGIN_MP_NAMESPACE
           }
       }
 
-    /* INVARIANT:
-     * - all faces with indices in [[0, left[[ are not removed
-     * - all faces with indices in [[left, right[[ need to be checked
-     * - all faces with indices in [[right, size[[ should be cleaned (all
-     * objects referring to an face should be destroyed)
-     * Thus, in the end (i.e. when left == right ), we have:
-     * - faces with indices in [[0,left[[ are clean and tight
-     * - faces with indices in [[left, size[[ should be cleaned
-     * - left is the new size of faces
-     */
-    face_index next_free_slot = m_impl->m_faces_next_free_handle_slot;
-    face_index left = 0, right = size;
-    while( left < right )
-      {
-        if( flags[ left ] )
-          {
-            // update the left_entry
-            const auto left_entry_index = m_impl->m_face_index_to_handle_index[ left ];
-            auto left_entry = m_impl->m_face_handles + left_entry_index;
-            left_entry->next_free_index = next_free_slot;
-            left_entry->status = datastructure::STATUS_FREE;
-            next_free_slot = left_entry_index;
-
-            // look for a valid face in the end of the buffer
-            --right;
-            while( left < right && flags[ right ] )
-              {
-                const auto entry_index = m_impl->m_face_index_to_handle_index[ right ];
-                auto entry = m_impl->m_face_handles + entry_index;
-                entry->next_free_index = next_free_slot;
-                entry->status = datastructure::STATUS_FREE;
-                next_free_slot = entry_index;
-                --right;
-              }
-
-            if( left != right )
-              {
-                // move the last face into this one to keep the buffer tight
-                m_impl->m_faces[left] = std::move( m_impl->m_faces[right] );
-                for( auto& property : m_impl->m_face_properties )
-                  property->move( right, left );
-
-                const auto right_entry_index = m_impl->m_face_index_to_handle_index[ right ];
-                auto right_entry = m_impl->m_face_handles + right_entry_index;
-                right_entry->face_index = left;
-                m_impl->m_face_index_to_handle_index[ left ] = right_entry_index;
-                ++left;
-              }
-          }
-        else ++ left;
-      }
-    delete[] flags;
-
-    // cleaning faces in [[left, size[[
-    for ( face_index index = left; index < size; ++ index )
-      {
-        auto handle_index = m_impl->m_face_index_to_handle_index[ index ];
-        face_handle handle( handle_index, m_impl->m_face_handles[ handle_index ].counter );
-        remove_face_special_properties( index, handle );
-      }
-    // destroy properties of atoms in [[left, size[[
-    for( auto& property : m_impl->m_face_properties )
-      property->destroy( left, size );
-
-    m_impl->m_faces_size = left;
-    m_impl->m_faces_next_free_handle_slot = next_free_slot;
+    remove_faces_indices( flags );
   }
 
 END_MP_NAMESPACE

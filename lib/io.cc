@@ -129,12 +129,12 @@ BEGIN_MP_NAMESPACE
     static void init_default_loaders_and_savers()
     {
       add_loader( new moff_loader );
-      add_loader( new balls_loader );
-      add_loader( new median_loader );
+//      add_loader( new balls_loader );
+//      add_loader( new median_loader );
 
       add_saver( new moff_saver );
-      add_saver( new balls_saver );
-      add_saver( new median_loader );
+//      add_saver( new balls_saver );
+//      add_saver( new median_loader );
     }
     static void release_loaders_and_savers() __attribute__((constructor));
     static void release_loaders_and_savers()
