@@ -15,7 +15,7 @@
 BEGIN_MP_NAMESPACE
   namespace io {
 
-    static const std::string moff_format_extension;
+    static const std::string moff_format_extension = ".moff";
 
     struct moff_saver
       : public saver {
@@ -69,7 +69,7 @@ BEGIN_MP_NAMESPACE
           {
             skeleton.clear(0,0,0);
             LOG( error, "failed to load skeleton from MOFF file [" << filename << "]");
-            result = true;
+            result = false;
           }
         input.close();
         return result;

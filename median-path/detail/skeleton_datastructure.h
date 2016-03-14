@@ -683,7 +683,7 @@ BEGIN_MP_NAMESPACE
     link_handle_type, link_handle_index_bits,
     face_handle_type, face_handle_index_bits>::clear_atoms( atom_handle_type atom_capacity )
   {
-    if( atom_capacity < m_atoms_capacity )
+    if( atom_capacity <= m_atoms_capacity )
       {
         # pragma omp parallel for
         for( size_t i = 0; i < m_atoms_capacity; ++ i )
@@ -727,7 +727,7 @@ BEGIN_MP_NAMESPACE
     link_handle_type, link_handle_index_bits,
     face_handle_type, face_handle_index_bits>::clear_links( link_handle_type link_capacity )
   {
-    if( link_capacity < m_links_capacity )
+    if( link_capacity <= m_links_capacity )
       {
         # pragma omp parallel for
         for( size_t i = 0; i < m_links_capacity; ++ i )
@@ -771,7 +771,7 @@ BEGIN_MP_NAMESPACE
     link_handle_type, link_handle_index_bits,
     face_handle_type, face_handle_index_bits>::clear_faces( face_handle_type face_capacity )
   {
-    if( face_capacity < m_faces_capacity )
+    if( face_capacity <= m_faces_capacity )
       {
         # pragma omp parallel for
         for( size_t i = 0; i < m_faces_capacity; ++ i )

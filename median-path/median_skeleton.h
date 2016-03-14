@@ -196,9 +196,9 @@ BEGIN_MP_NAMESPACE
      *
      * After the call, the skeleton is empty but with enough space to store the
      * requested number of atom, link and faces. The previous atom, link and
-     * face properties still exist in the skeleton but are now empty. The result
-     * would be the same if we build another skeleton with the requested capacities
-     * and copy it into this.
+     * face properties still exist in the skeleton but are now empty. If a requested
+     * capacity is smaller than the current capacity, the corresponding buffer is not
+     * shrinked.
      * @param atom_capacity Requested atom capacity
      * @param link_capacity Requested link capacity
      * @param face_capacity Requested face capacity */

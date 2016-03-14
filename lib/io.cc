@@ -85,10 +85,13 @@ BEGIN_MP_NAMESPACE
       loaders_mutex.lock();
         for( auto& pldr : get_loaders() )
           {
-            if( pldr->load( skeleton, filename ) )
+            if( pldr->can_load_from( filename ) )
               {
-                result = true;
-                break;
+                if( pldr->load( skeleton, filename ) )
+                  {
+                    result = true;
+                    break;
+                  }
               }
           }
       loaders_mutex.unlock();
@@ -101,10 +104,13 @@ BEGIN_MP_NAMESPACE
       savers_mutex.lock();
         for( auto& psvr : get_savers() )
           {
-            if( psvr->save( skeleton, filename ) )
+            if( psvr->can_save_to( filename ) )
               {
-                result = true;
-                break;
+                if( psvr->save( skeleton, filename ) )
+                  {
+                    result = true;
+                    break;
+                  }
               }
           }
       savers_mutex.unlock();
@@ -125,19 +131,18 @@ BEGIN_MP_NAMESPACE
       savers_mutex.unlock();
     }
 
-    static void init_default_loaders_and_savers() __attribute__((constructor));
-    static void init_default_loaders_and_savers()
+    void init_default_loaders_and_savers()
     {
       add_loader( new moff_loader );
-//      add_loader( new balls_loader );
+      add_loader( new balls_loader );
 //      add_loader( new median_loader );
 
       add_saver( new moff_saver );
-//      add_saver( new balls_saver );
+      add_saver( new balls_saver );
 //      add_saver( new median_loader );
     }
-    static void release_loaders_and_savers() __attribute__((constructor));
-    static void release_loaders_and_savers()
+
+    void release_loaders_and_savers()
     {
       while( !get_loaders().empty() )
         {

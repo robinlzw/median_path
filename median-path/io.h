@@ -82,6 +82,9 @@ BEGIN_MP_NAMESPACE
      * @param saver A skeleton file saver.
      */
     void add_saver( saver* svr );
+
+    void init_default_loaders_and_savers() __attribute__((constructor));
+    void release_loaders_and_savers() __attribute__((destructor));
   }
 END_MP_NAMESPACE
 # endif 

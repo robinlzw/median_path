@@ -4,6 +4,8 @@
 # include "test.h"
 # include "../median-path/median_skeleton.h"
 # include <graphics-origin/tools/log.h>
+
+# include <fstream>
 BEGIN_MP_NAMESPACE
 
   static void add_dont_throw()
@@ -333,6 +335,35 @@ BEGIN_MP_NAMESPACE
     BOOST_REQUIRE_EQUAL( s.get_handle(s.get_atom_by_index(4)), handles[5] );
   }
 
+  static void load_balls_file()
+  {
+    median_skeleton s;
+
+    {
+      std::ofstream temp( "temp.balls" );
+      temp << "5\n"
+           << "0 0 0 0 1 1 1 1 2 \n"
+           << "2 2 2  //end of the third ball\n"
+           << "3 3 3 3 4 4 4 4 \n"
+           << "5 5 5 5 //this is not read";
+      temp.close();
+    }
+
+    BOOST_REQUIRE( s.load( "temp.balls") );
+    BOOST_REQUIRE_EQUAL( s.get_number_of_atoms(), 5 );
+    BOOST_REQUIRE_EQUAL( s.get_number_of_links(), 0 );
+    BOOST_REQUIRE_EQUAL( s.get_number_of_faces(), 0 );
+
+    for( int i = 0; i < 5; ++ i )
+      {
+        auto& atom = s.get_atom_by_index( i );
+        REAL_CHECK_CLOSE( atom.x, i, 1e-9, 1e-6 );
+        REAL_CHECK_CLOSE( atom.y, i, 1e-9, 1e-6 );
+        REAL_CHECK_CLOSE( atom.z, i, 1e-9, 1e-6 );
+        REAL_CHECK_CLOSE( atom.w, i, 1e-9, 1e-6 );
+      }
+  }
+
   test_suite* atom_management_test_suite()
   {
     test_suite* suite = BOOST_TEST_SUITE( "atom_management" );
@@ -350,6 +381,7 @@ BEGIN_MP_NAMESPACE
     ADD_TEST_CASE( memory_reused_instead_of_reallocation );
     ADD_TEST_CASE( filter_move_atoms_as_expected );
     ADD_TEST_CASE( filter_move_atoms_as_expected_with_an_initial_odd_number );
+    ADD_TEST_CASE( load_balls_file );
     return suite;
   }
 
