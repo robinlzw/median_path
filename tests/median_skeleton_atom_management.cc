@@ -220,7 +220,117 @@ BEGIN_MP_NAMESPACE
         REAL_CHECK_CLOSE( atom.z, i, 1e-9, 1e-6 );
         REAL_CHECK_CLOSE( atom.w, i, 1e-9, 1e-6 );
       }
+  }
 
+  static void memory_reused_instead_of_reallocation()
+  {
+    median_skeleton s( 200 );
+    median_skeleton::atom_handle handles[300];
+
+    BOOST_CHECK_EQUAL( s.get_atoms_capacity(), 200 );
+    for( int i = 0; i < 200; ++ i )
+      {
+        handles[i] = s.add( vec4{ i, i, i, i } );
+      }
+
+    BOOST_CHECK_EQUAL( s.get_atoms_capacity(), s.get_number_of_atoms());
+    for( int i = 0; i < 100; ++ i )
+      {
+        s.remove( handles[ 2 * i] );
+      }
+
+    BOOST_CHECK_EQUAL( s.get_number_of_atoms(), 100 );
+    for( int i = 200; i < 300; ++ i )
+      {
+        handles[i] = s.add( vec4{ i, i, i, i } );
+      }
+    BOOST_CHECK_EQUAL( s.get_number_of_atoms(), 200 );
+    BOOST_CHECK_EQUAL( s.get_atoms_capacity(), 200 );
+  }
+
+  static void filter_move_atoms_as_expected()
+  {
+    median_skeleton s( 10 );
+    median_skeleton::atom_handle handles[10];
+    for( int i = 0; i < 10; ++ i )
+      {
+        // atom #i is a_i = {i,i,i,i}
+        handles[i] = s.add( vec4{ i, i, i, i } );
+      }
+    // all odd atoms are removed,
+    s.remove( [&s]( median_skeleton::atom& atom ){ return s.get_index( atom ) & 1; }, true );
+    BOOST_REQUIRE_EQUAL( s.get_number_of_atoms(), 5 );
+    // a_0    a_2    a_4
+    //    a_8    a_6
+
+    // check handles and handles --> atoms
+    for( int i = 0; i < 5; ++ i )
+      {
+        BOOST_REQUIRE( s.is_valid( handles[i * 2] ) );
+        BOOST_REQUIRE( !s.is_valid( handles[i * 2 + 1 ] ) );
+        median_skeleton::atom& atom = s.get( handles[ 2 * i ] );
+        REAL_CHECK_CLOSE( atom.x, 2*i, 1e-9, 1e-6 );
+        REAL_CHECK_CLOSE( atom.y, 2*i, 1e-9, 1e-6 );
+        REAL_CHECK_CLOSE( atom.z, 2*i, 1e-9, 1e-6 );
+        REAL_CHECK_CLOSE( atom.w, 2*i, 1e-9, 1e-6 );
+      }
+
+    // check handles --> atoms (useless for now, but may be important if the handle buffer change)
+    BOOST_REQUIRE_EQUAL( s.get_index( handles[0] ), median_skeleton::atom_index(0) );
+    BOOST_REQUIRE_EQUAL( s.get_index( handles[8] ), median_skeleton::atom_index(1) );
+    BOOST_REQUIRE_EQUAL( s.get_index( handles[2] ), median_skeleton::atom_index(2) );
+    BOOST_REQUIRE_EQUAL( s.get_index( handles[6] ), median_skeleton::atom_index(3) );
+    BOOST_REQUIRE_EQUAL( s.get_index( handles[4] ), median_skeleton::atom_index(4) );
+
+    // check index --> handles
+    BOOST_REQUIRE_EQUAL( s.get_handle(s.get_atom_by_index(0)), handles[0] );
+    BOOST_REQUIRE_EQUAL( s.get_handle(s.get_atom_by_index(1)), handles[8] );
+    BOOST_REQUIRE_EQUAL( s.get_handle(s.get_atom_by_index(2)), handles[2] );
+    BOOST_REQUIRE_EQUAL( s.get_handle(s.get_atom_by_index(3)), handles[6] );
+    BOOST_REQUIRE_EQUAL( s.get_handle(s.get_atom_by_index(4)), handles[4] );
+  }
+
+  static void filter_move_atoms_as_expected_with_an_initial_odd_number()
+  {
+    median_skeleton s( 11 );
+    median_skeleton::atom_handle handles[11];
+    // a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10
+    for( int i = 0; i < 11; ++ i )
+      {
+        // atom #i is a_i = {i,i,i,i}
+        handles[i] = s.add( vec4{ i, i, i, i } );
+      }
+    // all even atoms are removed,
+    s.remove( [&s]( median_skeleton::atom& atom ){ return !(s.get_index( atom ) & 1); }, true );
+
+    // a9 a1 a7 a3 a5
+    BOOST_REQUIRE_EQUAL( s.get_number_of_atoms(), 5 );
+
+    // check handles and handles --> atoms
+    for( int i = 0; i < 5; ++ i )
+      {
+        BOOST_REQUIRE( !s.is_valid( handles[i * 2] ) );
+        BOOST_REQUIRE( s.is_valid( handles[i * 2 + 1 ] ) );
+        median_skeleton::atom& atom = s.get( handles[ 2 * i + 1] );
+        REAL_CHECK_CLOSE( atom.x, 2*i + 1, 1e-9, 1e-6 );
+        REAL_CHECK_CLOSE( atom.y, 2*i + 1, 1e-9, 1e-6 );
+        REAL_CHECK_CLOSE( atom.z, 2*i + 1, 1e-9, 1e-6 );
+        REAL_CHECK_CLOSE( atom.w, 2*i + 1, 1e-9, 1e-6 );
+      }
+
+    // check handles --> atoms (useless for now, but may be important if the handle buffer change)
+    BOOST_REQUIRE_EQUAL( s.get_index( handles[9] ), median_skeleton::atom_index(0) );
+    BOOST_REQUIRE_EQUAL( s.get_index( handles[1] ), median_skeleton::atom_index(1) );
+    BOOST_REQUIRE_EQUAL( s.get_index( handles[7] ), median_skeleton::atom_index(2) );
+    BOOST_REQUIRE_EQUAL( s.get_index( handles[3] ), median_skeleton::atom_index(3) );
+    BOOST_REQUIRE_EQUAL( s.get_index( handles[5] ), median_skeleton::atom_index(4) );
+
+    // check index --> handles
+    BOOST_REQUIRE_EQUAL( s.get_handle(s.get_atom_by_index(0)), handles[9] );
+    BOOST_REQUIRE_EQUAL( s.get_handle(s.get_atom_by_index(1)), handles[1] );
+    BOOST_REQUIRE_EQUAL( s.get_handle(s.get_atom_by_index(2)), handles[7] );
+    BOOST_REQUIRE_EQUAL( s.get_handle(s.get_atom_by_index(3)), handles[3] );
+    BOOST_REQUIRE_EQUAL( s.get_handle(s.get_atom_by_index(4)), handles[5] );
   }
 
   test_suite* atom_management_test_suite()
@@ -237,6 +347,9 @@ BEGIN_MP_NAMESPACE
     ADD_TEST_CASE( remove_even_atoms );
     ADD_TEST_CASE( remove_even_atoms_by_filter );
     ADD_TEST_CASE( process_atoms );
+    ADD_TEST_CASE( memory_reused_instead_of_reallocation );
+    ADD_TEST_CASE( filter_move_atoms_as_expected );
+    ADD_TEST_CASE( filter_move_atoms_as_expected_with_an_initial_odd_number );
     return suite;
   }
 
