@@ -6,11 +6,18 @@
 # define MEDIAN_PATH_SKELETONIZATION_H_
 
 # include "median_skeleton.h"
+# include <graphics-origin/geometry/mesh.h>
 
 BEGIN_MP_NAMESPACE
 
   class skeletonizer {
   public:
+
+    struct shrinking_ball_parameters {
+      shrinking_ball_parameters();
+
+      real m_min_radius_variation;
+    };
 
     struct parameters {
 
@@ -46,6 +53,7 @@ BEGIN_MP_NAMESPACE
     skeletonizer(
         vec3* input_points,
         vec3* input_normals,
+        size_t number_of_samples,
         median_skeleton& output,
         const parameters& params = parameters() );
 
