@@ -8,6 +8,7 @@
 # include "exceptions.h"
 
 # include <graphics-origin/geometry/vec.h>
+# include <graphics-origin/geometry/ball.h>
 
 # include <type_traits>
 # include <vector>
@@ -228,26 +229,7 @@ BEGIN_MP_NAMESPACE
      *  - a link is a pair of atom handles                                    *
      *  - a face is a 3-cycle of links along with their atom handles          *
      **************************************************************************/
-    struct atom
-      : public GO_NAMESPACE::vec4 {
-      atom& operator=( atom&& other )
-      {
-        GO_NAMESPACE::vec4::operator=( std::move(other) );
-        return *this;
-      }
-
-      atom()
-        : GO_NAMESPACE::vec4{}
-      {}
-
-      atom( const GO_NAMESPACE::vec3& center, const real& radius )
-        : GO_NAMESPACE::vec4{ center, radius }
-      {}
-
-      atom( const GO_NAMESPACE::vec4& ball )
-        : GO_NAMESPACE::vec4{ ball }
-      {}
-    };
+    typedef GO_NAMESPACE::geometry::ball atom;
     struct link {
 
       link()
