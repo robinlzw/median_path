@@ -2,23 +2,15 @@
  *      Author: T. Delame (tdelame@gmail.com)
  */
 # include "../median-path/skeletonization.h"
-
+# include <valgrind/callgrind.h>
 # include <omp.h>
 BEGIN_MP_NAMESPACE
 
   extern
   void shrinking_ball_skeletonizer(
-      graphics_origin::geometry::mesh& input,
+      graphics_origin::geometry::mesh_spatial_optimization& input,
       median_skeleton& output,
-      const parameters& params );
-
-  extern
-  void shrinking_ball_skeletonizer(
-    vec3* input_points,
-    vec3* input_normals,
-    size_t number_of_samples,
-    median_skeleton& output,
-    const parameters& params );
+      const skeletonizer::parameters& params );
 
   skeletonizer::parameters::parameters()
     : m_geometry_method{ SHRINKING_BALLS },
@@ -33,10 +25,17 @@ BEGIN_MP_NAMESPACE
       const parameters& params )
   {
     m_execution_time = omp_get_wtime();
+    // take into account the construction of this structure in the execution time
+    graphics_origin::geometry::mesh_spatial_optimization mso( input, false, false );
+    LOG( debug, "took " << omp_get_wtime() - m_execution_time << " to build SMO");
     switch( params.m_geometry_method )
     {
       case parameters::SHRINKING_BALLS:
-        shrinking_ball_skeletonizer( input, output, params );
+        {
+        CALLGRIND_START_INSTRUMENTATION;
+        shrinking_ball_skeletonizer( mso, output, params );
+        CALLGRIND_STOP_INSTRUMENTATION;
+        }
         break;
       default:
         LOG( debug, "not all case are implemented");
@@ -44,15 +43,10 @@ BEGIN_MP_NAMESPACE
     m_execution_time = omp_get_wtime() - m_execution_time;
   }
 
-  skeletonizer::skeletonizer(
-      vec3* input_points,
-      vec3* input_normals,
-      size_t number_of_samples,
-      median_skeleton& output,
-      const parameters& params )
+  real
+  skeletonizer::get_execution_time() const noexcept
   {
-    m_execution_time = 0;
-    LOG( debug, "TODO");
+    return m_execution_time;
   }
 
 

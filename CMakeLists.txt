@@ -42,6 +42,11 @@ option(
   ON)
   
 option(
+  MP_USE_THRUST
+  "Use Cuda/Thrust library"
+  ON)
+  
+option(
   MP_USE_CUDA
   "Set to ON to use CUDA libraries. If set to false, some functionnalities won't be available"
   ON)  
@@ -53,7 +58,12 @@ option(
 
 option(
   MP_USE_GO_GEOMETRY_WITH_CUDA
-  "Set to ON if GraphicsOrigin::geometry uses CUDA. If set to false, only command line tools would be available."
+  "Set to ON if GraphicsOrigin::geometry uses CUDA. If set to false, some functionnalities might not be available."
+  ON)
+
+option(
+  MP_USE_GO_GEOMETRY_WITH_THRUST
+  "Set to ON if GraphicsOrigin::geometry uses Cuda/Thrust. If set to false, some functionnalities might not be available."
   ON)
   
 option( 
@@ -65,7 +75,7 @@ option(
 # global flags *
 #*******************************************************************************
 set( CMAKE_CXX_FLAGS 
-  "-frounding-math -std=c++14 -fPIC -fopenmp -DGLM_FORCE_SSE2 -DGLM_FORCE_RADIANS -DBOOST_LOG_DYN_LINK -DBOOST_ALL_DYN_LINK"
+  "-g -frounding-math -std=c++14 -fPIC -fopenmp -DGLM_FORCE_SSE2 -DGLM_FORCE_RADIANS -DBOOST_LOG_DYN_LINK -DBOOST_ALL_DYN_LINK"
   CACHE STRING "C++ compiler flags" FORCE )
 set( CMAKE_CXX_FLAGS_RELEASE 
   "-O3 -msse2 -UDEBUG -DNDEBUG -DCGAL_NDEBUG -DNO_DEBUG -DEIGEN_NO_DEBUG" 
@@ -73,8 +83,12 @@ set( CMAKE_CXX_FLAGS_RELEASE
 set( CMAKE_CXX_FLAGS_DEBUG 
   "-O0 -ggdb -Wall -Wextra -DDEBUG" 
   CACHE STRING "C++ compiler extra flags for debug build type" FORCE )
-
 set( CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -lgomp" )
+
+
+if( ${MP_USE_GO_GEOMETRY_WITH_THRUST} )
+  set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DGO_USE_CUDA_THRUST" )
+endif()
 include_directories( "${MP_HEADERS_IN_DIR}" )
   
 #*********************

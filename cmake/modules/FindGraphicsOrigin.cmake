@@ -47,7 +47,7 @@ if( GRAPHICS_ORIGIN_INCLUDE_DIR )
 	set( Boost_USE_STATIC_RUNTIME OFF )
 	find_package( Boost
 	  REQUIRED
-	  COMPONENTS serialization filesystem log log_setup locale random system )
+	  COMPONENTS serialization filesystem log log_setup locale random system program_options )
 	
 	if( Boost_FOUND )
 
