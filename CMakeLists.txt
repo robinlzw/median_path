@@ -106,6 +106,14 @@ configure_file( "${MP_SOURCES_IN_DIR}/median_path.h.in" "${MP_HEADERS_IN_DIR}/me
 add_subdirectory( ${MP_SOURCES_IN_DIR} )
 add_subdirectory( ${MP_APPLICATIONS_IN_DIR} )
 
+if( ${MP_USE_CGAL} )
+  find_package( CGAL REQUIRED )
+  include_directories( ${CGAL_INCLUDE_DIR} )
+  set( MP_INCLUDE_DIRS "${MP_INCLUDE_DIRS} ${CGAL_INCLUDE_DIRS}")
+  set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DMP_USE_CGAL")
+  set( MP_LIBRARIES "${MP_LIBRARIES} ${CGAL_LIBRARIES}" )
+endif()
+
 if( ${MP_BUILD_TESTS} )
   enable_testing()
   set( Boost_USE_MULTITHREADED ON )

@@ -2,7 +2,6 @@
  *      Author: T. Delame (tdelame@gmail.com)
  */
 # include "../median-path/skeletonization.h"
-# include <valgrind/callgrind.h>
 # include <omp.h>
 BEGIN_MP_NAMESPACE
 
@@ -31,14 +30,32 @@ BEGIN_MP_NAMESPACE
     switch( params.m_geometry_method )
     {
       case parameters::SHRINKING_BALLS:
-        {
-        CALLGRIND_START_INSTRUMENTATION;
         shrinking_ball_skeletonizer( mso, output, params );
-        CALLGRIND_STOP_INSTRUMENTATION;
-        }
         break;
       default:
         LOG( debug, "not all case are implemented");
+    }
+    switch( params.m_topology_method )
+    {
+      case parameters::REGULAR_TRIANGULATION:
+
+        break;
+      case parameters::DELAUNAY_RECONSTRUCTION:
+
+        break;
+
+      case parameters::POWERSHAPE:
+        if( params.m_geometry_method != parameters::POLAR_BALLS &&
+            params.m_geometry_method != parameters::VORONOI_BALLS )
+          {
+            LOG( error, "cannot have a powershape reconstruction if the geometry method is neither polar balls nor voronoi balls");
+          }
+        break;
+      case parameters::VORONOI:
+        if( params.m_geometry_method != parameters::VORONOI_BALLS )
+          {
+            LOG( error, "cannot have a Voronoi reconstruction if the geometry method is not voronoi balls");
+          }
     }
     m_execution_time = omp_get_wtime() - m_execution_time;
   }

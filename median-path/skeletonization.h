@@ -45,6 +45,19 @@ BEGIN_MP_NAMESPACE
       real m_min_radius_variation;
     };
 
+    /**
+     *
+     * Not all combination of parameters are possible.
+     *
+     * Relation between geometry and topology method:
+     * - any geometry method can be followed regular triangulation or Delaunay
+     * reconstruction topology methods
+     * - the Voronoi method requires the medial balls to be centered on Voronoi
+     * vertices. As such, it can only happen after a Voronoi balls geometry method.
+     * - the powershape method requires to know both the inside and the outside
+     * polar balls. Thus it can only be applied after a Voronoi balls method or
+     * a polar balls method.
+     */
     struct parameters {
 
       typedef enum {
@@ -56,7 +69,8 @@ BEGIN_MP_NAMESPACE
       typedef enum {
         REGULAR_TRIANGULATION,
         DELAUNAY_RECONSTRUCTION,
-        POWERSHAPE
+        POWERSHAPE,
+        VORONOI
       } topology_method;
 
       parameters();
