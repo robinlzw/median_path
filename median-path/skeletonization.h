@@ -55,8 +55,8 @@ BEGIN_MP_NAMESPACE
      * - the Voronoi method requires the medial balls to be centered on Voronoi
      * vertices. As such, it can only happen after a Voronoi balls geometry method.
      * - the powershape method requires to know both the inside and the outside
-     * polar balls. Thus it can only be applied after a Voronoi balls method or
-     * a polar balls method.
+     * medial balls. Thus it can only be applied after a Voronoi balls method or
+     * a polar balls method since both methods compute inside and outside balls.
      */
     struct parameters {
 

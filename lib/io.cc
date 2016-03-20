@@ -6,6 +6,7 @@
 # include "../median-path/detail/balls_format.h"
 # include "../median-path/detail/moff_format.h"
 # include "../median-path/detail/median_format.h"
+# include "../median-path/detail/json_format.h"
 
 # include <graphics-origin/tools/filesystem.h>
 # include <graphics-origin/tools/log.h>
@@ -139,6 +140,7 @@ BEGIN_MP_NAMESPACE
 
       add_saver( new moff_saver );
       add_saver( new balls_saver );
+      add_saver( new json_saver );
 //      add_saver( new median_loader );
     }
 

@@ -11,8 +11,9 @@ set_property( TARGET design_test
 add_executable( skeletonizer
 	skeletonizer.cc )
 	
+message( "LINKING skeletonizer to ${MP_LIBRARIES}")	
 target_link_libraries( skeletonizer
-  ${GRAPHICS_ORIGIN_GEOMETRY_LIBRARIES} median_path)
+  median_path ${MP_LIBRARIES})
   
 set_property( TARGET skeletonizer
 	PROPERTY RUNTIME_OUTPUT_DIRECTORY ${MP_APPLICATIONS_OUT_DIR} )

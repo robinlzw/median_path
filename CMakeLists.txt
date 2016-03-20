@@ -54,7 +54,7 @@ option(
 option(
   MP_USE_GO_APPLICATION
   "Set to ON to use GraphicsOrigin::application. If set to false, only command line tools would be available."
-  ON)
+  OFF)
 
 option(
   MP_USE_GO_GEOMETRY_WITH_CUDA
@@ -99,19 +99,33 @@ set( GRAPHICS_ORIGIN_WITH_APPLICATION ${MP_USE_GO_APPLICATION} )
 set( GRAPHICS_ORIGIN_DIR  $ENV{GRAPHICS_ORIGIN_DIR}
   CACHE FILEPATH "Variable to try to find Graphics-Origin installation path")
 find_package( GraphicsOrigin )  
+
 include_directories( ${GRAPHICS_ORIGIN_INCLUDE_DIRS} )
-
-configure_file( "${MP_SOURCES_IN_DIR}/median_path.h.in" "${MP_HEADERS_IN_DIR}/median-path/median_path.h")
-
-add_subdirectory( ${MP_SOURCES_IN_DIR} )
-add_subdirectory( ${MP_APPLICATIONS_IN_DIR} )
+set( MP_INCLUDE_DIRS ${MP_INCLUDE_DIRS} ${GRAPHICS_ORIGIN_INCLUDE_DIRS})
+set( MP_LIBRARIES ${MP_LIBRARIES} ${GRAPHICS_ORIGIN_LIBRARIES} )
 
 if( ${MP_USE_CGAL} )
-  find_package( CGAL REQUIRED )
-  include_directories( ${CGAL_INCLUDE_DIR} )
-  set( MP_INCLUDE_DIRS "${MP_INCLUDE_DIRS} ${CGAL_INCLUDE_DIRS}")
-  set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DMP_USE_CGAL")
-  set( MP_LIBRARIES "${MP_LIBRARIES} ${CGAL_LIBRARIES}" )
+  set( CGAL_CORE_PACKAGE_DIR "/usr"
+  CACHE FILEPATH "Variable to try to find CGAL_CORE package i.e. the directory where include/CGAL/CORE can be found" )
+
+  #TODO: I have done quite a mess to compile with the CGAL libraries. 
+  #TODO: clean that by using the cmake files given by CGAL or write another find package file for cgal
+
+  find_package( GMP REQUIRED )
+  find_package( MPFR REQUIRED )
+  find_package( TBB REQUIRED COMPONENTS tbbmalloc )
+  	
+  if( NOT GMP_FOUND )
+    message( fatal "GMP not found")
+  endif()
+  if( NOT MPFR_FOUND )
+    message( fatal "MPFR not found")
+  endif()
+
+  include_directories( ${GMP_INCLUDE_DIR} ${MPFR_INCLUDE_DIR} ${TBB_INCLUDE_DIRS})
+  set( MP_INCLUDE_DIRS "${MP_INCLUDE_DIRS} ${GMP_INCLUDE_DIR} ${MPFR_INCLUDE_DIR} ${TBB_INCLUDE_DIRS}")
+  set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DMP_USE_CGAL -DCGAL_DISABLE_ROUNDING_MATH_CHECK ${TBB_DEFINITIONS}")
+  set( MP_LIBRARIES ${MP_LIBRARIES} ${GMP_LIBRARIES} ${MPFR_LIBRARIES} -lCGAL -lCGAL_Core ${TBB_LIBRARIES} ${CGAL_CORE_LIBRARY})
 endif()
 
 if( ${MP_BUILD_TESTS} )
@@ -129,3 +143,12 @@ if( ${MP_BUILD_TESTS} )
 	add_subdirectory( ${MP_TEST_IN_DIR} )
   endif()
 endif()
+
+configure_file( "${MP_SOURCES_IN_DIR}/median_path.h.in" "${MP_HEADERS_IN_DIR}/median-path/median_path.h")
+
+add_subdirectory( ${MP_SOURCES_IN_DIR} )
+add_subdirectory( ${MP_APPLICATIONS_IN_DIR} )
+
+
+message( "LIBRARIES = ${MP_LIBRARIES}")
+message( "INCLUDES  = ${MP_INCLUDE_DIRS}")

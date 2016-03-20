@@ -11,6 +11,11 @@ BEGIN_MP_NAMESPACE
       median_skeleton& output,
       const skeletonizer::parameters& params );
 
+  void voronoi_ball_skeletonizer(
+    graphics_origin::geometry::mesh_spatial_optimization& input,
+    median_skeleton& output,
+    const skeletonizer::parameters& params );
+
   skeletonizer::parameters::parameters()
     : m_geometry_method{ SHRINKING_BALLS },
       m_topology_method{ REGULAR_TRIANGULATION },
@@ -26,11 +31,14 @@ BEGIN_MP_NAMESPACE
     m_execution_time = omp_get_wtime();
     // take into account the construction of this structure in the execution time
     graphics_origin::geometry::mesh_spatial_optimization mso( input, false, false );
-    LOG( debug, "took " << omp_get_wtime() - m_execution_time << " to build SMO");
     switch( params.m_geometry_method )
     {
       case parameters::SHRINKING_BALLS:
         shrinking_ball_skeletonizer( mso, output, params );
+        break;
+
+      case parameters::VORONOI_BALLS:
+        voronoi_ball_skeletonizer( mso, output, params );
         break;
       default:
         LOG( debug, "not all case are implemented");

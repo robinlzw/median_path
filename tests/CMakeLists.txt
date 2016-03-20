@@ -14,6 +14,7 @@ add_executable( fulltest
   
 target_link_libraries( fulltest
   ${GRAPHICS_ORIGIN_LIBRARIES}
+  ${MP_LIBRARIES}
   median_path
   ${MP_TEST_LIBRARIES} )
   
