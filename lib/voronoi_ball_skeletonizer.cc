@@ -134,11 +134,6 @@ BEGIN_MP_NAMESPACE
       {
         if( input.contain( vballs[i].center ) )
           {
-            if( !input.contain( vballs[i].center ) )
-              {
-                LOG(debug, "how is this possible?");
-              }
-
             # pragma omp critical
             output.add( vballs[i].center, std::sqrt( vballs[i].radius ) );
           }

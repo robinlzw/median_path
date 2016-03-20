@@ -3,6 +3,7 @@
  */
 # include "../median-path/skeletonization.h"
 # include <graphics-origin/tools/filesystem.h>
+# include <graphics-origin/tools/log.h>
 
 # include <boost/program_options.hpp>
 # include <sys/ioctl.h>
