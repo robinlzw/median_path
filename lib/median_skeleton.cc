@@ -4,6 +4,7 @@
 # include <median-path/median_skeleton.h>
 # include <median-path/io.h>
 
+# include <graphics-origin/geometry/box.h>
 # include <graphics-origin/tools/log.h>
 
 BEGIN_MP_NAMESPACE
@@ -11,15 +12,6 @@ BEGIN_MP_NAMESPACE
   static const uint8_t atom_links_property_index = 0;
   static const uint8_t atom_faces_property_index = 1;
   static const uint8_t link_faces_property_index = 0;
-
-  /**TODO: When removing topologies, we should be sure the handles are still correct.
-   * Inside the filter functions, we could remove topology as soon as we detect
-   * an element to remove OR to mark topologies that should be removed and filter them
-   * directly (might be more efficient).
-   *
-   *
-   */
-
 
   void
   median_skeleton::remove_link_to_face( link_index idx, face_handle handle )
@@ -119,6 +111,31 @@ BEGIN_MP_NAMESPACE
     delete m_impl;
   }
 
+  void median_skeleton::resize_atoms( atom_index new_atoms_size )
+  {
+    if( new_atoms_size > m_impl->m_atoms_size )
+      {
+        if( new_atoms_size > m_impl->m_atoms_capacity )
+          {
+            // reallocated, recopy
+            m_impl->grow_atoms( new_atoms_size );
+          }
+        m_impl->m_atoms_size = new_atoms_size;
+      }
+  }
+
+  void median_skeleton::resize_links( link_index new_links_size )
+  {
+    if( new_links_size > m_impl->m_links_size )
+      {
+        if( new_links_size > m_impl->m_links_capacity )
+          {
+            m_impl->grow_links( new_links_size );
+          }
+        m_impl->m_links_size = new_links_size;
+      }
+  }
+
   void median_skeleton::clear(
       atom_index atom_capacity,
       uint64_t link_capacity,
@@ -161,6 +178,52 @@ BEGIN_MP_NAMESPACE
   median_skeleton::face_index median_skeleton::get_faces_capacity() const noexcept
   {
     return m_impl->m_faces_capacity;
+  }
+
+  void median_skeleton::compute_bounding_box( graphics_origin::geometry::aabox& b ) const
+  {
+    auto const size = m_impl->m_atoms_size;
+    if( size )
+      {
+        atom bball = m_impl->m_atoms[0];
+        # pragma omp parallel
+        {
+          atom thread_bball = m_impl->m_atoms[0];
+          # pragma omp for
+          for( atom_index i = 0; i < size; ++ i )
+            {
+              thread_bball.merge( m_impl->m_atoms[ i ] );
+            }
+          # pragma omp critical
+          bball.merge( thread_bball );
+        }
+        b.m_center = vec3{ bball };
+        b.m_hsides.x = bball.w;
+        b.m_hsides.y = bball.w;
+        b.m_hsides.z = bball.w;
+      }
+  }
+
+  void median_skeleton::compute_centers_bounding_box( graphics_origin::geometry::aabox& b ) const
+  {
+    # pragma omp declare reduction(minatomcenter: vec3: omp_out = min( omp_out, omp_in )) \
+      initializer(omp_priv = vec3{REAL_MAX,REAL_MAX,REAL_MAX})
+    # pragma omp declare reduction(maxatomcenter: vec3: omp_out = max( omp_out, omp_in )) \
+      initializer(omp_priv = vec3{-REAL_MAX,-REAL_MAX,-REAL_MAX})
+    auto const size = m_impl->m_atoms_size;
+    if( size )
+      {
+        vec3 minp = vec3{REAL_MAX,REAL_MAX,REAL_MAX};
+        vec3 maxp = vec3{-REAL_MAX,-REAL_MAX,-REAL_MAX};
+        # pragma omp parallel for reduction(minatomcenter:minp) reduction(maxatomcenter:maxp)
+        for( atom_index i = 0; i < size; ++ i )
+          {
+            const auto p = vec3( m_impl->m_atoms[ i ] );
+            minp = min( minp, p );
+            maxp = max( maxp, p );
+          }
+        b = graphics_origin::geometry::aabox{ minp, maxp };
+      }
   }
 
 

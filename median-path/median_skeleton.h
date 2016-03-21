@@ -207,6 +207,30 @@ BEGIN_MP_NAMESPACE
       link_index link_capacity = 0,
       face_index face_capacity = 0 );
 
+    /**@brief Resize atom buffers.
+     *
+     * Expand atom buffers to the requested size. If the requested size is smaller
+     * than the current one, nothing is done since it is not clear which atoms should
+     * be destroyed. If the requested size is bigger than the current one but smaller
+     * than atoms capacity, this operation takes constant time. Finally, if the requested
+     * size is bigger than the current capacity, all buffers are reallocated and the new
+     * capacity is the requested size.
+     * @param new_atoms_size The requested size of atom buffers.
+     */
+    void resize_atoms( atom_index new_atoms_size );
+
+    /**@brief Resize link buffers.
+     *
+     * Expand link buffers to the requested size. If the requested size is smaller
+     * than the current one, nothing is done since it is not clear which links should
+     * be destroyed. If the requested size is bigger than the current one but smaller
+     * than links capacity, this operation takes constant time. Finally, if the requested
+     * size is bigger than the current capacity, all buffers are reallocated and the new
+     * capacity is the requested size.
+     * @param new_links_size The requested size of link buffers
+     */
+    void resize_links( link_index new_links_size );
+
     /**@brief Load a skeleton from a file.
      *
      * Load a median skeleton described by a file into this skeleton.
@@ -230,6 +254,21 @@ BEGIN_MP_NAMESPACE
     atom_index get_atoms_capacity() const noexcept;
     link_index get_links_capacity() const noexcept;
     face_index get_faces_capacity() const noexcept;
+
+    /**@brief Compute the bounding box of atoms.
+     *
+     * This function computes the bounding box of all atoms contained in
+     * this skeleton.
+     * @param b The resulting bounding box. */
+    void compute_bounding_box( graphics_origin::geometry::aabox& b ) const;
+
+    /**@brief Compute the bounding box of atom centers.
+     *
+     * This function computes the bounding box of all atom centers in this
+     * skeleton.
+     * @param b The resulting bounding box.
+     */
+    void compute_centers_bounding_box( graphics_origin::geometry::aabox& b ) const;
 
     /**@name Atom management
      * @{ */

@@ -1,0 +1,71 @@
+/*  Created on: Mar 21, 2016
+ *      Author: T. Delame (tdelame@gmail.com)
+ */
+# include "../median-path/skeletonization.h"
+
+# define CGAL_LINKED_WITH_TBB
+# include <tbb/task_scheduler_init.h>
+# include <CGAL/Exact_predicates_inexact_constructions_kernel.h>
+# include <CGAL/Triangulation_vertex_base_with_info_3.h>
+# include <CGAL/Regular_triangulation_euclidean_traits_3.h>
+# include <CGAL/Regular_triangulation_3.h>
+
+BEGIN_MP_NAMESPACE
+
+  typedef CGAL::Epick rt_kernel;
+  typedef CGAL::Regular_triangulation_euclidean_traits_3< rt_kernel > rt_traits;
+  typedef CGAL::Triangulation_vertex_base_with_info_3< median_skeleton::atom_index, rt_traits > rt_vertex_base;
+  typedef CGAL::Regular_triangulation_cell_base_3< rt_traits > rt_cell_base;
+  typedef CGAL::Triangulation_data_structure_3< rt_vertex_base, rt_cell_base, CGAL::Parallel_tag > rt_datastructure;
+  typedef CGAL::Regular_triangulation_3< rt_traits, rt_datastructure > rt;
+
+  void regular_triangulation_reconstruction(
+      median_skeleton& output )
+  {
+    tbb::task_scheduler_init init;
+    const auto natoms = output.get_number_of_atoms();
+
+    std::vector< rt::Weighted_point > wpoints( natoms );
+    std::vector< median_skeleton::atom_index > vinfos( natoms );
+    # pragma omp parallel for schedule(static)
+    for( median_skeleton::atom_index i = 0; i < natoms; ++ i )
+      {
+        const auto& atom = output.get_atom_by_index( i );
+        wpoints[ i ] = rt::Weighted_point( rt::Bare_point( atom.x, atom.y, atom.z ), atom.w * atom.w );
+        vinfos[ i ] = i;
+      }
+
+    graphics_origin::geometry::aabox bbox;
+    output.compute_centers_bounding_box( bbox );
+    bbox.m_hsides += 1e-6;
+    rt::Lock_data_structure locking_datastructure(
+        CGAL::Bbox_3(
+            bbox.m_center.x - bbox.m_hsides.x, bbox.m_center.y - bbox.m_hsides.y, bbox.m_center.z - bbox.m_hsides.z,
+            bbox.m_center.x + bbox.m_hsides.x, bbox.m_center.y + bbox.m_hsides.y, bbox.m_center.z + bbox.m_hsides.z ),
+        50);
+
+    rt regular_tetrahedrization(
+        boost::make_zip_iterator(boost::make_tuple( wpoints.begin(), vinfos.begin() )),
+        boost::make_zip_iterator(boost::make_tuple( wpoints.end()  , vinfos.end()   )),
+        &locking_datastructure);
+
+//    regular_tetrahedrization.number_of_finite_facets();
+    median_skeleton::atom_index indices[3];
+    for( auto fit = regular_tetrahedrization.finite_facets_begin(),
+        fitend = regular_tetrahedrization.finite_facets_end(); fit != fitend;
+        ++fit )
+      {
+        int j = 0;
+        for( int i = 0; i < 4; ++ i )
+          {
+            if( i != fit->second )
+              {
+                indices[j] = fit->first->vertex( i )->info();
+              }
+          }
+        output.add( indices[0], indices[1], indices[2] );
+      }
+  }
+
+
+END_MP_NAMESPACE

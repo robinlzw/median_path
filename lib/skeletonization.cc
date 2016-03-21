@@ -6,7 +6,6 @@
 # include <omp.h>
 BEGIN_MP_NAMESPACE
 
-  extern
   void shrinking_ball_skeletonizer(
       graphics_origin::geometry::mesh_spatial_optimization& input,
       median_skeleton& output,
@@ -16,6 +15,9 @@ BEGIN_MP_NAMESPACE
     graphics_origin::geometry::mesh_spatial_optimization& input,
     median_skeleton& output,
     const skeletonizer::parameters& params );
+
+  void regular_triangulation_reconstruction(
+      median_skeleton& output );
 
   skeletonizer::parameters::parameters()
     : m_geometry_method{ SHRINKING_BALLS },
@@ -47,7 +49,7 @@ BEGIN_MP_NAMESPACE
     switch( params.m_topology_method )
     {
       case parameters::REGULAR_TRIANGULATION:
-
+        regular_triangulation_reconstruction( output );
         break;
       case parameters::DELAUNAY_RECONSTRUCTION:
 
