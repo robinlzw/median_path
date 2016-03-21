@@ -114,7 +114,7 @@ namespace io {
             for( median_skeleton::atom_index i = 0; i < natoms; ++ i )
               {
                 real* data = &balls_data[ 4 * i ];
-                skeleton.add( vec4{ data[0], data[1], data[2], data[2] });
+                skeleton.add( vec4{ data[0], data[1], data[2], data[3] });
               }
           }
         else
