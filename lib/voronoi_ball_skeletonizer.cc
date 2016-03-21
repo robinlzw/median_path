@@ -2,6 +2,7 @@
  *      Author: T. Delame (tdelame@gmail.com)
  */
 # include "../median-path/skeletonization.h"
+# include <graphics-origin/tools/log.h>
 
 # define CGAL_LINKED_WITH_TBB
 # include <tbb/task_scheduler_init.h>
@@ -39,29 +40,6 @@ BEGIN_MP_NAMESPACE
     dt::Vertex_handle v6 = delaunay_tetrahedrisation.insert ( dt::Point ( point_max.x, point_min.y, point_max.z ) );
     dt::Vertex_handle v7 = delaunay_tetrahedrisation.insert ( dt::Point ( point_max.x, point_max.y, point_min.z ) );
     dt::Vertex_handle v8 = delaunay_tetrahedrisation.insert ( dt::Point ( point_max.x, point_max.y, point_max.z ) );
-
-//    v1->info() = null_dt_vertex_info;
-//    v2->info() = null_dt_vertex_info;
-//    v3->info() = null_dt_vertex_info;
-//    v4->info() = null_dt_vertex_info;
-//    v5->info() = null_dt_vertex_info;
-//    v6->info() = null_dt_vertex_info;
-//    v7->info() = null_dt_vertex_info;
-//    v8->info() = null_dt_vertex_info;
-
-//    std::list< dt::Cell_handle > cells_outside_convex_hull;
-//    delaunay_tetrahedrisation.incident_cells( v1, std::back_inserter( cells_outside_convex_hull ) );
-//    delaunay_tetrahedrisation.incident_cells( v2, std::back_inserter( cells_outside_convex_hull ) );
-//    delaunay_tetrahedrisation.incident_cells( v3, std::back_inserter( cells_outside_convex_hull ) );
-//    delaunay_tetrahedrisation.incident_cells( v4, std::back_inserter( cells_outside_convex_hull ) );
-//    delaunay_tetrahedrisation.incident_cells( v5, std::back_inserter( cells_outside_convex_hull ) );
-//    delaunay_tetrahedrisation.incident_cells( v6, std::back_inserter( cells_outside_convex_hull ) );
-//    delaunay_tetrahedrisation.incident_cells( v7, std::back_inserter( cells_outside_convex_hull ) );
-//    delaunay_tetrahedrisation.incident_cells( v8, std::back_inserter( cells_outside_convex_hull ) );
-//    delaunay_tetrahedrisation.incident_cells( delaunay_tetrahedrisation.infinite_vertex(), std::back_inserter ( cells_outside_convex_hull ) );
-//
-//    for( auto& c : cells_outside_convex_hull )
-//      c->info().m_outside = true;
   }
 
   struct voronoi_ball {
