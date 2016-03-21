@@ -105,7 +105,12 @@ BEGIN_MP_NAMESPACE
   }
 
   median_skeleton::median_skeleton( const std::string& filename )
+    : m_impl{ new datastructure{} }
   {
+    m_impl->add_atom_property<atom_links_property>("links");
+    m_impl->add_atom_property<atom_faces_property>("faces");
+    m_impl->add_link_property<link_faces_property>("faces");
+
     load( filename );
   }
 
