@@ -30,54 +30,54 @@ static uint32_t get_console_line_length()
 namespace po = boost::program_options;
 
 namespace std {
-std::istream& operator>>( std::istream& in, median_path::skeletonizer::parameters::geometry_method& method )
-{
-  std::string token;
-  in >> token;
-  if( token == "shrinking_balls" )
-    method = median_path::skeletonizer::parameters::SHRINKING_BALLS;
-  else if( token == "polar_balls" )
-    method = median_path::skeletonizer::parameters::POLAR_BALLS;
-  else if( token == "voronoi_balls")
-    method = median_path::skeletonizer::parameters::VORONOI_BALLS;
-  else throw po::validation_error(
-      po::validation_error::invalid_option_value,
-      "geometry_method",
-      token);
-  return in;
-}
+  std::istream& operator>>( std::istream& in, median_path::skeletonizer::parameters::geometry_method& method )
+  {
+    std::string token;
+    in >> token;
+    if( token == "shrinking_balls" )
+      method = median_path::skeletonizer::parameters::SHRINKING_BALLS;
+    else if( token == "polar_balls" )
+      method = median_path::skeletonizer::parameters::POLAR_BALLS;
+    else if( token == "voronoi_balls")
+      method = median_path::skeletonizer::parameters::VORONOI_BALLS;
+    else throw po::validation_error(
+        po::validation_error::invalid_option_value,
+        "geometry_method",
+        token);
+    return in;
+  }
 
-std::istream& operator>>( std::istream& in, median_path::skeletonizer::parameters::topology_method& method )
-{
-  std::string token;
-  in >> token;
-  if( token == "regular_triangulation" )
-    method = median_path::skeletonizer::parameters::REGULAR_TRIANGULATION;
-  else if( token == "delaunay_reconstruction" )
-    method = median_path::skeletonizer::parameters::DELAUNAY_RECONSTRUCTION;
-  else if( token == "powershape")
-    method = median_path::skeletonizer::parameters::POWERSHAPE;
-  else throw po::validation_error(
-      po::validation_error::invalid_option_value,
-      "topology_method",
-      token);
-  return in;
-}
+  std::istream& operator>>( std::istream& in, median_path::structurer::parameters::topology_method& method )
+  {
+    std::string token;
+    in >> token;
+    if( token == "regular_triangulation" )
+      method = median_path::structurer::parameters::REGULAR_TRIANGULATION;
+    else if( token == "delaunay_reconstruction" )
+      method = median_path::structurer::parameters::DELAUNAY_RECONSTRUCTION;
+    else if( token == "powershape")
+      method = median_path::structurer::parameters::POWERSHAPE;
+    else throw po::validation_error(
+        po::validation_error::invalid_option_value,
+        "topology_method",
+        token);
+    return in;
+  }
 
-std::istream& operator>>( std::istream& in, median_path::skeletonizer::shrinking_ball_parameters::initial_radius_method& method )
-{
-  std::string token;
-  in >> token;
-  if( token == "raytracing" )
-    method = median_path::skeletonizer::shrinking_ball_parameters::RAYTRACING;
-  else if( token == "constant" )
-    method = median_path::skeletonizer::shrinking_ball_parameters::CONSTANT;
-  else throw po::validation_error(
-      po::validation_error::invalid_option_value,
-      "initial_radius",
-      token);
-  return in;
-}
+  std::istream& operator>>( std::istream& in, median_path::skeletonizer::shrinking_ball_parameters::initial_radius_method& method )
+  {
+    std::string token;
+    in >> token;
+    if( token == "raytracing" )
+      method = median_path::skeletonizer::shrinking_ball_parameters::RAYTRACING;
+    else if( token == "constant" )
+      method = median_path::skeletonizer::shrinking_ball_parameters::CONSTANT;
+    else throw po::validation_error(
+        po::validation_error::invalid_option_value,
+        "initial_radius",
+        token);
+    return in;
+  }
 }
 
 struct application_parameters {
@@ -112,8 +112,8 @@ struct application_parameters {
             "  * polar_balls, to use polar balls as in the PowerShape algorithm\n"
             "  * voronoi_balls, to use Voronoi balls")
         ("topology_method,t",
-            po::value<median_path::skeletonizer::parameters::topology_method>(&skeletonizer_parameters.m_topology_method)
-            ->default_value(median_path::skeletonizer::parameters::REGULAR_TRIANGULATION),
+            po::value<median_path::structurer::parameters::topology_method>(&skeletonizer_parameters.m_structurer_parameters.m_topology_method)
+            ->default_value(median_path::structurer::parameters::REGULAR_TRIANGULATION),
             "method to build the skeleton topology. Possible values are:\n"
             "  * regular_triangulation, to use a regular triangulation of atoms (fast)\n"
             "  * delaunay_reconstruction, to use Delaunay reconstruction method\n"
@@ -125,7 +125,7 @@ struct application_parameters {
             "number of closest neighbors to consider to detect atom clusters")
         ("build_topology", po::value<bool>(&skeletonizer_parameters.m_build_topology)->default_value(true),
             "switch on/off the skeleton topology construction")
-        ("build_faces", po::value<bool>(&skeletonizer_parameters.m_build_faces)->default_value(true),
+        ("build_faces", po::value<bool>(&skeletonizer_parameters.m_structurer_parameters.m_build_faces)->default_value(true),
             "switch on/off the construction of triangular faces between atom centers")
         ("merge_clusters", po::value<bool>(&skeletonizer_parameters.m_merge_clusters)->default_value(true),
             "switch on/off the merge of atom clusters");
@@ -211,7 +211,7 @@ struct application_parameters {
 int main( int argc, char* argv[] )
 {
   int return_value = EXIT_SUCCESS;
-//  try
+  try
     {
       application_parameters params( argc, argv );
       for( auto& filename : params.input_filename )
@@ -228,12 +228,12 @@ int main( int argc, char* argv[] )
               << algorithm.get_execution_time() << " second(s)" << std::endl;
         }
     }
-//  catch( std::exception& e )
-//    {
-//      LOG( fatal, "exception caught: " << e.what() );
-//      std::cerr << "exception caught: " << e.what() << std::endl;
-//      return_value = EXIT_FAILURE;
-//    }
+  catch( std::exception& e )
+    {
+      LOG( fatal, "exception caught: " << e.what() );
+      std::cerr << "exception caught: " << e.what() << std::endl;
+      return_value = EXIT_FAILURE;
+    }
   boost::log::core::get()->flush();
   return return_value;
 }

@@ -10,6 +10,23 @@
 
 BEGIN_MP_NAMESPACE
 
+  class structurer {
+  public:
+
+
+    struct parameters {
+      parameters();
+      typedef enum {
+        REGULAR_TRIANGULATION,
+        DELAUNAY_RECONSTRUCTION,
+        POWERSHAPE,
+        VORONOI
+      } topology_method;
+      topology_method m_topology_method;
+      bool m_build_faces;
+    };
+  };
+
   class skeletonizer {
   public:
 
@@ -59,6 +76,7 @@ BEGIN_MP_NAMESPACE
      * a polar balls method since both methods compute inside and outside balls.
      */
     struct parameters {
+      parameters();
 
       typedef enum {
         SHRINKING_BALLS,
@@ -66,27 +84,17 @@ BEGIN_MP_NAMESPACE
         VORONOI_BALLS
       } geometry_method;
 
-      typedef enum {
-        REGULAR_TRIANGULATION,
-        DELAUNAY_RECONSTRUCTION,
-        POWERSHAPE,
-        VORONOI
-      } topology_method;
-
-      parameters();
-
       geometry_method m_geometry_method;
-      topology_method m_topology_method;
       real m_cluster_volume_factor;
       median_skeleton::atom_index  m_neighbors_for_cluster_detection;
-
-      bool m_build_topology;
-      bool m_build_faces;
       bool m_merge_clusters;
 
       union {
         shrinking_ball_parameters m_shrinking_ball;
       };
+
+      bool m_build_topology;
+      structurer::parameters m_structurer_parameters;
     };
 
     skeletonizer(

@@ -6,6 +6,11 @@
 # include <omp.h>
 BEGIN_MP_NAMESPACE
 
+  structurer::parameters::parameters()
+    : m_topology_method{ REGULAR_TRIANGULATION },
+      m_build_faces{ true }
+  {}
+
   void shrinking_ball_skeletonizer(
       graphics_origin::geometry::mesh_spatial_optimization& input,
       median_skeleton& output,
@@ -17,14 +22,16 @@ BEGIN_MP_NAMESPACE
     const skeletonizer::parameters& params );
 
   void regular_triangulation_reconstruction(
-      median_skeleton& output );
+      median_skeleton& output,
+      const structurer::parameters& params );
 
   skeletonizer::parameters::parameters()
     : m_geometry_method{ SHRINKING_BALLS },
-      m_topology_method{ REGULAR_TRIANGULATION },
       m_cluster_volume_factor{ 0.005 }, m_neighbors_for_cluster_detection{ 10 },
-      m_build_topology{ true }, m_build_faces{ true }, m_merge_clusters{ true },
-      m_shrinking_ball{}
+      m_merge_clusters{ true },
+      m_shrinking_ball{},
+
+      m_build_topology{ true }, m_structurer_parameters{}
   {}
 
   skeletonizer::skeletonizer(
@@ -47,23 +54,24 @@ BEGIN_MP_NAMESPACE
       default:
         LOG( debug, "not all case are implemented");
     }
-    switch( params.m_topology_method )
+
+    switch( params.m_structurer_parameters.m_topology_method )
     {
-      case parameters::REGULAR_TRIANGULATION:
-        regular_triangulation_reconstruction( output );
+      case structurer::parameters::REGULAR_TRIANGULATION:
+        regular_triangulation_reconstruction( output, params.m_structurer_parameters );
         break;
-      case parameters::DELAUNAY_RECONSTRUCTION:
+      case structurer::parameters::DELAUNAY_RECONSTRUCTION:
 
         break;
 
-      case parameters::POWERSHAPE:
+      case structurer::parameters::POWERSHAPE:
         if( params.m_geometry_method != parameters::POLAR_BALLS &&
             params.m_geometry_method != parameters::VORONOI_BALLS )
           {
             LOG( error, "cannot have a powershape reconstruction if the geometry method is neither polar balls nor voronoi balls");
           }
         break;
-      case parameters::VORONOI:
+      case structurer::parameters::VORONOI:
         if( params.m_geometry_method != parameters::VORONOI_BALLS )
           {
             LOG( error, "cannot have a Voronoi reconstruction if the geometry method is not voronoi balls");
