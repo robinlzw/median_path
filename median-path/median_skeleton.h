@@ -231,6 +231,36 @@ BEGIN_MP_NAMESPACE
      */
     void resize_links( link_index new_links_size );
 
+    /**@brief Reserve place for links.
+     *
+     * Expand link buffers to the requested capacity. If the requested capacity is smaller
+     * than the current one, nothing is done since it is not clear which links should be
+     * destroyed. If the requested capacity is bigger than the current one, all buffers
+     * are reallocated.
+     * @param new_links_capacity The requested new link*/
+    void reserve_links( link_index new_links_capacity );
+
+    /**@brief Resize face buffers.
+     *
+     * Expand face buffers to the requested size. If the requested size is smaller
+     * than the current one, nothing is done since it is not clear which faces should
+     * be destroyed. If the requested size is bigger than the current one but smaller
+     * than faces capacity, this operation takes constant time. Finally, if the requested
+     * size is bigger than the current capacity, all buffers are reallocated and the new
+     * capacity is the requested size.
+     * @param new_faces_size The requested size of face buffers
+     */
+    void resize_faces( face_index new_faces_size );
+
+    /**@brief Reserve place for faces.
+     *
+     * Expand face buffers to the requested capacity. If the requested capacity is smaller
+     * than the current one, nothing is done since it is not clear which faces should be
+     * destroyed. If the requested capacity is bigger than the current one, all buffers
+     * are reallocated.
+     * @param new_faces_capacity The requested new faces capacity.*/
+    void reserve_faces( face_index new_faces_capacity );
+
     /**@brief Load a skeleton from a file.
      *
      * Load a median skeleton described by a file into this skeleton.

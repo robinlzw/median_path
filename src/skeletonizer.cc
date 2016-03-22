@@ -89,6 +89,7 @@ struct application_parameters {
 
 
   application_parameters( int argc, char* argv[] )
+    : skeletonizer_parameters{}
   {
     auto line_length = get_console_line_length();
     po::options_description generic(
@@ -210,7 +211,7 @@ struct application_parameters {
 int main( int argc, char* argv[] )
 {
   int return_value = EXIT_SUCCESS;
-  try
+//  try
     {
       application_parameters params( argc, argv );
       for( auto& filename : params.input_filename )
@@ -227,12 +228,12 @@ int main( int argc, char* argv[] )
               << algorithm.get_execution_time() << " second(s)" << std::endl;
         }
     }
-  catch( std::exception& e )
-    {
-      LOG( fatal, "exception caught: " << e.what() );
-      std::cerr << "exception caught: " << e.what() << std::endl;
-      return_value = EXIT_FAILURE;
-    }
+//  catch( std::exception& e )
+//    {
+//      LOG( fatal, "exception caught: " << e.what() );
+//      std::cerr << "exception caught: " << e.what() << std::endl;
+//      return_value = EXIT_FAILURE;
+//    }
   boost::log::core::get()->flush();
   return return_value;
 }

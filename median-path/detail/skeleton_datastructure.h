@@ -356,7 +356,10 @@ BEGIN_MP_NAMESPACE
         if( old_capacity )
           {
             auto new_buffer = new value_type[ new_capacity ];
-            std::memcpy( (void*)new_buffer, (void*)base_property_buffer::m_buffer, sizeof( value_type ) * old_capacity );
+            for( size_t i = 0; i < old_capacity; ++ i )
+              {
+                new_buffer[ i ] = std::move( reinterpret_cast< pointer_type >( base_property_buffer::m_buffer )[ i ] );
+              }
             delete[] reinterpret_cast< pointer_type >( base_property_buffer::m_buffer );
             base_property_buffer::m_buffer = reinterpret_cast< unsigned char* >( new_buffer );
           }
@@ -861,8 +864,6 @@ BEGIN_MP_NAMESPACE
         m_links = new link[ new_capacity ];
         m_link_index_to_handle_index = new size_t[ new_capacity ];
         m_link_handles = new link_handle_entry[ new_capacity ];
-
-//        add_link_property<std::vector<face_handle>>( "faces" );
       }
     // resize buffers
     else
@@ -1177,7 +1178,7 @@ BEGIN_MP_NAMESPACE
       {
         // move the link itself
         m_links[ index ] = std::move( m_links[ m_links_size ] );
-
+        m_links[ m_links_size ] = std::move(link{});
         // move link properties
         for( auto& property : m_link_properties )
           {
@@ -1194,7 +1195,7 @@ BEGIN_MP_NAMESPACE
     // just delete this link
     else
       {
-        m_links[index].~link(); // not even necessary
+        m_links[index] = std::move(link{});
         for( auto& property : m_link_properties )
           property->destroy( index );
       }
@@ -1233,7 +1234,7 @@ BEGIN_MP_NAMESPACE
       {
         // move the face itself
         m_faces[ index ] = std::move( m_faces[ m_faces_size ] );
-
+        m_faces[ m_faces_size ] = std::move(face{});
         // move face properties
         for( auto& property : m_face_properties )
           {
@@ -1250,7 +1251,7 @@ BEGIN_MP_NAMESPACE
     // just delete this face
     else
       {
-        m_faces[index].~face(); // not even necessary
+        m_faces[ index ] = std::move(face{});
         for( auto& property : m_face_properties )
           property->destroy( index );
       }
@@ -1302,7 +1303,6 @@ BEGIN_MP_NAMESPACE
       // just delete this atom
       else
         {
-          m_atoms[index].~atom(); // not even necessary
           for( auto& property : m_atom_properties )
             property->destroy( index );
         }
@@ -1337,6 +1337,7 @@ BEGIN_MP_NAMESPACE
         {
           // move the link itself
           m_links[ index ] = std::move( m_links[ m_links_size ] );
+          m_links[ m_links_size ] = std::move(link{});
 
           // move link properties
           for( auto& property : m_link_properties )
@@ -1354,7 +1355,7 @@ BEGIN_MP_NAMESPACE
       // just delete this link
       else
         {
-          m_links[index].~link(); // not even necessary
+          m_links[ index ] = std::move(link{});
           for( auto& property : m_link_properties )
             property->destroy( index );
         }
@@ -1389,7 +1390,7 @@ BEGIN_MP_NAMESPACE
         {
           // move the face itself
           m_faces[ index ] = std::move( m_faces[ m_faces_size ] );
-
+          m_faces[ m_faces_size ] = std::move(face{});
           // move face properties
           for( auto& property : m_face_properties )
             {
@@ -1406,7 +1407,7 @@ BEGIN_MP_NAMESPACE
       // just delete this face
       else
         {
-          m_faces[index].~face(); // not even necessary
+          m_faces[ index ] = std::move(face{});
           for( auto& property : m_face_properties )
             property->destroy( index );
         }
@@ -1505,7 +1506,7 @@ BEGIN_MP_NAMESPACE
       {
         // move the link itself
         e = std::move( m_links[ m_links_size ] );
-
+        m_links[ m_links_size ] = std::move(link{});
         // move link properties
         for( auto& property : m_link_properties )
           {
@@ -1522,7 +1523,7 @@ BEGIN_MP_NAMESPACE
     // just delete this link
     else
       {
-        e.~link(); // not even necessary
+        m_links[ index ] = std::move(link{});
         for( auto& property : m_link_properties )
           property->destroy( index );
       }
@@ -1563,6 +1564,7 @@ BEGIN_MP_NAMESPACE
       {
         // move the face itself
         e = std::move( m_faces[ m_faces_size ] );
+        m_faces[ m_faces_size ] = std::move(face{});
 
         // move face properties
         for( auto& property : m_face_properties )
@@ -1580,7 +1582,7 @@ BEGIN_MP_NAMESPACE
     // just delete this face
     else
       {
-        e.~face(); // not even necessary
+        m_faces[ index ] = std::move(face{});
         for( auto& property : m_face_properties )
           property->destroy( index );
       }

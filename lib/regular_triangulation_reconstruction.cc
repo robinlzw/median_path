@@ -3,21 +3,64 @@
  */
 # include "../median-path/skeletonization.h"
 
+# include <graphics-origin/tools/log.h>
+
 # define CGAL_LINKED_WITH_TBB
 # include <tbb/task_scheduler_init.h>
 # include <CGAL/Exact_predicates_inexact_constructions_kernel.h>
 # include <CGAL/Triangulation_vertex_base_with_info_3.h>
 # include <CGAL/Regular_triangulation_euclidean_traits_3.h>
 # include <CGAL/Regular_triangulation_3.h>
+# include <CGAL/Simple_cartesian.h>
+
+
+# include <CGAL/Fixed_alpha_shape_3.h>
+# include <CGAL/Fixed_alpha_shape_vertex_base_3.h>
+# include <CGAL/Fixed_alpha_shape_cell_base_3.h>
 
 BEGIN_MP_NAMESPACE
+  template < typename Info_, typename GT,
+             typename Vb = CGAL::Fixed_alpha_shape_vertex_base_3<GT> >
+  class Fixed_alpha_shape_vertex_base_with_info_3
+    : public Vb
+  {
+    Info_ _info;
+  public:
+
+    typedef typename Vb::Cell_handle                   Cell_handle;
+    typedef typename Vb::Point                         Point;
+    typedef Info_                                      Info;
+
+    template < typename TDS2 >
+    struct Rebind_TDS {
+      typedef typename Vb::template Rebind_TDS<TDS2>::Other          Vb2;
+      typedef Fixed_alpha_shape_vertex_base_with_info_3<Info, GT, Vb2>   Other;
+    };
+
+    Fixed_alpha_shape_vertex_base_with_info_3()
+      : Vb() {}
+
+    Fixed_alpha_shape_vertex_base_with_info_3(const Point & p)
+      : Vb(p) {}
+
+    Fixed_alpha_shape_vertex_base_with_info_3(const Point & p, Cell_handle c)
+      : Vb(p, c) {}
+
+    Fixed_alpha_shape_vertex_base_with_info_3(Cell_handle c)
+      : Vb(c) {}
+
+    const Info& info() const { return _info; }
+    Info&       info()       { return _info; }
+  };
 
   typedef CGAL::Epick rt_kernel;
   typedef CGAL::Regular_triangulation_euclidean_traits_3< rt_kernel > rt_traits;
-  typedef CGAL::Triangulation_vertex_base_with_info_3< median_skeleton::atom_index, rt_traits > rt_vertex_base;
-  typedef CGAL::Regular_triangulation_cell_base_3< rt_traits > rt_cell_base;
+  typedef Fixed_alpha_shape_vertex_base_with_info_3< median_skeleton::atom_index, rt_traits > rt_vertex_base;
+  typedef CGAL::Fixed_alpha_shape_cell_base_3< rt_traits > rt_cell_base;
   typedef CGAL::Triangulation_data_structure_3< rt_vertex_base, rt_cell_base, CGAL::Parallel_tag > rt_datastructure;
   typedef CGAL::Regular_triangulation_3< rt_traits, rt_datastructure > rt;
+  typedef CGAL::Fixed_alpha_shape_3< rt > fixed_alpha_shape;
+
 
   void regular_triangulation_reconstruction(
       median_skeleton& output )
@@ -49,18 +92,40 @@ BEGIN_MP_NAMESPACE
         boost::make_zip_iterator(boost::make_tuple( wpoints.end()  , vinfos.end()   )),
         &locking_datastructure);
 
-//    regular_tetrahedrization.number_of_finite_facets();
+
+    fixed_alpha_shape alpha_shape( regular_tetrahedrization, 0 );
+    std::vector< fixed_alpha_shape::Facet > facets;
+//    std::vector< fixed_alpha_shape::Edge > edges;
+    facets.reserve( alpha_shape.number_of_finite_facets() );
+    for( auto fit = alpha_shape.finite_facets_begin(), fitend = alpha_shape.finite_facets_end();
+        fit != fitend; ++ fit )
+      {
+        auto type = alpha_shape.classify( *fit );
+        if( type == fixed_alpha_shape::REGULAR || type == fixed_alpha_shape::SINGULAR )
+          {
+            facets.push_back( *fit );
+          }
+      }
+
+
+//    edges.reserve( alpha_shape.number_of_finite_edges() );
+//    alpha_shape.get_alpha_shape_facets( std::back_inserter( facets ), fixed_alpha_shape::REGULAR );
+//    alpha_shape.get_alpha_shape_facets( std::back_inserter( facets ), fixed_alpha_shape::SINGULAR );
+//    alpha_shape.get_alpha_shape_edges( std::back_inserter( edges ), fixed_alpha_shape::REGULAR );
+//    alpha_shape.get_alpha_shape_edges( std::back_inserter( edges ), fixed_alpha_shape::SINGULAR );
+
+    output.reserve_faces( facets.size() );
+    output.reserve_links( facets.size() * 3 );
     median_skeleton::atom_index indices[3];
-    for( auto fit = regular_tetrahedrization.finite_facets_begin(),
-        fitend = regular_tetrahedrization.finite_facets_end(); fit != fitend;
-        ++fit )
+    for( auto& f : facets )
       {
         int j = 0;
         for( int i = 0; i < 4; ++ i )
           {
-            if( i != fit->second )
+            if( i != f.second )
               {
-                indices[j] = fit->first->vertex( i )->info();
+                indices[j] = f.first->vertex( i )->info();
+                ++j;
               }
           }
         output.add( indices[0], indices[1], indices[2] );

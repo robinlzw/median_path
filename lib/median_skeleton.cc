@@ -128,11 +128,35 @@ BEGIN_MP_NAMESPACE
   {
     if( new_links_size > m_impl->m_links_size )
       {
-        if( new_links_size > m_impl->m_links_capacity )
-          {
-            m_impl->grow_links( new_links_size );
-          }
+        reserve_links( new_links_size );
         m_impl->m_links_size = new_links_size;
+      }
+  }
+
+  void
+  median_skeleton::reserve_links( link_index new_links_capacity )
+  {
+    if( new_links_capacity > m_impl->m_links_capacity )
+      {
+        m_impl->grow_links( new_links_capacity );
+      }
+  }
+
+  void median_skeleton::resize_faces( face_index new_faces_size )
+  {
+    if( new_faces_size > m_impl->m_faces_size )
+      {
+        reserve_faces( new_faces_size );
+        m_impl->m_faces_size = new_faces_size;
+      }
+  }
+
+  void
+  median_skeleton::reserve_faces( face_index new_faces_capacity )
+  {
+    if( new_faces_capacity > m_impl->m_faces_capacity )
+      {
+        m_impl->grow_faces( new_faces_capacity );
       }
   }
 

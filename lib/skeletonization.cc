@@ -23,7 +23,8 @@ BEGIN_MP_NAMESPACE
     : m_geometry_method{ SHRINKING_BALLS },
       m_topology_method{ REGULAR_TRIANGULATION },
       m_cluster_volume_factor{ 0.005 }, m_neighbors_for_cluster_detection{ 10 },
-      m_build_topology{ true }, m_build_faces{ true }, m_merge_clusters{ true }
+      m_build_topology{ true }, m_build_faces{ true }, m_merge_clusters{ true },
+      m_shrinking_ball{}
   {}
 
   skeletonizer::skeletonizer(
