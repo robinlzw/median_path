@@ -16,6 +16,11 @@ BEGIN_MP_NAMESPACE
     median_skeleton& output,
     const skeletonizer::parameters& params );
 
+  void polar_ball_skeletonizer(
+    graphics_origin::geometry::mesh_spatial_optimization& input,
+    median_skeleton& output,
+    const skeletonizer::parameters& params );
+
   void regular_triangulation_reconstruction(
       median_skeleton& output,
       const structurer::parameters& params );
@@ -45,8 +50,10 @@ BEGIN_MP_NAMESPACE
       case parameters::VORONOI_BALLS:
         voronoi_ball_skeletonizer( mso, output, params );
         break;
-      default:
-        LOG( debug, "not all case are implemented");
+
+      case parameters::POLAR_BALLS:
+        polar_ball_skeletonizer( mso, output, params );
+        break;
     }
 
     switch( params.m_structurer_parameters.m_topology_method )

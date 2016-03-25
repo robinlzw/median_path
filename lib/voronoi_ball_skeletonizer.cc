@@ -45,6 +45,10 @@ BEGIN_MP_NAMESPACE
   typedef CGAL::Triangulation_data_structure_3< dt_vertex_base, dt_cell_base, CGAL::Parallel_tag > dt_datastructure;
   typedef CGAL::Delaunay_triangulation_3< dt_kernel, dt_datastructure > dt;
 
+  void powershape_structurer(
+      median_skeleton& skeleton,
+      std::vector<median_skeleton::atom>& out_atoms,
+      const structurer::parameters& params );
 
   void voronoi_structuration(
       median_skeleton& skeleton,
@@ -110,9 +114,9 @@ BEGIN_MP_NAMESPACE
               }
           }
       }
-//    else
+    else
       {
-//        skeleton.reserve_links( delaunay_tetrahedrization.number_of_finite_facets() );
+        skeleton.reserve_links( delaunay_tetrahedrization.number_of_finite_facets() );
         for( auto ffit = delaunay_tetrahedrization.finite_facets_begin(),
             ffend = delaunay_tetrahedrization.finite_facets_end(); ffit != ffend;
             ++ ffit )
@@ -204,13 +208,31 @@ BEGIN_MP_NAMESPACE
         if( params.m_structurer_parameters.m_topology_method == structurer::parameters::VORONOI )
           {
             voronoi_structuration( output, delaunay_tetrahedrisation, params.m_structurer_parameters );
+            delete[] voronoi_balls;
           }
         else if( params.m_structurer_parameters.m_topology_method == structurer::parameters::POWERSHAPE )
           {
-
+            std::vector< median_skeleton::atom > out_atoms;
+            out_atoms.reserve( voronoi_ball_index - atom_index );
+            # pragma omp parallel for
+            for( size_t i = 0; i < voronoi_ball_index; ++ i )
+              {
+                auto& info = voronoi_balls[i];
+                if( info.is_inside )
+                  {
+                    info.atom.w = std::sqrt( info.atom.w );
+                    # pragma omp critical
+                    out_atoms.push_back( info.atom );
+                  }
+              }
+            delete[] voronoi_balls;
+            powershape_structurer( output, out_atoms, params.m_structurer_parameters );
           }
+        else
+          delete[] voronoi_balls;
       }
-    delete[] voronoi_balls;
+    else
+      delete[] voronoi_balls;
   }
 
 
