@@ -5,27 +5,12 @@
 # ifndef MEDIAN_PATH_SKELETONIZATION_H_
 # define MEDIAN_PATH_SKELETONIZATION_H_
 
-# include "median_skeleton.h"
+# include "structuration.h"
 # include <graphics-origin/geometry/mesh.h>
 
 BEGIN_MP_NAMESPACE
 
-  class structurer {
-  public:
 
-
-    struct parameters {
-      parameters();
-      typedef enum {
-        REGULAR_TRIANGULATION,
-        DELAUNAY_RECONSTRUCTION,
-        POWERSHAPE,
-        VORONOI
-      } topology_method;
-      topology_method m_topology_method;
-      bool m_build_faces;
-    };
-  };
 
   class skeletonizer {
   public:

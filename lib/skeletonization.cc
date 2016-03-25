@@ -6,11 +6,6 @@
 # include <omp.h>
 BEGIN_MP_NAMESPACE
 
-  structurer::parameters::parameters()
-    : m_topology_method{ REGULAR_TRIANGULATION },
-      m_build_faces{ true }
-  {}
-
   void shrinking_ball_skeletonizer(
       graphics_origin::geometry::mesh_spatial_optimization& input,
       median_skeleton& output,
@@ -38,9 +33,8 @@ BEGIN_MP_NAMESPACE
       graphics_origin::geometry::mesh& input,
       median_skeleton& output,
       const parameters& params )
+    : m_execution_time{ omp_get_wtime() }
   {
-    m_execution_time = omp_get_wtime();
-    // take into account the construction of this structure in the execution time
     graphics_origin::geometry::mesh_spatial_optimization mso( input, false, false );
     switch( params.m_geometry_method )
     {
@@ -57,7 +51,7 @@ BEGIN_MP_NAMESPACE
 
     switch( params.m_structurer_parameters.m_topology_method )
     {
-      case structurer::parameters::REGULAR_TRIANGULATION:
+      case structurer::parameters::WEIGHTED_ALPHA_SHAPE:
         regular_triangulation_reconstruction( output, params.m_structurer_parameters );
         break;
       case structurer::parameters::DELAUNAY_RECONSTRUCTION:

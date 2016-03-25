@@ -52,8 +52,8 @@ namespace std {
     std::string token;
     in >> token;
     if( token == "regular_triangulation" )
-      method = median_path::structurer::parameters::REGULAR_TRIANGULATION;
-    else if( token == "delaunay_reconstruction" )
+      method = median_path::structurer::parameters::WEIGHTED_ALPHA_SHAPE;
+    else if( token == "weighted_alpha_shape" )
       method = median_path::structurer::parameters::DELAUNAY_RECONSTRUCTION;
     else if( token == "powershape")
       method = median_path::structurer::parameters::POWERSHAPE;
@@ -113,9 +113,9 @@ struct application_parameters {
             "  * voronoi_balls, to use Voronoi balls")
         ("topology_method,t",
             po::value<median_path::structurer::parameters::topology_method>(&skeletonizer_parameters.m_structurer_parameters.m_topology_method)
-            ->default_value(median_path::structurer::parameters::REGULAR_TRIANGULATION),
+            ->default_value(median_path::structurer::parameters::WEIGHTED_ALPHA_SHAPE),
             "method to build the skeleton topology. Possible values are:\n"
-            "  * regular_triangulation, to use a regular triangulation of atoms (fast)\n"
+            "  * weighted_alpha_shape, to use a regular triangulation of atoms and keep only faces of the weighted alpha shape for alpha=0 (fast)\n"
             "  * delaunay_reconstruction, to use Delaunay reconstruction method\n"
             "  * powershape, to use the method of the PowerShape (long)")
         ("volume_factor,f", po::value<median_path::real>(&skeletonizer_parameters.m_cluster_volume_factor)->default_value(0.005, "0.005"),
