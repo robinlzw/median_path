@@ -11,7 +11,6 @@
 # include <CGAL/Triangulation_vertex_base_with_info_3.h>
 # include <CGAL/Regular_triangulation_euclidean_traits_3.h>
 # include <CGAL/Regular_triangulation_3.h>
-# include <CGAL/Simple_cartesian.h>
 
 # include <CGAL/Fixed_alpha_shape_3.h>
 # include <CGAL/Fixed_alpha_shape_vertex_base_3.h>
