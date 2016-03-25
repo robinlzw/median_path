@@ -13,39 +13,119 @@
 # include <CGAL/Location_policy.h>
 # include <CGAL/Delaunay_triangulation_3.h>
 
-
 BEGIN_MP_NAMESPACE
 
   typedef uint32_t dt_vertex_info;
 
   typedef CGAL::Epeck dt_kernel;
+  struct voronoi_ball {
+    voronoi_ball()
+      : atom{}, idx{0}, is_inside{ false }
+    {}
+
+    voronoi_ball( voronoi_ball& other )
+      : atom{ other.atom }, idx{ other.idx }, is_inside{ other.is_inside }
+    {}
+
+    voronoi_ball&
+    operator=( voronoi_ball& other )
+    {
+      atom = other.atom;
+      idx = other.idx;
+      is_inside = other.is_inside;
+      return *this;
+    }
+    median_skeleton::atom atom;
+    median_skeleton::atom_index idx;
+    bool is_inside;
+  };
 
   typedef CGAL::Triangulation_vertex_base_with_info_3< dt_vertex_info, dt_kernel > dt_vertex_base;
-  typedef CGAL::Triangulation_cell_base_3< dt_kernel > dt_cell_base; //_with_info_3< dt_cell_info, dt_kernel > dt_cell_base;
+  typedef CGAL::Triangulation_cell_base_with_info_3< voronoi_ball*, dt_kernel > dt_cell_base;
   typedef CGAL::Triangulation_data_structure_3< dt_vertex_base, dt_cell_base, CGAL::Parallel_tag > dt_datastructure;
   typedef CGAL::Delaunay_triangulation_3< dt_kernel, dt_datastructure > dt;
 
 
-  static void add_extended_bounding_box_vertices(
-      dt& delaunay_tetrahedrisation,
-      const graphics_origin::geometry::aabox& bbox )
+  void voronoi_structuration(
+      median_skeleton& skeleton,
+      dt& delaunay_tetrahedrization,
+      const structurer::parameters& params )
   {
-    vec3 point_min = bbox.get_min();
-    vec3 point_max = bbox.get_max();
-    dt::Vertex_handle v1 = delaunay_tetrahedrisation.insert ( dt::Point ( point_min.x, point_min.y, point_min.z ) );
-    dt::Vertex_handle v2 = delaunay_tetrahedrisation.insert ( dt::Point ( point_min.x, point_min.y, point_max.z ) );
-    dt::Vertex_handle v3 = delaunay_tetrahedrisation.insert ( dt::Point ( point_min.x, point_max.y, point_min.z ) );
-    dt::Vertex_handle v4 = delaunay_tetrahedrisation.insert ( dt::Point ( point_min.x, point_max.y, point_max.z ) );
-    dt::Vertex_handle v5 = delaunay_tetrahedrisation.insert ( dt::Point ( point_max.x, point_min.y, point_min.z ) );
-    dt::Vertex_handle v6 = delaunay_tetrahedrisation.insert ( dt::Point ( point_max.x, point_min.y, point_max.z ) );
-    dt::Vertex_handle v7 = delaunay_tetrahedrisation.insert ( dt::Point ( point_max.x, point_max.y, point_min.z ) );
-    dt::Vertex_handle v8 = delaunay_tetrahedrisation.insert ( dt::Point ( point_max.x, point_max.y, point_max.z ) );
-  }
+    if( params.m_build_faces )
+      {
+        skeleton.reserve_faces( delaunay_tetrahedrization.number_of_finite_edges() );
+        skeleton.reserve_links( delaunay_tetrahedrization.number_of_finite_facets() );
+        for( auto feit = delaunay_tetrahedrization.finite_edges_begin(),
+            feend = delaunay_tetrahedrization.finite_edges_end(); feit != feend;
+            ++ feit )
+          {
+            auto circulator = delaunay_tetrahedrization.incident_cells( *feit );
+            std::vector< voronoi_ball* > vballs;
+            auto begin = circulator;
+            bool ok = true;
+            do
+              {
+                auto info = circulator->info();
+                if( !info || !info->is_inside )
+                  {
+                    ok = false;
+                    break;
+                  }
+                vballs.push_back( info );
+                ++circulator;
+              }
+            while( circulator != begin );
 
-  struct voronoi_ball {
-    vec3 center;
-    real radius;
-  };
+            size_t nelements = vballs.size();
+            if( ok && nelements > 2 )
+              {
+                if( params.m_neighbors_should_intersect )
+                  {
+                    size_t start = 0;
+                    for( size_t i = 1; i < nelements; ++ i )
+                      {
+                        if( vballs[0]->atom.intersect( vballs[i]->atom ) )
+                          {
+                            start = i;
+                            break;
+                          }
+                      }
+                    for( size_t i = start + 1; i < nelements; ++ i )
+                      {
+                        if( vballs[i]->atom.intersect( vballs[0]->atom )
+                         && vballs[i]->atom.intersect( vballs[i-1]->atom ) )
+                         {
+                            skeleton.add( vballs[0]->idx, vballs[i-1]->idx, vballs[i]->idx );
+                         }
+                      }
+                  }
+                else
+                  {
+
+                    for( size_t i = 2; i < nelements; ++ i )
+                      {
+                        skeleton.add( vballs[0]->idx, vballs[i-1]->idx, vballs[i]->idx );
+                      }
+                  }
+              }
+          }
+      }
+//    else
+      {
+//        skeleton.reserve_links( delaunay_tetrahedrization.number_of_finite_facets() );
+        for( auto ffit = delaunay_tetrahedrization.finite_facets_begin(),
+            ffend = delaunay_tetrahedrization.finite_facets_end(); ffit != ffend;
+            ++ ffit )
+          {
+            auto pi1 = ffit->first->info();
+            auto pi2 = ffit->first->neighbor( ffit->second )->info();
+
+            if( pi1 && pi2 && pi1->is_inside && pi2->is_inside &&
+                (!params.m_neighbors_should_intersect || pi1->atom.intersect( pi2->atom ) ) )
+              skeleton.add( pi1->idx, pi2->idx );
+          }
+      }
+  }
 
   void voronoi_ball_skeletonizer(
     graphics_origin::geometry::mesh_spatial_optimization& input,
@@ -84,38 +164,55 @@ BEGIN_MP_NAMESPACE
     std::vector<dt::Point>{}.swap( dtpoints );
     std::vector<dt_vertex_info>{}.swap( vinfos );
 
-    //extend the bounding box and add its vertices to the DT
-    //this allows to easily label some outside voronoi balls
-    bbox.m_hsides *= 6.0;
-    add_extended_bounding_box_vertices( delaunay_tetrahedrisation, bbox );
-
-    // the last time I try to access to cell in parallel, it crashed
-    // so now I'm collecting in a single thread voronoi balls, then process them in parallel
-    // Note: balls have squared radius for now.
-    std::vector< voronoi_ball > vballs( delaunay_tetrahedrisation.number_of_finite_cells());
-    const auto number_of_voronoi_balls = vballs.size();
-    size_t i = 0;
+    voronoi_ball* voronoi_balls = new voronoi_ball[ delaunay_tetrahedrisation.number_of_finite_cells() ];
+    size_t voronoi_ball_index = 0;
     for( auto cit = delaunay_tetrahedrisation.finite_cells_begin(),
         end = delaunay_tetrahedrisation.finite_cells_end(); cit != end; ++ cit )
       {
+        auto& info = voronoi_balls[ voronoi_ball_index ];
         auto voronoi_vertex = delaunay_tetrahedrisation.dual( cit );
-        vballs[ i ].center = vec3 {
+        info.atom = vec4 {
           CGAL::to_double( voronoi_vertex.x() ),
           CGAL::to_double( voronoi_vertex.y() ),
-          CGAL::to_double( voronoi_vertex.z() )};
-        vballs[ i ].radius = CGAL::to_double( CGAL::squared_distance( cit->vertex(0)->point(), voronoi_vertex ) );
-        ++i;
+          CGAL::to_double( voronoi_vertex.z() ),
+          CGAL::to_double(CGAL::squared_distance( cit->vertex(0)->point(), voronoi_vertex ))
+        };
+        cit->info() = &info;
+        ++voronoi_ball_index;
       }
 
+    size_t atom_index = 0;
     # pragma omp parallel for
-    for( i = 0; i < number_of_voronoi_balls; ++ i )
-      {
-        if( input.contain( vballs[i].center ) )
+    for( size_t i = 0; i < voronoi_ball_index; ++ i )
+    {
+        auto& info = voronoi_balls[ i ];
+        if( input.contain( vec3(info.atom) ) )
           {
+            info.is_inside = true;
+            info.atom.w = std::sqrt( info.atom.w );
             # pragma omp critical
-            output.add( vballs[i].center, std::sqrt( vballs[i].radius ) );
+            {
+              output.add( info.atom );
+              info.idx = atom_index;
+              ++atom_index;
+            }
           }
       }
+
+    if( params.m_build_topology )
+      {
+        if( params.m_structurer_parameters.m_topology_method == structurer::parameters::VORONOI )
+          {
+            voronoi_structuration( output, delaunay_tetrahedrisation, params.m_structurer_parameters );
+          }
+        else if( params.m_structurer_parameters.m_topology_method == structurer::parameters::POWERSHAPE )
+          {
+
+          }
+      }
+    delete[] voronoi_balls;
   }
+
+
 
 END_MP_NAMESPACE

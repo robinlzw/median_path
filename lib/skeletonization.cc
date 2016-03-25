@@ -55,7 +55,7 @@ BEGIN_MP_NAMESPACE
         regular_triangulation_reconstruction( output, params.m_structurer_parameters );
         break;
       case structurer::parameters::DELAUNAY_RECONSTRUCTION:
-
+        LOG( debug, "not available yet");
         break;
 
       case structurer::parameters::POWERSHAPE:
