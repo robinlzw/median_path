@@ -13,7 +13,6 @@
 # include <CGAL/Regular_triangulation_3.h>
 # include <CGAL/Simple_cartesian.h>
 
-
 # include <CGAL/Fixed_alpha_shape_3.h>
 # include <CGAL/Fixed_alpha_shape_vertex_base_3.h>
 # include <CGAL/Fixed_alpha_shape_cell_base_3.h>
@@ -86,69 +85,52 @@ BEGIN_MP_NAMESPACE
         CGAL::Bbox_3(
             bbox.m_center.x - bbox.m_hsides.x, bbox.m_center.y - bbox.m_hsides.y, bbox.m_center.z - bbox.m_hsides.z,
             bbox.m_center.x + bbox.m_hsides.x, bbox.m_center.y + bbox.m_hsides.y, bbox.m_center.z + bbox.m_hsides.z ),
-        50);
+        8);
 
     rt regular_tetrahedrization(
         boost::make_zip_iterator(boost::make_tuple( wpoints.begin(), vinfos.begin() )),
         boost::make_zip_iterator(boost::make_tuple( wpoints.end()  , vinfos.end()   )),
         &locking_datastructure);
 
-
     fixed_alpha_shape alpha_shape( regular_tetrahedrization, 0 );
+
     if( params.m_build_faces )
       {
-        std::vector< fixed_alpha_shape::Facet > facets;
-        facets.reserve( alpha_shape.number_of_finite_facets() );
-        median_skeleton::link_index nblinks = 0;
+        auto nb_finite_facets = alpha_shape.number_of_finite_facets();
+        output.reserve_faces( nb_finite_facets );
+        output.reserve_links( nb_finite_facets * 3 );
+        median_skeleton::atom_index indices[3];
+
         for( auto fit = alpha_shape.facets_begin(), fitend = alpha_shape.facets_end();
             fit != fitend; ++ fit )
           {
             auto type = alpha_shape.classify( *fit );
             if( type == fixed_alpha_shape::REGULAR || type == fixed_alpha_shape::SINGULAR )
               {
-                facets.push_back( *fit );
-              }
-          }
-        for( auto eit = alpha_shape.edges_begin(), eitend = alpha_shape.edges_end();
-            eit != eitend; ++ eit )
-          {
-            auto type = alpha_shape.classify( *eit );
-            if( type == fixed_alpha_shape::REGULAR || type == fixed_alpha_shape::SINGULAR )
-              ++nblinks;
-          }
-
-        output.reserve_faces( facets.size() );
-        output.reserve_links( nblinks );
-        median_skeleton::atom_index indices[3];
-        for( auto& f : facets )
-          {
-            int j = 0;
-            for( int i = 0; i < 4; ++ i )
-              {
-                if( i != f.second )
+                int j = 0;
+                for( int i = 0; i < 4; ++ i )
                   {
-                    indices[j] = f.first->vertex( i )->info();
-                    ++j;
+                    if( i != fit->second )
+                      {
+                        indices[j] = fit->first->vertex( i )->info();
+                        ++j;
+                      }
                   }
+                output.add( indices[0], indices[1], indices[2] );
               }
-            output.add( indices[0], indices[1], indices[2] );
           }
       }
     else
       {
-        std::vector< fixed_alpha_shape::Edge > edges;
-        edges.reserve( alpha_shape.number_of_finite_edges() );
+        output.reserve_links( alpha_shape.number_of_finite_edges() );
         for( auto eit = alpha_shape.edges_begin(), eitend = alpha_shape.edges_end();
             eit != eitend; ++ eit )
           {
             auto type = alpha_shape.classify( *eit );
             if( type == fixed_alpha_shape::REGULAR || type == fixed_alpha_shape::SINGULAR )
-              edges.push_back( *eit );
-          }
-        output.reserve_links( edges.size() );
-        for( auto& e : edges )
-          {
-            output.add( e.first->vertex( e.second )->info(), e.first->vertex( e.third )->info() );
+              {
+                output.add( eit->first->vertex( eit->second )->info(), eit->first->vertex( eit->third )->info() );
+              }
           }
       }
   }

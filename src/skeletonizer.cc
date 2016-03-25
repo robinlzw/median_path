@@ -51,12 +51,14 @@ namespace std {
   {
     std::string token;
     in >> token;
-    if( token == "regular_triangulation" )
+    if( token == "weighted_alpha_shape" )
       method = median_path::structurer::parameters::WEIGHTED_ALPHA_SHAPE;
-    else if( token == "weighted_alpha_shape" )
+    else if( token == "delaunay" )
       method = median_path::structurer::parameters::DELAUNAY_RECONSTRUCTION;
     else if( token == "powershape")
       method = median_path::structurer::parameters::POWERSHAPE;
+    else if( token == "voronoi" )
+      method = median_path::structurer::parameters::VORONOI;
     else throw po::validation_error(
         po::validation_error::invalid_option_value,
         "topology_method",
@@ -117,7 +119,8 @@ struct application_parameters {
             "method to build the skeleton topology. Possible values are:\n"
             "  * weighted_alpha_shape, to use a regular triangulation of atoms and keep only faces of the weighted alpha shape for alpha=0 (fast)\n"
             "  * delaunay_reconstruction, to use Delaunay reconstruction method\n"
-            "  * powershape, to use the method of the PowerShape (long)")
+            "  * powershape, to use the method of the PowerShape (long)\n"
+            "  * voronoi, to use a subset of the voronoi faces/edges (fast since the Voronoi diagram is already available)")
         ("volume_factor,f", po::value<median_path::real>(&skeletonizer_parameters.m_cluster_volume_factor)->default_value(0.005, "0.005"),
             "minimum volume ratio an intesecting ball should add to another one to not form a cluster")
         ("cluster_neighbors,n", po::value<median_path::median_skeleton::atom_index>(&skeletonizer_parameters.m_neighbors_for_cluster_detection)
@@ -125,6 +128,8 @@ struct application_parameters {
             "number of closest neighbors to consider to detect atom clusters")
         ("build_topology", po::value<bool>(&skeletonizer_parameters.m_build_topology)->default_value(true),
             "switch on/off the skeleton topology construction")
+        ("neighbors_intersect", po::value<bool>(&skeletonizer_parameters.m_structurer_parameters.m_neighbors_should_intersect)->default_value(true),
+            "switch on/off the intersection test between two neighbor atom candidates")
         ("build_faces", po::value<bool>(&skeletonizer_parameters.m_structurer_parameters.m_build_faces)->default_value(true),
             "switch on/off the construction of triangular faces between atom centers")
         ("merge_clusters", po::value<bool>(&skeletonizer_parameters.m_merge_clusters)->default_value(true),
