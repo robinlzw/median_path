@@ -111,27 +111,27 @@ BEGIN_MP_NAMESPACE
     delete m_impl;
   }
 
-  void median_skeleton::resize_atoms( atom_index new_atoms_size )
-  {
-    if( new_atoms_size > m_impl->m_atoms_size )
-      {
-        if( new_atoms_size > m_impl->m_atoms_capacity )
-          {
-            // reallocated, recopy
-            m_impl->grow_atoms( new_atoms_size );
-          }
-        m_impl->m_atoms_size = new_atoms_size;
-      }
-  }
-
-  void median_skeleton::resize_links( link_index new_links_size )
-  {
-    if( new_links_size > m_impl->m_links_size )
-      {
-        reserve_links( new_links_size );
-        m_impl->m_links_size = new_links_size;
-      }
-  }
+//  void median_skeleton::resize_atoms( atom_index new_atoms_size )
+//  {
+//    if( new_atoms_size > m_impl->m_atoms_size )
+//      {
+//        if( new_atoms_size > m_impl->m_atoms_capacity )
+//          {
+//            // reallocated, recopy
+//            m_impl->grow_atoms( new_atoms_size );
+//          }
+//        m_impl->m_atoms_size = new_atoms_size;
+//      }
+//  }
+//
+//  void median_skeleton::resize_links( link_index new_links_size )
+//  {
+//    if( new_links_size > m_impl->m_links_size )
+//      {
+//        reserve_links( new_links_size );
+//        m_impl->m_links_size = new_links_size;
+//      }
+//  }
 
   void
   median_skeleton::reserve_links( link_index new_links_capacity )
@@ -142,14 +142,14 @@ BEGIN_MP_NAMESPACE
       }
   }
 
-  void median_skeleton::resize_faces( face_index new_faces_size )
-  {
-    if( new_faces_size > m_impl->m_faces_size )
-      {
-        reserve_faces( new_faces_size );
-        m_impl->m_faces_size = new_faces_size;
-      }
-  }
+//  void median_skeleton::resize_faces( face_index new_faces_size )
+//  {
+//    if( new_faces_size > m_impl->m_faces_size )
+//      {
+//        reserve_faces( new_faces_size );
+//        m_impl->m_faces_size = new_faces_size;
+//      }
+//  }
 
   void
   median_skeleton::reserve_faces( face_index new_faces_capacity )

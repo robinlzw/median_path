@@ -22,7 +22,11 @@ BEGIN_MP_NAMESPACE
   typedef CGAL::Epeck dt_kernel;
   struct voronoi_ball {
 
-    enum { INSIDE_SHAPE = 1, KEPT = 2 };
+    // status of 0: voronoi ball outside the shape
+    // status of 1: voronoi ball inside the shape
+    // status of 2: voronoi ball kept for the structuration
+    // status of 3: 1 + 2, i.e. inside voronoi ball kept for the structuration, thus an atom
+    enum { INSIDE_SHAPE = 1, KEPT = 2, ATOM = 3};
 
 
 
@@ -175,7 +179,7 @@ BEGIN_MP_NAMESPACE
       {
         const auto& atom = voronoi_balls[ i ].atom;
         auto p = vec3( atom );
-        wpoints[ i ] = rt::Weighted_point( rt::Bare_point( atom.x, atom.y, atom.z ), atom.w );
+        wpoints[ i ] = rt::Weighted_point( rt::Bare_point( atom.x, atom.y, atom.z ), atom.w * atom.w );
         vinfos[ i ] = i;
         minp = min( minp, p );
         maxp = max( maxp, p );
@@ -210,7 +214,7 @@ BEGIN_MP_NAMESPACE
                 if( i != fit->second )
                   {
                     auto& info = voronoi_balls[ fit->first->vertex( i )->info() ];
-                    if( info.status & voronoi_ball::INSIDE_SHAPE )
+                    if( info.status == voronoi_ball::ATOM )
                       {
                         indices[j] = info.idx;
                         ++j;
@@ -239,7 +243,7 @@ BEGIN_MP_NAMESPACE
           {
             auto& i1 = voronoi_balls[ eit->first->vertex( eit->second )->info() ];
             auto& i2 = voronoi_balls[ eit->first->vertex( eit->third  )->info() ];
-            if( (i1.status & voronoi_ball::INSIDE_SHAPE) && (i2.status & voronoi_ball::INSIDE_SHAPE)
+            if( (i1.status == voronoi_ball::ATOM) && (i2.status == voronoi_ball::ATOM )
              && (!params.m_neighbors_should_intersect || skeleton.get_atom_by_index( i1.idx ).intersect( skeleton.get_atom_by_index( i2.idx ) ) ) )
               {
                 skeleton.add( i1.idx, i2.idx );
@@ -254,13 +258,6 @@ BEGIN_MP_NAMESPACE
       dt& delaunay_tetrahedrization,
       const structurer::parameters& params )
   {
-    const auto size = voronoi_balls.size();
-    # pragma omp parallel for schedule(static)
-    for( size_t i = 0; i < size; ++ i )
-    {
-       voronoi_balls[i].atom.w = std::sqrt( voronoi_balls[i].atom.w );   
-    }
-      
     if( params.m_build_faces )
       {
         skeleton.reserve_faces( delaunay_tetrahedrization.number_of_finite_edges() );
@@ -276,7 +273,9 @@ BEGIN_MP_NAMESPACE
             do
               {
                 auto info = circulator->info();
-                if( !info || !(info->status & voronoi_ball::KEPT ) )
+                // not relevant vertex or not representing an atom
+                // note: an atom has a status of 3 since it is inside the shape and kept for the structuration
+                if( !info || info->status != voronoi_ball::ATOM )
                   {
                     ok = false;
                     break;
@@ -323,7 +322,7 @@ BEGIN_MP_NAMESPACE
             auto pi2 = ffit->first->neighbor( ffit->second )->info();
 
             if( pi1 && pi2 &&
-                (pi1->status & voronoi_ball::KEPT) && (pi2->status & voronoi_ball::KEPT) &&
+                (pi1->status == voronoi_ball::ATOM ) && (pi2->status == voronoi_ball::ATOM ) &&
                 (!params.m_neighbors_should_intersect || pi1->atom.intersect( pi2->atom ) ) )
               skeleton.add( pi1->idx, pi2->idx );
           }
@@ -343,29 +342,50 @@ BEGIN_MP_NAMESPACE
       // need an extended bounding box only to apply a powershape algorithm (gives more outside voronoi vertices)
       params.m_build_topology && (params.m_structurer_parameters.m_topology_method == structurer::parameters::POWERSHAPE) );
 
-    const auto nb_vballs = voronoi_balls.size();
-
-    median_skeleton::atom_index atom_index = 0;
-    for( size_t i = 0; i < nb_vballs ; ++ i )
-      {
-        auto& info = voronoi_balls[ i ];
-        if( info.status & voronoi_ball::INSIDE_SHAPE )
-          {
-            output.add( vec3{info.atom}, std::sqrt(info.atom.w) );
-            info.idx = atom_index;
-            ++atom_index;
-            info.status |= voronoi_ball::KEPT;
-          }
-      }
+    const auto nb_balls = voronoi_balls.size();
 
     if( params.m_build_topology )
       {
         if( params.m_structurer_parameters.m_topology_method == structurer::parameters::VORONOI )
           {
+            median_skeleton::atom_index atom_index = 0;
+            # pragma omp parallel for
+            for( size_t i = 0; i < nb_balls; ++ i )
+              {
+                auto& info = voronoi_balls[ i ];
+                if( info.status & voronoi_ball::INSIDE_SHAPE )
+                  {
+                    info.atom.w = std::sqrt( info.atom.w );
+                    info.status = voronoi_ball::ATOM;
+                    # pragma omp critical
+                    {
+                      output.add( info.atom );
+                      info.idx = atom_index;
+                      ++atom_index;
+                    }
+                  }
+              }
             voronoi_structuration( output, voronoi_balls, *delaunay_tetrahedrisation, params.m_structurer_parameters );
           }
         else if( params.m_structurer_parameters.m_topology_method == structurer::parameters::POWERSHAPE )
           {
+            median_skeleton::atom_index atom_index = 0;
+            # pragma omp parallel for
+            for( size_t i = 0; i < nb_balls; ++ i )
+              {
+                auto& info = voronoi_balls[ i ];
+                info.atom.w = std::sqrt( info.atom.w );
+                if( info.status & voronoi_ball::INSIDE_SHAPE )
+                  {
+                    # pragma omp critical
+                    {
+                      output.add( info.atom );
+                      info.idx = atom_index;
+                      ++atom_index;
+                    }
+                  }
+                info.status |= voronoi_ball::KEPT;
+              }
             powershape_structuration( output, voronoi_balls, params.m_structurer_parameters );
           }
       }
@@ -382,19 +402,82 @@ BEGIN_MP_NAMESPACE
     dt* delaunay_tetrahedrisation;
     build_and_classify_voronoi_balls( input, output, voronoi_balls, delaunay_tetrahedrisation, true );
 
-    const auto nb_vballs = voronoi_balls.size();
-    median_skeleton::atom_index atom_index = 0;
+    const auto nb_balls = voronoi_balls.size();
+    std::vector< dt::Cell_handle > incident_cells;
     for( auto fvit = delaunay_tetrahedrisation->finite_vertices_begin(),
         fvitend = delaunay_tetrahedrisation->finite_vertices_end(); fvit != fvitend;
         ++ fvit )
       {
         if( fvit->info() != null_dt_vertex_info )
           {
-            std::vector< dt::Cell_handle > incident_cells;
+
             delaunay_tetrahedrisation->incident_cells( fvit, std::back_inserter( incident_cells));
+
+            voronoi_ball* in_pole = nullptr;
+            voronoi_ball* out_pole = nullptr;
+            for( auto& ch : incident_cells )
+              {
+                if( ch->info()->status & voronoi_ball::INSIDE_SHAPE )
+                  {
+                    if( !in_pole || in_pole->atom.w < ch->info()->atom.w )
+                      in_pole = ch->info();
+                  }
+                else
+                  {
+                    if( !out_pole || out_pole->atom.w < ch->info()->atom.w )
+                      out_pole = ch->info();
+                  }
+              }
+            if( in_pole ) in_pole->status |= voronoi_ball::KEPT;
+            if( out_pole ) out_pole->status |= voronoi_ball::KEPT;
+            incident_cells.clear();
           }
       }
 
+
+
+    if( params.m_build_topology && params.m_structurer_parameters.m_topology_method == structurer::parameters::POWERSHAPE )
+      {
+        median_skeleton::atom_index atom_index = 0;
+        # pragma omp parallel for
+        for( size_t i = 0; i < nb_balls; ++ i )
+          {
+            auto& info = voronoi_balls[ i ];
+            if( info.status & voronoi_ball::KEPT )
+              info.atom.w = std::sqrt( info.atom.w );
+            if( info.status == voronoi_ball::ATOM )
+              {
+                # pragma omp critical
+                {
+                  output.add( info.atom );
+                  info.idx = atom_index;
+                  ++atom_index;
+                }
+              }
+          }
+        powershape_structuration( output, voronoi_balls, params.m_structurer_parameters );
+      }
+    else
+      {
+        median_skeleton::atom_index atom_index = 0;
+        # pragma omp parallel for
+        for( size_t i = 0; i < nb_balls; ++ i )
+          {
+            auto& info = voronoi_balls[ i ];
+            if( info.status == voronoi_ball::ATOM )
+              {
+                # pragma omp critical
+                {
+                  auto& info = voronoi_balls[ i ];
+                  info.atom.w = std::sqrt( info.atom.w );
+                  output.add( info.atom );
+                  info.idx = atom_index;
+                  ++atom_index;
+                }
+              }
+          }
+      }
+    delete delaunay_tetrahedrisation;
 
   }
 
