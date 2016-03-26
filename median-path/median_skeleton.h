@@ -207,30 +207,6 @@ BEGIN_MP_NAMESPACE
       link_index link_capacity = 0,
       face_index face_capacity = 0 );
 
-//    /**@brief Resize atom buffers.
-//     *
-//     * Expand atom buffers to the requested size. If the requested size is smaller
-//     * than the current one, nothing is done since it is not clear which atoms should
-//     * be destroyed. If the requested size is bigger than the current one but smaller
-//     * than atoms capacity, this operation takes constant time. Finally, if the requested
-//     * size is bigger than the current capacity, all buffers are reallocated and the new
-//     * capacity is the requested size.
-//     * @param new_atoms_size The requested size of atom buffers.
-//     */
-//    void resize_atoms( atom_index new_atoms_size );
-
-//    /**@brief Resize link buffers.
-//     *
-//     * Expand link buffers to the requested size. If the requested size is smaller
-//     * than the current one, nothing is done since it is not clear which links should
-//     * be destroyed. If the requested size is bigger than the current one but smaller
-//     * than links capacity, this operation takes constant time. Finally, if the requested
-//     * size is bigger than the current capacity, all buffers are reallocated and the new
-//     * capacity is the requested size.
-//     * @param new_links_size The requested size of link buffers
-//     */
-//    void resize_links( link_index new_links_size );
-
     /**@brief Reserve place for links.
      *
      * Expand link buffers to the requested capacity. If the requested capacity is smaller
@@ -239,18 +215,6 @@ BEGIN_MP_NAMESPACE
      * are reallocated.
      * @param new_links_capacity The requested new link*/
     void reserve_links( link_index new_links_capacity );
-
-//    /**@brief Resize face buffers.
-//     *
-//     * Expand face buffers to the requested size. If the requested size is smaller
-//     * than the current one, nothing is done since it is not clear which faces should
-//     * be destroyed. If the requested size is bigger than the current one but smaller
-//     * than faces capacity, this operation takes constant time. Finally, if the requested
-//     * size is bigger than the current capacity, all buffers are reallocated and the new
-//     * capacity is the requested size.
-//     * @param new_faces_size The requested size of face buffers
-//     */
-//    void resize_faces( face_index new_faces_size );
 
     /**@brief Reserve place for faces.
      *
