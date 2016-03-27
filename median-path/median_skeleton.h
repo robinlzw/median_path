@@ -245,9 +245,34 @@ BEGIN_MP_NAMESPACE
     link_index get_number_of_links() const noexcept;
     /**@brief Get the current number of faces */
     face_index get_number_of_faces() const noexcept;
+
     atom_index get_atoms_capacity() const noexcept;
     link_index get_links_capacity() const noexcept;
     face_index get_faces_capacity() const noexcept;
+
+    /**@brief Get the number of user atom properties.
+     *
+     * Get the number of properties associated to atoms. This number does not take
+     * into account the internal atom properties used to manage the skeleton topology.
+     * @return The number of user atom properties.
+     */
+    uint64_t get_number_of_atom_properties() const noexcept;
+
+    /**@brief Get the number of user link properties.
+     *
+     * Get the number of properties associated to links. This number does not take
+     * into account the internal link properties used to manage the skeleton topology.
+     * @return The number of user link properties.
+     */
+    uint64_t get_number_of_link_properties() const noexcept;
+
+    /**@brief Get the number of user face properties.
+     *
+     * Get the number of properties associated to faces. This number does not take
+     * into account the internal face properties used to manage the skeleton topology.
+     * @return The number of user face properties.
+     */
+    uint64_t get_number_of_face_properties() const noexcept;
 
     /**@brief Compute the bounding box of atoms.
      *

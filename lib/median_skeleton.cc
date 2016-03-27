@@ -173,6 +173,22 @@ BEGIN_MP_NAMESPACE
     return m_impl->m_faces_capacity;
   }
 
+
+  uint64_t median_skeleton::get_number_of_atom_properties() const noexcept
+  {
+    return m_impl->m_atom_properties.size() - 2;
+  }
+
+  uint64_t median_skeleton::get_number_of_link_properties() const noexcept
+  {
+    return m_impl->m_link_properties.size() - 1;
+  }
+
+  uint64_t median_skeleton::get_number_of_face_properties() const noexcept
+  {
+    return m_impl->m_face_properties.size();
+  }
+
   void median_skeleton::compute_bounding_box( graphics_origin::geometry::aabox& b ) const
   {
     auto const size = m_impl->m_atoms_size;

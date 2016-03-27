@@ -141,7 +141,7 @@ BEGIN_MP_NAMESPACE
       add_saver( new moff_saver );
       add_saver( new balls_saver );
       add_saver( new json_saver );
-//      add_saver( new median_loader );
+      add_saver( new median_saver );
     }
 
     void release_loaders_and_savers()
