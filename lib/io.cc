@@ -136,7 +136,7 @@ BEGIN_MP_NAMESPACE
     {
       add_loader( new moff_loader );
       add_loader( new balls_loader );
-//      add_loader( new median_loader );
+      add_loader( new median_loader );
 
       add_saver( new moff_saver );
       add_saver( new balls_saver );

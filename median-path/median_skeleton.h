@@ -207,6 +207,15 @@ BEGIN_MP_NAMESPACE
       link_index link_capacity = 0,
       face_index face_capacity = 0 );
 
+    /**@brief Reserve place for atoms.
+     *
+     * Expand atom buffers to the requested capacity. If the requested capacity is smaller
+     * than the current one, nothing is done since it is not clear which atoms should be
+     * destroyed. If the requested capacity is bigger than the current one, all buffers
+     * are reallocated.
+     * @param new_atoms_capacity The requested new atom*/
+    void reserve_atoms( atom_index new_atoms_capacity );
+
     /**@brief Reserve place for links.
      *
      * Expand link buffers to the requested capacity. If the requested capacity is smaller

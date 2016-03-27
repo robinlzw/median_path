@@ -112,6 +112,15 @@ BEGIN_MP_NAMESPACE
   }
 
   void
+  median_skeleton::reserve_atoms( atom_index new_atoms_capacity )
+  {
+    if( new_atoms_capacity > m_impl->m_atoms_capacity )
+      {
+        m_impl->grow_atoms( new_atoms_capacity );
+      }
+  }
+
+  void
   median_skeleton::reserve_links( link_index new_links_capacity )
   {
     if( new_links_capacity > m_impl->m_links_capacity )
