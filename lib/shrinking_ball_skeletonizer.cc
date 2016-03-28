@@ -26,6 +26,12 @@ BEGIN_MP_NAMESPACE
     return result;
   }
 
+  void delaunay_reconstruction(
+      median_skeleton& skeleton,
+      graphics_origin::geometry::mesh_spatial_optimization& msp,
+      std::vector< std::vector< uint32_t > >& vertex_to_atoms,
+      const structurer::parameters& params );
+
   static inline real
   compute_radius( const real* sample, const real* point, const real* normal )
   {
@@ -49,6 +55,13 @@ BEGIN_MP_NAMESPACE
     const real global_initial_radius =
         real(2.0) * params.m_shrinking_ball.m_constant_radius_ratio *
         std::min( bbox.m_hsides.x, std::min( bbox.m_hsides.y, bbox.m_hsides.z ) );
+
+    std::vector< std::vector< uint32_t > > vertex_to_atoms;
+    bool keep_vertex_to_atoms = params.m_build_topology
+        && params.m_structurer_parameters.m_topology_method == structurer::parameters::DELAUNAY_RECONSTRUCTION;
+
+    if( keep_vertex_to_atoms )
+      vertex_to_atoms.resize( nsamples );
 
     # pragma omp parallel
     {
@@ -108,10 +121,23 @@ BEGIN_MP_NAMESPACE
           if( std::isfinite( center.x ) && std::isfinite( center.y ) && std::isfinite( center.z ) && std::isfinite( radius ) )
             {
               # pragma omp critical
-              output.add( median_skeleton::atom( center, radius ) );
+              {
+                output.add( median_skeleton::atom( center, radius ) );
+                if( keep_vertex_to_atoms )
+                  {
+                    auto id = output.get_number_of_atoms();
+                    vertex_to_atoms[ indices[0] ].push_back( id );
+                    vertex_to_atoms[ indices[1] ].push_back( id );
+                  }
+              }
             }
         }
     }
+
+    if( keep_vertex_to_atoms )
+      {
+        delaunay_reconstruction( output, input, vertex_to_atoms, params.m_structurer_parameters );
+      }
   }
 
 
