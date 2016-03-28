@@ -26,3 +26,12 @@ target_link_libraries( filter_balls_outside_mesh
   
 set_property( TARGET filter_balls_outside_mesh
 	PROPERTY RUNTIME_OUTPUT_DIRECTORY ${MP_APPLICATIONS_OUT_DIR} )
+	
+add_executable( sgp_benchmark
+	sgp_benchmark.cc )
+	
+target_link_libraries( sgp_benchmark
+  median_path ${MP_LIBRARIES})
+  
+set_property( TARGET sgp_benchmark
+	PROPERTY RUNTIME_OUTPUT_DIRECTORY ${MP_APPLICATIONS_OUT_DIR} )	

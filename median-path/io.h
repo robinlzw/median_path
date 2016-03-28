@@ -22,6 +22,7 @@ BEGIN_MP_NAMESPACE
    * Those numbers are taken four by four to build median atoms. This format is useful to import
    * data from other software. The topology of the skeleton can then be built by reconstruction
    * algorithms from this library.
+   * - .web The format of skeleton that could be loaded into the web application
    * - .median The format used by this library.
    */
   namespace io {

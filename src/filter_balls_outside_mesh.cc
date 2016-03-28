@@ -48,7 +48,7 @@ struct application_parameters {
         ("help,h", "produce help message")
         ("output_directory,d", po::value<std::string>(&output_directory), "skeleton output directory")
         ("output_name,o", po::value<std::string>(&output_name),"output name of the skeleton file when there is only one input mesh")
-        ("format,f", po::value<std::string>(&output_extension),"output file format (median, balls, moff and json)")
+        ("format,f", po::value<std::string>(&output_extension),"output file format (median, balls, moff and web)")
         ("mesh,m", po::value<std::string>(&input_mesh_filename),"file name of the input mesh")
         ("skeleton,s", po::value<std::string>(&input_skeleton_filename),"file name of the input skeleton")
         ;

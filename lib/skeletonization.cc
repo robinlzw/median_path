@@ -61,9 +61,6 @@ BEGIN_MP_NAMESPACE
       case structurer::parameters::WEIGHTED_ALPHA_SHAPE:
         regular_triangulation_reconstruction( output, params.m_structurer_parameters );
         break;
-      case structurer::parameters::DELAUNAY_RECONSTRUCTION:
-        LOG( debug, "not available yet");
-        break;
 
       case structurer::parameters::POWERSHAPE:
         if( params.m_geometry_method != parameters::POLAR_BALLS &&

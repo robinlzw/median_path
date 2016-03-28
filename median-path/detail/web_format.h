@@ -2,8 +2,8 @@
  *      Author: T. Delame (tdelame@gmail.com)
  */
 
-# ifndef MEDIAN_PATH_JSON_FORMAT_H_
-# define MEDIAN_PATH_JSON_FORMAT_H_
+# ifndef MEDIAN_PATH_WEB_FORMAT_H_
+# define MEDIAN_PATH_WEB_FORMAT_H_
 
 # include "../io.h"
 # include "io_utilities.h"
@@ -16,13 +16,13 @@
 BEGIN_MP_NAMESPACE
 namespace io {
 
-  static const std::string json_format_extension = ".json";
+  static const std::string web_format_extension = ".web";
 
-  struct json_saver
+  struct web_saver
     : public saver {
     bool can_save_to( const std::string& filename ) override
     {
-      return graphics_origin::tools::get_extension( filename ) == json_format_extension;
+      return graphics_origin::tools::get_extension( filename ) == web_format_extension;
     }
     bool save( median_skeleton& skeleton, const std::string& filename ) override
     {

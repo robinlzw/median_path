@@ -6,6 +6,7 @@
 # include <graphics-origin/tools/log.h>
 
 # include <boost/program_options.hpp>
+
 # include <sys/ioctl.h>
 # include <stdio.h>
 # include <stdlib.h>
@@ -101,7 +102,7 @@ struct application_parameters {
         ("help,h", "produce help message")
         ("output_directory,d", po::value<std::string>(&output_directory), "skeleton output directory")
         ("output_name,o", po::value<std::string>(&output_name),"output name of the skeleton file when there is only one input mesh")
-        ("format,f", po::value<std::string>(&output_extension),"output file format (median, balls, moff and json)");
+        ("format,f", po::value<std::string>(&output_extension),"output file format (median, balls, moff and web)");
 
     po::options_description skeletonization(
         "Skeletonization options", line_length, line_length > 10 ? line_length -10 : line_length );
@@ -167,14 +168,18 @@ struct application_parameters {
           vm);
       po::notify(vm);
 
+
+      if( vm.count("version" ) )
+        std::cout<< version_string << std::endl;
+
       if( vm.count("help") )
         {
           std::cout<< help_string << visible << std::endl;
           exit( EXIT_SUCCESS );
         }
 
-      if( vm.count("version" ) )
-        std::cout<< version_string << std::endl;
+
+
 
       for( auto iterator = input_filename.begin(), end = input_filename.end();
           iterator != end; )
@@ -239,6 +244,6 @@ int main( int argc, char* argv[] )
       std::cerr << "exception caught: " << e.what() << std::endl;
       return_value = EXIT_FAILURE;
     }
-  boost::log::core::get()->flush();
+  graphics_origin::tools::flush_log();
   return return_value;
 }
