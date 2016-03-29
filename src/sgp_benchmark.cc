@@ -285,11 +285,27 @@ static void benchmark_from_shrinking_ball_skeletonization(
     median_path::skeletonizer::parameters& params )
 {
   params.m_geometry_method = median_path::skeletonizer::parameters::SHRINKING_BALLS;
+  params.m_shrinking_ball.m_radius_method = median_path::skeletonizer::shrinking_ball_parameters::CONSTANT;
   params.m_structurer_parameters.m_topology_method = median_path::structurer::parameters::DELAUNAY_RECONSTRUCTION;
   benchmark_delaunay_reconstruction( input, filename, app_params, params );
 
   params.m_structurer_parameters.m_topology_method = median_path::structurer::parameters::WEIGHTED_ALPHA_SHAPE;
   benchmark_weighted_alpha_shape_reconstruction( input, filename, app_params, params );
+}
+
+static void prepare_directories( application_parameters& params )
+{
+  boost::filesystem::create_directories( params.output_directory + "/voronoi/voronoi");
+  boost::filesystem::create_directories( params.output_directory + "/voronoi/powershape");
+  boost::filesystem::create_directories( params.output_directory + "/voronoi/delaunay");
+  boost::filesystem::create_directories( params.output_directory + "/voronoi/weighted_alpha_shape");
+
+  boost::filesystem::create_directories( params.output_directory + "/powershape/powershape");
+  boost::filesystem::create_directories( params.output_directory + "/powershape/delaunay");
+  boost::filesystem::create_directories( params.output_directory + "/powershape/weighted_alpha_shape");
+
+  boost::filesystem::create_directories( params.output_directory + "/shrinking_ball/delaunay");
+  boost::filesystem::create_directories( params.output_directory + "/shrinking_ball/weighted_alpha_shape");
 }
 
 int main( int argc, char* argv[] )
@@ -298,6 +314,11 @@ int main( int argc, char* argv[] )
   try
     {
       application_parameters params( argc, argv );
+
+      prepare_directories( params );
+
+
+
       median_path::skeletonizer::parameters skeletonizer_params;
       skeletonizer_params.m_build_topology = true;
       skeletonizer_params.m_merge_clusters = false;
@@ -312,6 +333,7 @@ int main( int argc, char* argv[] )
           benchmark_from_voronoi_skeletonization( input, filename, params, skeletonizer_params );
           benchmark_from_powershape_skeletonization( input, filename, params, skeletonizer_params );
           benchmark_from_shrinking_ball_skeletonization( input, filename, params, skeletonizer_params );
+          std::cout << std::endl;
         }
     }
   catch( std::exception& e )
