@@ -42,6 +42,7 @@ BEGIN_MP_NAMESPACE
                   indices.push_back( k );
                 }
             }
+
           std::sort( indices.begin(), indices.end() );
           auto last = std::unique( indices.begin(), indices.end() );
 

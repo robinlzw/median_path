@@ -118,19 +118,26 @@ BEGIN_MP_NAMESPACE
 
     voronoi_balls.resize( delaunay_tetrahedrisation->number_of_finite_cells() );
     size_t voronoi_ball_index = 0;
-    for( auto cit = delaunay_tetrahedrisation->finite_cells_begin(),
-        end = delaunay_tetrahedrisation->finite_cells_end(); cit != end; ++ cit )
+    for( auto cit = delaunay_tetrahedrisation->cells_begin(),
+        end = delaunay_tetrahedrisation->cells_end(); cit != end; ++ cit )
       {
-        auto& info = voronoi_balls[ voronoi_ball_index ];
-        auto voronoi_vertex = delaunay_tetrahedrisation->dual( cit );
-        info.atom = vec4 {
-          CGAL::to_double( voronoi_vertex.x() ),
-          CGAL::to_double( voronoi_vertex.y() ),
-          CGAL::to_double( voronoi_vertex.z() ),
-          CGAL::to_double(CGAL::squared_distance( cit->vertex(0)->point(), voronoi_vertex ))
-        };
-        cit->info() = &info;
-        ++voronoi_ball_index;
+        if( !delaunay_tetrahedrisation->is_infinite( cit ) )
+          {
+            auto& info = voronoi_balls[ voronoi_ball_index ];
+            auto voronoi_vertex = delaunay_tetrahedrisation->dual( cit );
+            info.atom = vec4 {
+              CGAL::to_double( voronoi_vertex.x() ),
+              CGAL::to_double( voronoi_vertex.y() ),
+              CGAL::to_double( voronoi_vertex.z() ),
+              CGAL::to_double(CGAL::squared_distance( cit->vertex(0)->point(), voronoi_vertex ))
+            };
+            cit->info() = &info;
+            ++voronoi_ball_index;
+          }
+        else
+          {
+            cit->info() = nullptr;
+          }
       }
 
     # pragma omp parallel for
@@ -572,6 +579,20 @@ BEGIN_MP_NAMESPACE
                 input,
                 vertex_to_atoms,
                 params.m_structurer_parameters );
+          }
+        else
+          {
+            # pragma omp parallel for
+            for( size_t i = 0; i < nb_balls; ++ i )
+              {
+                auto& info = voronoi_balls[ i ];
+                if( info.status == voronoi_ball::ATOM )
+                  {
+                    info.atom.w = std::sqrt( info.atom.w );
+                    # pragma omp critical
+                    output.add( info.atom );
+                  }
+              }
           }
       }
     else

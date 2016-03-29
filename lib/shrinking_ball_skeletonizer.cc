@@ -58,7 +58,7 @@ BEGIN_MP_NAMESPACE
 
     std::vector< std::vector< uint32_t > > vertex_to_atoms;
     bool keep_vertex_to_atoms = params.m_build_topology
-        && params.m_structurer_parameters.m_topology_method == structurer::parameters::DELAUNAY_RECONSTRUCTION;
+        && (params.m_structurer_parameters.m_topology_method == structurer::parameters::DELAUNAY_RECONSTRUCTION);
 
     if( keep_vertex_to_atoms )
       vertex_to_atoms.resize( nsamples );
@@ -122,13 +122,13 @@ BEGIN_MP_NAMESPACE
             {
               # pragma omp critical
               {
-                output.add( median_skeleton::atom( center, radius ) );
                 if( keep_vertex_to_atoms )
                   {
                     auto id = output.get_number_of_atoms();
                     vertex_to_atoms[ indices[0] ].push_back( id );
                     vertex_to_atoms[ indices[1] ].push_back( id );
                   }
+                output.add( median_skeleton::atom( center, radius ) );
               }
             }
         }

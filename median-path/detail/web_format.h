@@ -27,6 +27,11 @@ namespace io {
     bool save( median_skeleton& skeleton, const std::string& filename ) override
     {
       std::ofstream output( filename );
+      if( !output.is_open() )
+        {
+          LOG( error, "cannot open file " << filename );
+          return false;
+        }
       output.precision( 8 );
 
       const auto natoms = skeleton.get_number_of_atoms();

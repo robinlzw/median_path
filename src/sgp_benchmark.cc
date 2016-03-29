@@ -141,9 +141,9 @@ struct application_parameters {
         "powershape",
         "voronoi"
     };
-    static const std::string topology_directories[3] = {
+    static const std::string topology_directories[4] = {
         "weighted_alpha_shape",
-        "delaunay"
+        "delaunay",
         "powershape",
         "voronoi"
     };
@@ -155,89 +155,120 @@ struct application_parameters {
   }
 };
 
+struct skeletonization_statistics {
+
+  skeletonization_statistics()
+    : atoms{0}, links{0}, faces{0},
+      execution_time{0}
+  {}
+
+  uint32_t atoms;
+  uint64_t links;
+  uint64_t faces;
+  median_path::real execution_time;
+};
+
+struct statistics {
+  std::string mesh_name;
+  uint32_t mesh_vertices;
+  uint64_t mesh_links;
+  uint64_t mesh_faces;
+
+  skeletonization_statistics voronoi_voronoi;
+  skeletonization_statistics voronoi_powershape;
+  skeletonization_statistics voronoi_delaunay;
+  skeletonization_statistics voronoi_alpha;
+
+  skeletonization_statistics powershape_powershape;
+  skeletonization_statistics powershape_delaunay;
+  skeletonization_statistics powershape_alpha;
+
+  skeletonization_statistics shrinking_ball_delaunay;
+  skeletonization_statistics shrinking_ball_alpha;
+};
+
 static void benchmark_voronoi_reconstruction(
     graphics_origin::geometry::mesh& input,
     const std::string& filename,
     application_parameters& app_params,
-    median_path::skeletonizer::parameters& params )
+    median_path::skeletonizer::parameters& params,
+    skeletonization_statistics& stats )
 {
   params.m_structurer_parameters.m_topology_method = median_path::structurer::parameters::VORONOI;
-  {
-    median_path::median_skeleton result;
-    median_path::skeletonizer algorithm( input, result, params );
-    std::cout << result.get_number_of_atoms() << " & "
-        << result.get_number_of_links() << " & "
-        << result.get_number_of_faces() << " & "
-        << algorithm.get_execution_time() << " & ";
-    result.save(
-        app_params.get_output_filename(
-            filename,
-            params.m_geometry_method,
-            params.m_structurer_parameters.m_topology_method ) );
-  }
+  median_path::median_skeleton result;
+  median_path::skeletonizer algorithm( input, result, params );
+  stats.atoms = result.get_number_of_atoms();
+  stats.links = result.get_number_of_links();
+  stats.faces = result.get_number_of_faces();
+  stats.execution_time = algorithm.get_execution_time();
+  result.save(
+      app_params.get_output_filename(
+          filename,
+          params.m_geometry_method,
+          params.m_structurer_parameters.m_topology_method ) );
 }
 
 static void benchmark_powershape_reconstruction(
     graphics_origin::geometry::mesh& input,
     const std::string& filename,
     application_parameters& app_params,
-    median_path::skeletonizer::parameters& params )
+    median_path::skeletonizer::parameters& params,
+    skeletonization_statistics& stats )
 {
   params.m_structurer_parameters.m_topology_method = median_path::structurer::parameters::POWERSHAPE;
-  {
-    median_path::median_skeleton result;
-    median_path::skeletonizer algorithm( input, result, params );
-    std::cout << result.get_number_of_links() << " & "
-        << result.get_number_of_faces() << " & "
-        << algorithm.get_execution_time() << " & ";
-    result.save(
-        app_params.get_output_filename(
-            filename,
-            params.m_geometry_method,
-            params.m_structurer_parameters.m_topology_method ) );
-  }
+  median_path::median_skeleton result;
+  median_path::skeletonizer algorithm( input, result, params );
+  stats.atoms = result.get_number_of_atoms();
+  stats.links = result.get_number_of_links();
+  stats.faces = result.get_number_of_faces();
+  stats.execution_time = algorithm.get_execution_time();
+  result.save(
+      app_params.get_output_filename(
+          filename,
+          params.m_geometry_method,
+          params.m_structurer_parameters.m_topology_method ) );
 }
 
 static void benchmark_delaunay_reconstruction(
     graphics_origin::geometry::mesh& input,
     const std::string& filename,
     application_parameters& app_params,
-    median_path::skeletonizer::parameters& params )
+    median_path::skeletonizer::parameters& params,
+    skeletonization_statistics& stats )
 {
   params.m_structurer_parameters.m_topology_method = median_path::structurer::parameters::DELAUNAY_RECONSTRUCTION;
-  {
-    median_path::median_skeleton result;
-    median_path::skeletonizer algorithm( input, result, params );
-    std::cout << result.get_number_of_links() << " & "
-        << result.get_number_of_faces() << " & "
-        << algorithm.get_execution_time() << " & ";
-    result.save(
-        app_params.get_output_filename(
-            filename,
-            params.m_geometry_method,
-            params.m_structurer_parameters.m_topology_method ) );
-  }
+  median_path::median_skeleton result;
+  median_path::skeletonizer algorithm( input, result, params );
+  stats.atoms = result.get_number_of_atoms();
+  stats.links = result.get_number_of_links();
+  stats.faces = result.get_number_of_faces();
+  stats.execution_time = algorithm.get_execution_time();
+  result.save(
+      app_params.get_output_filename(
+          filename,
+          params.m_geometry_method,
+          params.m_structurer_parameters.m_topology_method ) );
 }
 
 static void benchmark_weighted_alpha_shape_reconstruction(
     graphics_origin::geometry::mesh& input,
     const std::string& filename,
     application_parameters& app_params,
-    median_path::skeletonizer::parameters& params )
+    median_path::skeletonizer::parameters& params,
+    skeletonization_statistics& stats )
 {
   params.m_structurer_parameters.m_topology_method = median_path::structurer::parameters::WEIGHTED_ALPHA_SHAPE;
-  {
-    median_path::median_skeleton result;
-    median_path::skeletonizer algorithm( input, result, params );
-    std::cout << result.get_number_of_links() << " & "
-        << result.get_number_of_faces() << " & "
-        << algorithm.get_execution_time() << " & ";
-    result.save(
-        app_params.get_output_filename(
-            filename,
-            params.m_geometry_method,
-            params.m_structurer_parameters.m_topology_method ) );
-  }
+  median_path::median_skeleton result;
+  median_path::skeletonizer algorithm( input, result, params );
+  stats.atoms = result.get_number_of_atoms();
+  stats.links = result.get_number_of_links();
+  stats.faces = result.get_number_of_faces();
+  stats.execution_time = algorithm.get_execution_time();
+  result.save(
+      app_params.get_output_filename(
+          filename,
+          params.m_geometry_method,
+          params.m_structurer_parameters.m_topology_method ) );
 }
 
 
@@ -245,52 +276,54 @@ static void benchmark_from_voronoi_skeletonization(
     graphics_origin::geometry::mesh& input,
     const std::string& filename,
     application_parameters& app_params,
-    median_path::skeletonizer::parameters& params )
+    median_path::skeletonizer::parameters& params,
+    statistics& stats )
 {
   params.m_geometry_method = median_path::skeletonizer::parameters::VORONOI_BALLS;
-  params.m_structurer_parameters.m_topology_method = median_path::structurer::parameters::VORONOI;
-  benchmark_voronoi_reconstruction( input, filename, app_params, params );
-
-  params.m_structurer_parameters.m_topology_method = median_path::structurer::parameters::POWERSHAPE;
-  benchmark_powershape_reconstruction( input, filename, app_params, params );
 
   params.m_structurer_parameters.m_topology_method = median_path::structurer::parameters::DELAUNAY_RECONSTRUCTION;
-  benchmark_delaunay_reconstruction( input, filename, app_params, params );
+  benchmark_delaunay_reconstruction( input, filename, app_params, params, stats.voronoi_delaunay );
+
+  params.m_structurer_parameters.m_topology_method = median_path::structurer::parameters::VORONOI;
+  benchmark_voronoi_reconstruction( input, filename, app_params, params, stats.voronoi_voronoi );
+
+  params.m_structurer_parameters.m_topology_method = median_path::structurer::parameters::POWERSHAPE;
+  benchmark_powershape_reconstruction( input, filename, app_params, params, stats.voronoi_powershape );
 
   params.m_structurer_parameters.m_topology_method = median_path::structurer::parameters::WEIGHTED_ALPHA_SHAPE;
-  benchmark_weighted_alpha_shape_reconstruction( input, filename, app_params, params );
+  benchmark_weighted_alpha_shape_reconstruction( input, filename, app_params, params, stats.voronoi_alpha );
 }
 
 static void benchmark_from_powershape_skeletonization(
     graphics_origin::geometry::mesh& input,
     const std::string& filename,
     application_parameters& app_params,
-    median_path::skeletonizer::parameters& params )
+    median_path::skeletonizer::parameters& params,
+    statistics& stats )
 {
   params.m_geometry_method = median_path::skeletonizer::parameters::POLAR_BALLS;
-  params.m_structurer_parameters.m_topology_method = median_path::structurer::parameters::POWERSHAPE;
-  benchmark_powershape_reconstruction( input, filename, app_params, params );
 
   params.m_structurer_parameters.m_topology_method = median_path::structurer::parameters::DELAUNAY_RECONSTRUCTION;
-  benchmark_delaunay_reconstruction( input, filename, app_params, params );
+  benchmark_delaunay_reconstruction( input, filename, app_params, params, stats.powershape_delaunay );
+
+  params.m_structurer_parameters.m_topology_method = median_path::structurer::parameters::POWERSHAPE;
+  benchmark_powershape_reconstruction( input, filename, app_params, params, stats.powershape_powershape );
 
   params.m_structurer_parameters.m_topology_method = median_path::structurer::parameters::WEIGHTED_ALPHA_SHAPE;
-  benchmark_weighted_alpha_shape_reconstruction( input, filename, app_params, params );
+  benchmark_weighted_alpha_shape_reconstruction( input, filename, app_params, params, stats.powershape_alpha );
 }
 
 static void benchmark_from_shrinking_ball_skeletonization(
     graphics_origin::geometry::mesh& input,
     const std::string& filename,
     application_parameters& app_params,
-    median_path::skeletonizer::parameters& params )
+    median_path::skeletonizer::parameters& params,
+    statistics& stats )
 {
   params.m_geometry_method = median_path::skeletonizer::parameters::SHRINKING_BALLS;
   params.m_shrinking_ball.m_radius_method = median_path::skeletonizer::shrinking_ball_parameters::CONSTANT;
-  params.m_structurer_parameters.m_topology_method = median_path::structurer::parameters::DELAUNAY_RECONSTRUCTION;
-  benchmark_delaunay_reconstruction( input, filename, app_params, params );
-
-  params.m_structurer_parameters.m_topology_method = median_path::structurer::parameters::WEIGHTED_ALPHA_SHAPE;
-  benchmark_weighted_alpha_shape_reconstruction( input, filename, app_params, params );
+  benchmark_delaunay_reconstruction( input, filename, app_params, params, stats.shrinking_ball_delaunay );
+  benchmark_weighted_alpha_shape_reconstruction( input, filename, app_params, params, stats.shrinking_ball_alpha );
 }
 
 static void prepare_directories( application_parameters& params )
@@ -325,15 +358,67 @@ int main( int argc, char* argv[] )
       skeletonizer_params.m_structurer_parameters.m_build_faces = true;
       skeletonizer_params.m_structurer_parameters.m_neighbors_should_intersect = true;
 
+      std::vector< statistics > stats;
+
       for( auto& filename : params.input_mesh_names )
         {
-          std::cout << graphics_origin::tools::get_basename( filename ) << " & ";
           graphics_origin::geometry::mesh input(filename);
 
-          benchmark_from_voronoi_skeletonization( input, filename, params, skeletonizer_params );
-          benchmark_from_powershape_skeletonization( input, filename, params, skeletonizer_params );
-          benchmark_from_shrinking_ball_skeletonization( input, filename, params, skeletonizer_params );
-          std::cout << std::endl;
+          statistics stat;
+          stat.mesh_name = graphics_origin::tools::get_stem( filename );
+          stat.mesh_vertices = input.n_vertices();
+          stat.mesh_links = input.n_edges();
+          stat.mesh_faces = input.n_faces();
+
+          benchmark_from_voronoi_skeletonization( input, filename, params, skeletonizer_params, stat );
+          benchmark_from_powershape_skeletonization( input, filename, params, skeletonizer_params, stat );
+          benchmark_from_shrinking_ball_skeletonization( input, filename, params, skeletonizer_params, stat );
+
+          stats.push_back( stat );
+        }
+
+      std::cout << "Execution statistics:\n";
+      for( auto& stat : stats )
+        {
+          std::cout << "for input mesh [" << stat.mesh_name << "]\n"
+              << "* voronoi    - voronoi    in " << stat.voronoi_voronoi.execution_time << " (s)\n"
+              << "    atoms " << stat.voronoi_voronoi.atoms << "\n"
+              << "    links " << stat.voronoi_voronoi.links << "\n"
+              << "    faces " << stat.voronoi_voronoi.faces << "\n"
+              << "  voronoi    - powershape in " << stat.voronoi_powershape.execution_time << " (s)\n"
+              << "    atoms " << stat.voronoi_powershape.atoms << "\n"
+              << "    links " << stat.voronoi_powershape.links << "\n"
+              << "    faces " << stat.voronoi_powershape.faces << "\n"
+              << "  voronoi    - delaunay   in " << stat.voronoi_delaunay.execution_time << " (s)\n"
+              << "    atoms " << stat.voronoi_delaunay.atoms << "\n"
+              << "    links " << stat.voronoi_delaunay.links << "\n"
+              << "    faces " << stat.voronoi_delaunay.faces << "\n"
+              << "  voronoi    - alpha      in " << stat.voronoi_alpha.execution_time << " (s)\n"
+              << "    atoms " << stat.voronoi_alpha.atoms << "\n"
+              << "    links " << stat.voronoi_alpha.links << "\n"
+              << "    faces " << stat.voronoi_alpha.faces << "\n"
+
+              << "* powershape - powershape in " << stat.powershape_powershape.execution_time << " (s)\n"
+              << "    atoms " << stat.powershape_powershape.atoms << "\n"
+              << "    links " << stat.powershape_powershape.links << "\n"
+              << "    faces " << stat.powershape_powershape.faces << "\n"
+              << "  powershape - delaunay   in " << stat.powershape_delaunay.execution_time << " (s)\n"
+              << "    atoms " << stat.powershape_delaunay.atoms << "\n"
+              << "    links " << stat.powershape_delaunay.links << "\n"
+              << "    faces " << stat.powershape_delaunay.faces << "\n"
+              << "  powershape - alpha      in " << stat.powershape_alpha.execution_time << " (s)\n"
+              << "    atoms " << stat.powershape_alpha.atoms << "\n"
+              << "    links " << stat.powershape_alpha.links << "\n"
+              << "    faces " << stat.powershape_alpha.faces << "\n"
+
+              << "* shrinking  - delaunay   in " << stat.shrinking_ball_delaunay.execution_time << " (s)\n"
+              << "    atoms " << stat.shrinking_ball_delaunay.atoms << "\n"
+              << "    links " << stat.shrinking_ball_delaunay.links << "\n"
+              << "    faces " << stat.shrinking_ball_delaunay.faces << "\n"
+              << "  shrinking  - alpha      in " << stat.shrinking_ball_alpha.execution_time << " (s)\n"
+              << "    atoms " << stat.shrinking_ball_alpha.atoms << "\n"
+              << "    links " << stat.shrinking_ball_alpha.links << "\n"
+              << "    faces " << stat.shrinking_ball_alpha.faces << "\n";
         }
     }
   catch( std::exception& e )

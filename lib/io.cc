@@ -115,6 +115,10 @@ BEGIN_MP_NAMESPACE
               }
           }
       savers_mutex.unlock();
+      if( !result )
+        {
+          LOG( error, "impossible to save this skeleton to " << filename );
+        }
       return result;
     }
 
