@@ -34,4 +34,19 @@ target_link_libraries( sgp_benchmark
   median_path ${MP_LIBRARIES})
   
 set_property( TARGET sgp_benchmark
+	PROPERTY RUNTIME_OUTPUT_DIRECTORY ${MP_APPLICATIONS_OUT_DIR} )
+	
+	
+	
+add_executable( sgp_benchmark_viewer
+	full_screen_scene_application.cc full_screen_scene_application.h
+	sgp_benchmark_viewer.cc
+	simple_camera.cc simple_camera.h
+	simple_gl_renderer.h
+	skeletons_renderable.cc skeletons_renderable.h)
+
+target_link_libraries( sgp_benchmark_viewer
+	median_path ${MP_LIBRARIES})
+
+set_property( TARGET sgp_benchmark
 	PROPERTY RUNTIME_OUTPUT_DIRECTORY ${MP_APPLICATIONS_OUT_DIR} )	

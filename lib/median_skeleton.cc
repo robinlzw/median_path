@@ -96,6 +96,17 @@ BEGIN_MP_NAMESPACE
     other.m_impl = new datastructure{};
   }
 
+
+  median_skeleton&
+  median_skeleton::operator=( median_skeleton&& other )
+  {
+    delete m_impl;
+    m_impl = other.m_impl;
+    other.m_impl = nullptr;
+    return *this;
+  }
+
+
   median_skeleton::median_skeleton( const std::string& filename )
     : m_impl{ new datastructure{} }
   {
@@ -219,6 +230,27 @@ BEGIN_MP_NAMESPACE
         b.m_hsides.x = bball.w;
         b.m_hsides.y = bball.w;
         b.m_hsides.z = bball.w;
+      }
+  }
+
+  void median_skeleton::compute_minmax_radii( real& minr, real& maxr ) const
+  {
+    # pragma omp declare reduction(minatomradius: real: omp_out = std::min( omp_out, omp_in ))\
+      initializer(omp_priv = REAL_MAX )
+    # pragma omp declare reduction(maxatomradius: real: omp_out = std::max( omp_out, omp_in ))\
+      initializer(omp_priv = -REAL_MAX )
+    auto const size = m_impl->m_atoms_size;
+    if( size )
+      {
+        minr = REAL_MAX;
+        maxr =-REAL_MAX;
+        # pragma omp parallel for reduction(minatomradius:minr) reduction(maxatomradius:maxr)
+        for( atom_index i = 0; i < size; ++ i )
+          {
+            const auto r = m_impl->m_atoms[ i ].w;
+            minr = std::min( minr, r );
+            maxr = std::max( maxr, r );
+          }
       }
   }
 
