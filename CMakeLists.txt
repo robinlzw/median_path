@@ -54,7 +54,7 @@ option(
 option(
   MP_USE_GO_APPLICATION
   "Set to ON to use GraphicsOrigin::application. If set to false, only command line tools would be available."
-  OFF)
+  ON)
 
 option(
   MP_USE_GO_GEOMETRY_WITH_CUDA

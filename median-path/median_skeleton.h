@@ -187,6 +187,9 @@ BEGIN_MP_NAMESPACE
      * @param filename The path of the file describing the skeleton to build. */
     median_skeleton( const std::string& filename );
 
+    median_skeleton&
+    operator=( median_skeleton&& other );
+
     ~median_skeleton();
     ///@}
 
@@ -297,6 +300,14 @@ BEGIN_MP_NAMESPACE
      * @param b The resulting bounding box.
      */
     void compute_centers_bounding_box( graphics_origin::geometry::aabox& b ) const;
+
+    /**@brief Compute min and max radii.
+     *
+     * This function computes the minimum and maximum radii of atoms in this
+     * skeleton.
+     * @param minr The minimum radius.
+     * @param maxr The maximum radius.*/
+    void compute_minmax_radii( real& minr, real& maxr ) const;
 
     /**@name Atom management
      * @{ */
