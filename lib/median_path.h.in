@@ -26,5 +26,13 @@ namespace median_path {
   typedef graphics_origin::gpu_vec4 gpu_vec4;
   typedef graphics_origin::gpu_mat3 gpu_mat3;
   typedef graphics_origin::gpu_mat4 gpu_mat4;
+  
+  using glm::cross;
+	using glm::dot;
+	using glm::distance;
+	using glm::length;
+	using glm::normalize;
+	using glm::max;
+	using glm::min;
 }
 # endif
