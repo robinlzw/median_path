@@ -5,6 +5,8 @@
 # define MEDIAN_PATH_MINOR @Median-Path_VERSION_MINOR@
 #
 # include <graphics-origin/graphics_origin.h>
+# include <graphics-origin/geometry/matrix.h>
+# include <graphics-origin/geometry/vec.h>
 #
 # define MP_NAMESPACE median_path
 # define BEGIN_MP_NAMESPACE namespace MP_NAMESPACE {
@@ -12,6 +14,17 @@
 #
 namespace median_path {
   typedef graphics_origin::real real;
+  typedef graphics_origin::vec2 vec2;
+  typedef graphics_origin::vec3 vec3;
+  typedef graphics_origin::vec4 vec4;
+  typedef graphics_origin::mat3 mat3;
+  typedef graphics_origin::mat4 mat4;
+  
   typedef graphics_origin::gpu_real gpu_real;
+  typedef graphics_origin::gpu_vec2 gpu_vec2;
+  typedef graphics_origin::gpu_vec3 gpu_vec3;
+  typedef graphics_origin::gpu_vec4 gpu_vec4;
+  typedef graphics_origin::gpu_mat3 gpu_mat3;
+  typedef graphics_origin::gpu_mat4 gpu_mat4;
 }
 # endif
