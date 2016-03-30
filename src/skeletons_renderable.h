@@ -23,10 +23,11 @@ BEGIN_MP_NAMESPACE
     struct storage {
       median_skeleton skeleton;
       unsigned int buffer_ids[number_of_buffers ];
+      unsigned int vao;
       bool dirty;
       bool active;
+      bool destroyed;
 
-      storage( median_skeleton&& skeleton );
       storage& operator=( storage&& other );
       storage();
     };
@@ -49,9 +50,9 @@ BEGIN_MP_NAMESPACE
     skeleton_buffer::handle
     add( median_skeleton&& skeleton );
 
-    void remove( skeleton_buffer::handle );
+    void remove( skeleton_buffer::handle h);
 
-    storage& get( skeleton_buffer::handle );
+    storage& get( skeleton_buffer::handle h);
 
   private:
     void update_gpu_data() override;

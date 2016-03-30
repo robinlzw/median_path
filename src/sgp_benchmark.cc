@@ -364,6 +364,8 @@ int main( int argc, char* argv[] )
         {
           graphics_origin::geometry::mesh input(filename);
 
+          LOG( debug, "dealing now with input shape " << filename );
+
           statistics stat;
           stat.mesh_name = graphics_origin::tools::get_stem( filename );
           stat.mesh_vertices = input.n_vertices();
