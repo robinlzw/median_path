@@ -1,52 +1,22 @@
-add_executable( design_test
-	design_test.cc )
-	
-target_link_libraries( design_test
-  median_path ${MP_LIBRARIES})
+function( add_mp_app executable_name )
+  add_executable( ${executable_name} ${ARGN} )
+  target_link_libraries( ${executable_name} median_path ${MP_LIBRARIES} )
+  set_property( TARGET ${executable_name} PROPERTY RUNTIME_OUTPUT_DIRECTORY ${MP_APPLICATIONS_OUT_DIR} )
+endfunction()
   
-set_property( TARGET design_test
-	PROPERTY RUNTIME_OUTPUT_DIRECTORY ${MP_APPLICATIONS_OUT_DIR} )
-	
-	
-add_executable( skeletonizer
-	skeletonizer.cc )
-	
-target_link_libraries( skeletonizer
-  median_path ${MP_LIBRARIES})
-  
-set_property( TARGET skeletonizer
-	PROPERTY RUNTIME_OUTPUT_DIRECTORY ${MP_APPLICATIONS_OUT_DIR} )
-	
-	
-add_executable( filter_balls_outside_mesh
-	filter_balls_outside_mesh.cc )
-	
-target_link_libraries( filter_balls_outside_mesh
-  median_path ${MP_LIBRARIES})
-  
-set_property( TARGET filter_balls_outside_mesh
-	PROPERTY RUNTIME_OUTPUT_DIRECTORY ${MP_APPLICATIONS_OUT_DIR} )
-	
-add_executable( sgp_benchmark
-	sgp_benchmark.cc )
-	
-target_link_libraries( sgp_benchmark
-  median_path ${MP_LIBRARIES})
-  
-set_property( TARGET sgp_benchmark
-	PROPERTY RUNTIME_OUTPUT_DIRECTORY ${MP_APPLICATIONS_OUT_DIR} )
-	
-	
-	
-add_executable( sgp_benchmark_viewer
+add_mp_app( design_test design_test.cc )
+
+add_mp_app( skeletonizer skeletonizer.cc )
+
+add_mp_app( filter_balls_outside_mesh filter_balls_outside_mesh.cc )
+
+add_mp_app( sgp_benchmark sgp_benchmark.cc )
+
+add_mp_app( sgp_benchmark_viewer
 	full_screen_scene_application.cc full_screen_scene_application.h
 	sgp_benchmark_viewer.cc
 	simple_camera.cc simple_camera.h
 	simple_gl_renderer.h
 	skeletons_renderable.cc skeletons_renderable.h)
-
-target_link_libraries( sgp_benchmark_viewer
-	median_path ${MP_LIBRARIES})
-
-set_property( TARGET sgp_benchmark
-	PROPERTY RUNTIME_OUTPUT_DIRECTORY ${MP_APPLICATIONS_OUT_DIR} )	
+	
+add_mp_app( prepare_mesh_for_benchmark prepare_mesh_for_benchmark.cc )

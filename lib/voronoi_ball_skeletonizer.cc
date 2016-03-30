@@ -37,11 +37,11 @@ BEGIN_MP_NAMESPACE
 
 
     voronoi_ball()
-      : atom{}, idx{0}, status{0}
+      : atom{}, idx{0}, status{0}, touch_4_samples{false}
     {}
 
     voronoi_ball( const voronoi_ball& other )
-      : atom{ other.atom }, idx{ other.idx }, status{ other.status }
+      : atom{ other.atom }, idx{ other.idx }, status{ other.status }, touch_4_samples{false}
     {}
 
     voronoi_ball&
@@ -50,11 +50,13 @@ BEGIN_MP_NAMESPACE
       atom = other.atom;
       idx = other.idx;
       status = other.status;
+      touch_4_samples = other.touch_4_samples;
       return *this;
     }
     median_skeleton::atom atom;
     median_skeleton::atom_index idx;
     int status;
+    bool touch_4_samples;
   };
 
   typedef CGAL::Triangulation_vertex_base_with_info_3< dt_vertex_info, dt_kernel > dt_vertex_base;
@@ -131,6 +133,11 @@ BEGIN_MP_NAMESPACE
               CGAL::to_double( voronoi_vertex.z() ),
               CGAL::to_double(CGAL::squared_distance( cit->vertex(0)->point(), voronoi_vertex ))
             };
+            info.touch_4_samples =
+                cit->vertex(0)->info() != null_dt_vertex_info &&
+                cit->vertex(1)->info() != null_dt_vertex_info &&
+                cit->vertex(2)->info() != null_dt_vertex_info &&
+                cit->vertex(3)->info() != null_dt_vertex_info;
             cit->info() = &info;
             ++voronoi_ball_index;
           }
@@ -144,7 +151,7 @@ BEGIN_MP_NAMESPACE
     for( size_t i = 0; i < voronoi_ball_index; ++ i )
       {
         auto& info = voronoi_balls[ i ];
-        if ( input.contain( vec3(info.atom) ) )
+        if ( info.touch_4_samples && input.contain( vec3(info.atom) ) )
           info.status |= voronoi_ball::INSIDE_SHAPE;
       }
   }
