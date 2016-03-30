@@ -24,7 +24,7 @@ namespace median_path {
     setPersistentOpenGLContext(true);
     setPersistentSceneGraph(true);
 
-    setSource(QUrl::fromLocalFile("qml/full_screen_scene_application.qml"));
+    setSource(QUrl::fromLocalFile("qml/FullscreenSceneWindow.qml"));
   }
 
   full_screen_scene_application::~full_screen_scene_application()

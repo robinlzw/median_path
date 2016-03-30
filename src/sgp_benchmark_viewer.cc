@@ -27,11 +27,11 @@ int main( int argc, char* argv[] )
 {
   int dummy_argc = 1;
   QGuiApplication qgui( dummy_argc, argv );
+
+  qmlRegisterType<simple_gl_window>("MedianPath", 1, 0, "GLWindow");
+  qmlRegisterType<median_path::simple_camera>("MedianPath", 1, 0, "GLCamera");
+
   median_path::full_screen_scene_application app;
-
-  qmlRegisterType<simple_gl_window>("SGPBenchmarkViewer", 1, 0, "GLWindow");
-  qmlRegisterType<median_path::simple_camera>("SGPBenchmarkViewer", 1, 0, "GLCamera");
-
   app.show();
   app.raise();
   return qgui.exec();
