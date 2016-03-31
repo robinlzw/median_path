@@ -110,7 +110,8 @@ public:
 
 
     auto skeletons = new median_path::median_skeletons_renderable( skeleton_program );
-    auto handle = skeletons->add( params.input_directory + "/voronoi/voronoi/" + params.input_stem + ".median" );
+//    auto handle = skeletons->add( params.input_directory + "/voronoi/delaunay/" + params.input_stem + ".median" );
+    auto handle = skeletons->add( "build/benchmark/voronoi/weighted_alpha_shape/ico.median" );//params.input_directory + "/voronoi/delaunay/" + params.input_stem + ".median" );
     auto& storage = skeletons->get( handle );
     storage.active = true;
     add_renderable( skeletons );

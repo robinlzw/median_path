@@ -28,8 +28,9 @@ QtObject {
   }
 
   property QtObject z: QtObject {
-    property int app_menu: 500
+		property int top:1000
     property int scene_window: 600
+    property int app_menu: 500
     property int toolbar: 400
   }
 }

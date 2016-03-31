@@ -1,5 +1,7 @@
 import QtQuick 2.5
+import QtQuick.Layouts 1.0
 import QtQuick.Controls 1.4
+import QtQuick.Controls.Styles 1.4
 import MedianPath 1.0
 import "."
 
@@ -39,10 +41,37 @@ Rectangle {
     }
   }
   
+  GroupBox {
+    title: "Geometry method"
+    z: Style.z.top
+    RowLayout {
+      ExclusiveGroup{ id: geometry_method_group }
+      RadioButton {
+				id: voronoi_balls
+      	text: "Voronoi Balls"
+      	exclusiveGroup: geometry_method_group
+    	}
+    	
+    	RadioButton {
+      	id: polar_balls
+      	text: "Polar Balls"
+      	exclusiveGroup: geometry_method_group
+    	}
+    
+    	RadioButton {
+      	id: shrinking_balls
+      	text: "Shrinking Balls"
+      	exclusiveGroup: geometry_method_group
+    	}
+    }
+  }
+  
+  
   GLWindow {
     id: glwindow
     width: parent.width
     height:parent.height
+    z: Style.z.scene_window
     anchors.centerIn: parent
     camera: cam1
     focus: true

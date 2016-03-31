@@ -76,11 +76,20 @@ namespace io {
       if( m_status.reading_header )
         {
           if( m_status.reading_atoms )
-            m_skeleton.reserve_atoms( i );
+            {
+              m_skeleton.reserve_atoms( i );
+              m_status.reading_atoms = 0;
+            }
           else if( m_status.reading_links )
-            m_skeleton.reserve_links( i );
+            {
+              m_skeleton.reserve_links( i );
+              m_status.reading_links = 0;
+            }
           else if( m_status.reading_faces )
-            m_skeleton.reserve_faces( i );
+            {
+              m_skeleton.reserve_faces( i );
+              m_status.reading_faces = 0;
+            }
         }
       else
         {
@@ -112,11 +121,20 @@ namespace io {
       if( m_status.reading_header )
         {
           if( m_status.reading_atoms )
-            m_skeleton.reserve_atoms( i );
+            {
+              m_skeleton.reserve_atoms( i );
+              m_status.reading_atoms = 0;
+            }
           else if( m_status.reading_links )
-            m_skeleton.reserve_links( i );
+            {
+              m_skeleton.reserve_links( i );
+              m_status.reading_links = 0;
+            }
           else if( m_status.reading_faces )
-            m_skeleton.reserve_faces( i );
+            {
+              m_skeleton.reserve_faces( i );
+              m_status.reading_faces = 0;
+            }
         }
       else
         {
@@ -148,11 +166,20 @@ namespace io {
       if( m_status.reading_header )
         {
           if( m_status.reading_atoms )
-            m_skeleton.reserve_atoms( i );
+            {
+              m_skeleton.reserve_atoms( i );
+              m_status.reading_atoms = 0;
+            }
           else if( m_status.reading_links )
-            m_skeleton.reserve_links( i );
+            {
+              m_skeleton.reserve_links( i );
+              m_status.reading_links = 0;
+            }
           else if( m_status.reading_faces )
-            m_skeleton.reserve_faces( i );
+            {
+              m_skeleton.reserve_faces( i );
+              m_status.reading_faces = 0;
+            }
         }
       else
         {
@@ -184,11 +211,20 @@ namespace io {
       if( m_status.reading_header )
         {
           if( m_status.reading_atoms )
-            m_skeleton.reserve_atoms( i );
+            {
+              m_skeleton.reserve_atoms( i );
+              m_status.reading_atoms = 0;
+            }
           else if( m_status.reading_links )
-            m_skeleton.reserve_links( i );
+            {
+              m_skeleton.reserve_links( i );
+              m_status.reading_links = 0;
+            }
           else if( m_status.reading_faces )
-            m_skeleton.reserve_faces( i );
+            {
+              m_skeleton.reserve_faces( i );
+              m_status.reading_faces = 0;
+            }
         }
       else
         {
