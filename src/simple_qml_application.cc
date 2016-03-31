@@ -2,7 +2,7 @@
  *      Author: T. Delame (tdelame@gmail.com)
  */
 
-# include "full_screen_scene_application.h"
+# include "simple_qml_application.h"
 
 # include <graphics-origin/application/gl_window.h>
 
@@ -10,7 +10,7 @@
 
 namespace median_path {
 
-  full_screen_scene_application::full_screen_scene_application( QWindow* parent )
+  simple_qml_application::simple_qml_application( QWindow* parent )
     : QQuickView( parent )
   {
     QSurfaceFormat format;
@@ -23,11 +23,9 @@ namespace median_path {
     // application is shutting down.
     setPersistentOpenGLContext(true);
     setPersistentSceneGraph(true);
-
-    setSource(QUrl::fromLocalFile("qml/FullscreenSceneWindow.qml"));
   }
 
-  full_screen_scene_application::~full_screen_scene_application()
+  simple_qml_application::~simple_qml_application()
   {
     // As the render threads make use of our QGuiApplication object
     // to clean up gracefully, wait for them to finish before

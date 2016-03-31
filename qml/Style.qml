@@ -2,36 +2,42 @@ pragma Singleton
 import QtQuick 2.3
 
 QtObject {
-  property QtObject main_window: QtObject {
-    property int initial_width: 800
-    property int initial_height: 600
-    property color background: "#dbeafa"
-  }
-
-  property QtObject scene_window: QtObject {
-    property int initial_width: 400
-    property int initial_height: 412
-    property int border_width: 2
-    property color border_color: "#155093"
-    property int radius: 5
-    property string initial_state: "FULLSCREEN"
-
-    property QtObject decoration: QtObject {
-      property int height: 12
-      property color color: "#3284e2"
-    }
-
-    property QtObject toolbar: QtObject {
-      property int spacing: 6
-    }
-  
-  }
 
   property QtObject z: QtObject {
-		property int top:1000
-    property int scene_window: 600
-    property int app_menu: 500
-    property int toolbar: 400
+	property int topology_button:1000
+	property int geometry_button:900
+    property int scene_window: 500
+  }
+  
+  property QtObject geometry_button: QtObject {
+    property color background_inactive: "#dbeafa"
+    property color background_active: "#67a9f0"
+    property color font_color_active: "#000000"
+    property color font_color_inactive: "#858585"
+    
+    property int font_size: 10
+    property int height: 20
+    property int width: 100
+
+  }
+  
+  property QtObject topology_button: QtObject {
+    property color background_inactive: "#C4F5C5"
+    property color background_active: "#89F58D"
+    property color font_color_active: "#000000"
+    property color font_color_inactive: "#858585"
+    
+    property int font_size: 10
+    property int height: 20
+    property int width: 200
+
+  }
+  
+  
+  property QtObject main_window: QtObject {
+    property int initial_width: 800
+    property int initial_height: 800
+  
   }
 }
 
