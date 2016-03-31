@@ -22,6 +22,7 @@ static const std::string help_string =
   "========================\n\n"\
   "Build the necessary skeleton data for the SGP 2016 paper. "\
   "The results are stored in the following directories, relatively to the root directory:\n"\
+  "  shapes/ to store the input shapes\n"\
   "  voronoi/ for Voronoi ball skeletonization\n"\
   "    voronoi/ (Voronoi diagram reconstruction)\n"\
   "    powershape/ (Powershape reconstruction)\n"\
@@ -328,6 +329,8 @@ static void benchmark_from_shrinking_ball_skeletonization(
 
 static void prepare_directories( application_parameters& params )
 {
+  boost::filesystem::create_directories( params.output_directory + "/shapes");
+
   boost::filesystem::create_directories( params.output_directory + "/voronoi/voronoi");
   boost::filesystem::create_directories( params.output_directory + "/voronoi/powershape");
   boost::filesystem::create_directories( params.output_directory + "/voronoi/delaunay");
@@ -377,6 +380,8 @@ int main( int argc, char* argv[] )
           benchmark_from_shrinking_ball_skeletonization( input, filename, params, skeletonizer_params, stat );
 
           stats.push_back( stat );
+
+          input.save( params.output_directory + "/shapes/" + stat.mesh_name + ".ply");
         }
 
       std::cout << "Execution statistics:\n";

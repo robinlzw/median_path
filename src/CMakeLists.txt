@@ -13,7 +13,8 @@ add_mp_app( filter_balls_outside_mesh filter_balls_outside_mesh.cc )
 add_mp_app( sgp_benchmark sgp_benchmark.cc )
 
 add_mp_app( sgp_benchmark_viewer
-	full_screen_scene_application.cc full_screen_scene_application.h
+	simple_qml_application.cc simple_qml_application.h
+	simple_gl_window.cc simple_gl_window.h
 	sgp_benchmark_viewer.cc
 	simple_camera.cc simple_camera.h
 	simple_gl_renderer.h

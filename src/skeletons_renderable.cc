@@ -73,7 +73,7 @@ BEGIN_MP_NAMESPACE
         else
           {
 
-          if( data->dirty )
+          if( data->dirty && data->skeleton.get_number_of_atoms() )
             {
               if( !data->vao )
                 {

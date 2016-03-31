@@ -1,13 +1,10 @@
 /*  Created on: Mar 29, 2016
  *      Author: T. Delame (tdelame@gmail.com)
  */
-# include "full_screen_scene_application.h"
+# include "simple_qml_application.h"
 # include "simple_camera.h"
-# include "simple_gl_renderer.h"
-# include "skeletons_renderable.h"
+# include "simple_gl_window.h"
 
-# include <graphics-origin/application/gl_window.h>
-# include <graphics-origin/application/shader_program.h>
 # include <graphics-origin/tools/log.h>
 
 # include <boost/program_options.hpp>
@@ -22,7 +19,7 @@
 # include <QGuiApplication>
 
 static const std::string version_string =
-  "SGP 2016 Benchmark Viewer tool v0.1 ©2016 Thomas Delame";
+  "SGP 2016 Benchmark Viewer tool v1.0 ©2016 Thomas Delame";
 
 static const std::string help_string =
   "SGP 2016 Benchmark Viewer\n"\
@@ -42,6 +39,7 @@ namespace po = boost::program_options;
 struct application_parameters {
   std::string input_stem;
   std::string input_directory;
+  std::string extension;
 
   application_parameters()
   {}
@@ -61,6 +59,8 @@ struct application_parameters {
          "where the benchmark results had been stored. If not specified, this is the working directory.")
      ("stem,s", po::value<std::string>(&input_stem),
          "stem of the input skeletons to compare (the basename of the input mesh used to compute the skeleton, from which we removed the extension part)")
+     ("format,f", po::value<std::string>(&extension)->default_value("median"),
+         "format of the skeleton files to load (median, web)")
     ;
 
     po::variables_map vm;
@@ -92,38 +92,9 @@ struct application_parameters {
   }
 };
 
-
-static application_parameters params;
-
-class simple_gl_window
-  : public graphics_origin::application::gl_window {
-public:
-  simple_gl_window( QQuickItem* parent = nullptr )
-    : graphics_origin::application::gl_window( parent )
-  {
-    initialize_renderer( new median_path::simple_gl_renderer );
-    auto skeleton_program = std::make_shared<graphics_origin::application::shader_program>( std::list<std::string>{
-      "shaders/skeleton.vert",
-      "shaders/skeleton.geom",
-      "shaders/skeleton.frag"
-    });
-
-
-    auto skeletons = new median_path::median_skeletons_renderable( skeleton_program );
-//    auto handle = skeletons->add( params.input_directory + "/voronoi/delaunay/" + params.input_stem + ".median" );
-    auto handle = skeletons->add( "build/benchmark/voronoi/weighted_alpha_shape/ico.median" );//params.input_directory + "/voronoi/delaunay/" + params.input_stem + ".median" );
-    auto& storage = skeletons->get( handle );
-    storage.active = true;
-    add_renderable( skeletons );
-
-    //TODO: initialize shader programs and renderables depending on the application arguments
-  }
-};
-
-
 int main( int argc, char* argv[] )
 {
-  params = application_parameters( argc, argv );
+  application_parameters params = application_parameters( argc, argv );
 
   int dummy_argc = 1;
   QGuiApplication qgui( dummy_argc, argv );
@@ -131,8 +102,13 @@ int main( int argc, char* argv[] )
   qmlRegisterType<simple_gl_window>("MedianPath", 1, 0, "GLWindow");
   qmlRegisterType<median_path::simple_camera>("MedianPath", 1, 0, "GLCamera");
 
-  median_path::full_screen_scene_application app;
+  median_path::simple_qml_application app;
+  app.setSource( QUrl::fromLocalFile("qml/Viewer.qml"));
   app.show();
+
+  auto window = app.rootObject()->findChild<simple_gl_window*>("glwindow");
+  window->load_benchmark( params.input_stem, params.input_directory, params.extension );
+
   app.raise();
   return qgui.exec();
 }

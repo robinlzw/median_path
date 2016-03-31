@@ -39,15 +39,16 @@ BEGIN_MP_NAMESPACE
         22 > skeleton_buffer;
 
   public:
+    typedef skeleton_buffer::handle handle;
 
     median_skeletons_renderable(
         graphics_origin::application::shader_program_ptr program );
     ~median_skeletons_renderable();
 
-    skeleton_buffer::handle
+    handle
     add( const std::string& skeleton_filename );
 
-    skeleton_buffer::handle
+    handle
     add( median_skeleton&& skeleton );
 
     void remove( skeleton_buffer::handle h);
