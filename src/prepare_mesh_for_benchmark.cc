@@ -14,6 +14,7 @@
 # include <unistd.h>
 # include <iostream>
 # include <iomanip>
+# include <limits>
 
 static const std::string version_string =
   "SGP 2016 Benchmark Building command line tools v0.1 ©2016 Thomas Delame";
@@ -189,10 +190,10 @@ int main( int argc, char* argv[] )
 
                       median_path::vec3 e1{ p2[0] - p1[0], p2[1] - p1[1], p2[2] - p1[2] };
                       median_path::vec3 e2{ p3[0] - p1[0], p3[1] - p1[1], p3[2] - p1[2] };
-                      median_path::real area = median_path::real(0.5) * median_path::length( median_path::cross( e1, e2 ) );
-                      if( area < 5e-6 )
+                      median_path::vec3 normal = median_path::cross( e1, e2 );
+                      if( median_path::length( normal ) < std::numeric_limits<median_path::real>::epsilon() )
                         {
-                          LOG( info, "mesh " << filename << " has triangle #" << fvit->idx() << " with too small area (" << area << ")");
+                          LOG( info, "mesh " << filename << " has triangle #" << fvit->idx() << " with a bad shape: cannot compute a normal");
                           ok = false;
                           break;
                         }
