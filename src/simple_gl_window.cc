@@ -24,8 +24,12 @@
       "shaders/skeleton.frag"
     });
 
+    auto isolated_program = std::make_shared<graphics_origin::application::shader_program>( std::list<std::string>{
+      "shaders/flat_skeleton.vert",
+      "shaders/flat_skeleton.frag"
+    });
 
-    m_skeletons = new median_path::median_skeletons_renderable( skeleton_program );
+    m_skeletons = new median_path::median_skeletons_renderable( skeleton_program, isolated_program );
 
     m_handles[voronoi_geometry][voronoi_reconstruction] = m_skeletons->add( benchmark_directory + "/voronoi/voronoi/" + shape_stem + "." + extension );
     m_handles[voronoi_geometry][powershape_reconstruction] = m_skeletons->add( benchmark_directory + "/voronoi/powershape/" + shape_stem + "." + extension );
@@ -40,6 +44,9 @@
     m_handles[shrinking_geometry][weighted_alpha_reconstruction] = m_skeletons->add( benchmark_directory + "/shrinking_ball/weighted_alpha_shape/" + shape_stem + "." + extension );
 
     m_skeletons->get( m_handles[voronoi_geometry][delaunay_reconstruction] ).active = true;
+
+    m_skeletons->render_isolated_atoms( true );
+    m_skeletons->render_isolated_links( true );
 
     add_renderable( m_skeletons );
   }
@@ -121,4 +128,15 @@
         if( m_handles[ m_geometry ][ m_topology ].is_valid() )
           m_skeletons->get( m_handles[ m_geometry ][ m_topology ] ).active = true;
       }
+  }
+
+  void simple_gl_window::render_isolated_atoms( bool render )
+  {
+    if( m_skeletons )
+      m_skeletons->render_isolated_atoms( render );
+  }
+  void simple_gl_window::render_isolated_links( bool render )
+  {
+    if( m_skeletons )
+      m_skeletons->render_isolated_links( render );
   }

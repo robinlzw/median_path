@@ -86,7 +86,7 @@ BEGIN_MP_NAMESPACE
                   skeleton.add( face[0], face[1], face[2] );
                 }
             }
-          else
+//          else
             {
               for( auto eit = delaunay_triangulation.finite_edges_begin(),
                   eitend = delaunay_triangulation.finite_edges_end(); eit != eitend;

@@ -253,7 +253,7 @@ BEGIN_MP_NAMESPACE
               }
           }
       }
-    else
+//    else
       {
         skeleton.reserve_links( regular_tetrahedrization.number_of_finite_edges() >> 1);
         for( auto eit = regular_tetrahedrization.finite_edges_begin(),
@@ -330,7 +330,7 @@ BEGIN_MP_NAMESPACE
               }
           }
       }
-    else
+//    else
       {
         skeleton.reserve_links( delaunay_tetrahedrization.number_of_finite_facets() );
         for( auto ffit = delaunay_tetrahedrization.finite_facets_begin(),

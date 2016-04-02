@@ -396,6 +396,28 @@ BEGIN_MP_NAMESPACE
      */
     bool is_valid( atom_handle handle ) const;
 
+    /**@brief Get the number of links of an atom.
+     *
+     * Get the number of links attached to an atom known by reference. If
+     * the reference does not point to a valid atom, an exception is thrown.
+     * @param e Reference the atom.
+     * @return The number of links */
+    link_index get_number_of_links( atom& e ) const;
+    /**@brief Get the number of links of an atom.
+     *
+     * Get the number of links attached to an atom known by its index. If
+     * the index is invalid, an exception is thrown.
+     * @param index Index of the atom.
+     * @return The number of links */
+    link_index get_number_of_links( atom_index index ) const;
+    /**@brief Get the number of links of an atom.
+     *
+     * Get the number of links attached to an atom known by its hande. If
+     * the handle is invalid, an exception is thrown.
+     * @param handle Handle of the atom.
+     * @return The number of links */
+    link_index get_number_of_links( atom_handle h ) const;
+
     /**@brief A function to process atoms.
      *
      * A function of such a type can be applied on all valid atoms of a skeleton.
@@ -557,6 +579,29 @@ BEGIN_MP_NAMESPACE
      * @param filter The filter function used to select links to remove.
      * @param parallel A flag to activate a parallel evaluation of the filter function. */
     void remove( link_filter&& filter, bool parallel = true );
+
+    /**@brief Get the number of faces of an link.
+     *
+     * Get the number of faces attached to an link known by reference. If
+     * the reference does not point to a valid link, an exception is thrown.
+     * @param e Reference the link.
+     * @return The number of faces */
+    face_index get_number_of_faces( link& e ) const;
+    /**@brief Get the number of faces of an link.
+     *
+     * Get the number of faces attached to an link known by its index. If
+     * the index is invalid, an exception is thrown.
+     * @param index Index of the link.
+     * @return The number of faces */
+    face_index get_number_of_faces( link_index index ) const;
+    /**@brief Get the number of faces of an link.
+     *
+     * Get the number of faces attached to an link known by its hande. If
+     * the handle is invalid, an exception is thrown.
+     * @param handle Handle of the link.
+     * @return The number of faces */
+    face_index get_number_of_faces( link_handle h ) const;
+
 
     /**@name Face management
     * @{ */
