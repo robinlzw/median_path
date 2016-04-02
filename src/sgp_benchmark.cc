@@ -350,6 +350,7 @@ static void save_execution_time_to_file( statistics& stats, std::ofstream& file 
       << stats.voronoi_voronoi.execution_time << " & " << stats.voronoi_powershape.execution_time << " & " << stats.voronoi_delaunay.execution_time << " & " << stats.voronoi_alpha.execution_time << " & "
       << stats.powershape_powershape.execution_time << " & " << stats.powershape_delaunay.execution_time << " & " << stats.powershape_alpha.execution_time << " & "
       << stats.shrinking_ball_delaunay.execution_time << " & " << stats.shrinking_ball_alpha.execution_time << "\n";
+  file.flush();
 }
 
 int main( int argc, char* argv[] )
@@ -395,6 +396,7 @@ int main( int argc, char* argv[] )
 
           save_execution_time_to_file( stats.back(), execution_time_file );
         }
+      execution_time_file.close();
 
       std::cout << "Execution statistics:\n";
       for( auto& stat : stats )
