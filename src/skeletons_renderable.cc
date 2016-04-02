@@ -224,13 +224,19 @@ BEGIN_MP_NAMESPACE
                 glcheck(glEnableVertexAttribArray( color_location ));
                 glcheck(glVertexAttribPointer( color_location, 4, GL_FLOAT, GL_FALSE, 0, 0 ));
 
-                glcheck(glPointSize( 6.0 ));
-                glcheck(glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, data->buffer_ids[isolated_vertices_ibo]));
-                glcheck(glDrawElements( GL_POINTS, data->number_of_isolated_atoms, GL_UNSIGNED_INT, (void*)0));
+                if( m_render_isolated_atoms )
+                  {
+                    glcheck(glPointSize( 6.0 ));
+                    glcheck(glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, data->buffer_ids[isolated_vertices_ibo]));
+                    glcheck(glDrawElements( GL_POINTS, data->number_of_isolated_atoms, GL_UNSIGNED_INT, (void*)0));
+                  }
 
-                glcheck(glLineWidth( 4.0 ));
-                glcheck(glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, data->buffer_ids[isolated_links_ibo]));
-                glcheck(glDrawElements( GL_LINES, data->number_of_isolated_links << 1, GL_UNSIGNED_INT, (void*)0));
+                if( m_render_isolated_links )
+                  {
+                    glcheck(glLineWidth( 4.0 ));
+                    glcheck(glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, data->buffer_ids[isolated_links_ibo]));
+                    glcheck(glDrawElements( GL_LINES, data->number_of_isolated_links << 1, GL_UNSIGNED_INT, (void*)0));
+                  }
               }
           }
       }
