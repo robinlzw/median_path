@@ -119,7 +119,7 @@ BEGIN_MP_NAMESPACE
               }
           }
       }
-    else
+//    else
       {
         output.reserve_links( alpha_shape.number_of_finite_edges() );
         for( auto eit = alpha_shape.edges_begin(), eitend = alpha_shape.edges_end();

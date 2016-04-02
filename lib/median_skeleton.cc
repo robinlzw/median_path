@@ -397,6 +397,28 @@ BEGIN_MP_NAMESPACE
     return false;
   }
 
+  median_skeleton::link_index
+  median_skeleton::get_number_of_links( atom& e ) const
+  {
+    auto index = m_impl->get_index( e );
+    return m_impl->m_atom_properties[atom_links_property_index]->get<atom_links_property>( index ).size();
+  }
+  median_skeleton::link_index
+  median_skeleton::get_number_of_links( atom_index index ) const
+  {
+# ifndef MP_SKELETON_NO_CHECK
+    if( index >= m_impl->m_atoms_size )
+      MP_THROW_EXCEPTION( skeleton_invalid_atom_index );
+# endif
+    return m_impl->m_atom_properties[atom_links_property_index]->get<atom_links_property>( index ).size();
+  }
+  median_skeleton::link_index
+  median_skeleton::get_number_of_links( atom_handle h ) const
+  {
+    auto index = m_impl->get_index( h );
+    return m_impl->m_atom_properties[atom_links_property_index]->get<atom_links_property>( index ).size();
+  }
+
   void
   median_skeleton::process( atom_processer&& function, bool parallel )
   {
@@ -750,6 +772,28 @@ BEGIN_MP_NAMESPACE
             function( m_impl->m_links[i]);
           }
       }
+  }
+
+  median_skeleton::face_index
+  median_skeleton::get_number_of_faces( link& e ) const
+  {
+    auto index = m_impl->get_index( e );
+    return m_impl->m_link_properties[link_faces_property_index]->get<link_faces_property>( index ).size();
+  }
+  median_skeleton::face_index
+  median_skeleton::get_number_of_faces( link_index index ) const
+  {
+# ifndef MP_SKELETON_NO_CHECK
+    if( index >= m_impl->m_links_size )
+      MP_THROW_EXCEPTION( skeleton_invalid_link_index );
+# endif
+    return m_impl->m_link_properties[link_faces_property_index]->get<link_faces_property>( index ).size();
+  }
+  median_skeleton::face_index
+  median_skeleton::get_number_of_faces( link_handle h ) const
+  {
+    auto index = m_impl->get_index( h );
+    return m_impl->m_link_properties[link_faces_property_index]->get<link_faces_property>( index ).size();
   }
 
 

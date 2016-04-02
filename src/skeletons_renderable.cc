@@ -14,10 +14,10 @@ BEGIN_MP_NAMESPACE
   median_skeletons_renderable::storage::operator=( storage&& other )
   {
     skeleton = std::move( other.skeleton );
-    buffer_ids[ 0 ] = other.buffer_ids[ 0 ];
-    buffer_ids[ 1 ] = other.buffer_ids[ 1 ];
-    buffer_ids[ 2 ] = other.buffer_ids[ 2 ];
-    buffer_ids[ 3 ] = other.buffer_ids[ 3 ];
+    for( int id = 0; id < number_of_buffers; ++ id )
+      buffer_ids[id] = other.buffer_ids[id];
+    number_of_isolated_atoms = other.number_of_isolated_atoms;
+    number_of_isolated_links = other.number_of_isolated_links;
     vao = other.vao;
     dirty = other.dirty;
     active = other.active;
@@ -26,12 +26,20 @@ BEGIN_MP_NAMESPACE
   }
 
   median_skeletons_renderable::storage::storage()
-    : buffer_ids{0,0,0,0}, vao{ 0 }, dirty{true}, active{ false }, destroyed{false}
-  {}
+    : vao{ 0 },
+      number_of_isolated_atoms{0}, number_of_isolated_links{0},
+      dirty{true}, active{ false }, destroyed{false}
+  {
+    for( int id = 0; id < number_of_buffers; ++ id )
+      buffer_ids[id] = 0;
+  }
 
 
   median_skeletons_renderable::median_skeletons_renderable(
-      graphics_origin::application::shader_program_ptr program )
+      graphics_origin::application::shader_program_ptr program,
+      graphics_origin::application::shader_program_ptr isolated )
+    : m_isolated_program{ isolated },
+      m_render_isolated_atoms{ false }, m_render_isolated_links{ false }
   {
     m_model = gpu_mat4(1.0);
     m_program = program;
@@ -58,8 +66,9 @@ BEGIN_MP_NAMESPACE
   void
   median_skeletons_renderable::update_gpu_data()
   {
-    std::vector<uint32_t> indices;
+    std::vector< median_skeleton::atom_index > indices;
     std::vector<gpu_vec4> colors;
+    std::vector< median_skeleton::atom_index > isolated;
     auto data = m_skeletons.data();
     for( size_t i = 0; i < m_skeletons.get_size();  )
       {
@@ -85,6 +94,7 @@ BEGIN_MP_NAMESPACE
                 int  atom_location = m_program->get_attribute_location( "atom" );
                 int color_location = m_program->get_attribute_location( "color");
 
+
                 glcheck(glBindVertexArray( data->vao ));
                   glcheck(glBindBuffer( GL_ARRAY_BUFFER, data->buffer_ids[balls_vbo]));
                   glcheck(glBufferData( GL_ARRAY_BUFFER, sizeof(median_skeleton::atom) * nbatoms,
@@ -97,12 +107,18 @@ BEGIN_MP_NAMESPACE
 
                   real minr, maxr;
                   data->skeleton.compute_minmax_radii( minr, maxr );
-
+                  isolated.resize( 0 );
                   colors.resize( nbatoms );
                   # pragma omp parallel for
                   for( median_skeleton::atom_index j = 0; j < nbatoms; ++ j )
                     {
                       colors[ j ] = gpu_vec4(graphics_origin::get_color( data->skeleton.get_atom_by_index( j ).w, minr, maxr ), 1.0 );
+
+                      if( !data->skeleton.get_number_of_links( j ) )
+                        {
+                          # pragma omp critical
+                          isolated.push_back( j );
+                        }
                     }
                   glcheck(glBindBuffer( GL_ARRAY_BUFFER, data->buffer_ids[colors_vbo]));
                   glcheck(glBufferData( GL_ARRAY_BUFFER, sizeof(gpu_vec4) * nbatoms, colors.data(), GL_STATIC_DRAW));
@@ -111,9 +127,13 @@ BEGIN_MP_NAMESPACE
                     4, GL_FLOAT, GL_FALSE,
                     0, 0 ));
 
+                  data->number_of_isolated_atoms = isolated.size();
+                  glcheck(glBindBuffer( GL_ARRAY_BUFFER, data->buffer_ids[isolated_vertices_ibo]));
+                  glcheck(glBufferData( GL_ARRAY_BUFFER, data->number_of_isolated_atoms * sizeof(median_skeleton::atom_index), isolated.data(), GL_STATIC_DRAW));
 
                   const median_skeleton::link_index nblinks = data->skeleton.get_number_of_links();
                   indices.resize( nblinks * 2 );
+                  isolated.resize( 0 );
                   # pragma omp parallel for
                   for( median_skeleton::link_index j = 0; j < nblinks; ++ j )
                     {
@@ -121,10 +141,22 @@ BEGIN_MP_NAMESPACE
                       size_t offset = j * 2;
                       indices[ offset    ] = data->skeleton.get_index( link.h1 );
                       indices[ offset + 1] = data->skeleton.get_index( link.h2 );
+                      if( !data->skeleton.get_number_of_faces( j ) )
+                        {
+                          #pragma omp critical
+                          {
+                            isolated.push_back( indices[ offset ] );
+                            isolated.push_back( indices[ offset + 1 ] );
+                          }
+                        }
                     }
 
                   glcheck(glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, data->buffer_ids[links_ibo]));
-                  glcheck(glBufferData( GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(uint32_t), indices.data(), GL_STATIC_DRAW));
+                  glcheck(glBufferData( GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(median_skeleton::atom_index), indices.data(), GL_STATIC_DRAW));
+
+                  data->number_of_isolated_links = isolated.size() >> 1;
+                  glcheck(glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, data->buffer_ids[isolated_links_ibo]));
+                  glcheck(glBufferData( GL_ELEMENT_ARRAY_BUFFER, isolated.size() * sizeof(median_skeleton::atom_index), isolated.data(), GL_STATIC_DRAW));
 
                   const median_skeleton::face_index nbfaces = data->skeleton.get_number_of_faces();
                   indices.resize( nbfaces * 3 );
@@ -169,6 +201,39 @@ BEGIN_MP_NAMESPACE
           }
       }
     glcheck(glBindVertexArray( 0 ));
+
+    if( m_render_isolated_atoms || m_render_isolated_links )
+      {
+        m_isolated_program->bind();
+        glcheck(glUniformMatrix4fv( m_isolated_program->get_uniform_location( "mvp" ),
+          1, GL_FALSE,
+          glm::value_ptr( m_renderer->get_projection_matrix() * m_renderer->get_view_matrix() * m_model )));
+
+        auto atom_location = m_isolated_program->get_attribute_location( "atom" );
+        auto color_location = m_isolated_program->get_attribute_location( "color" );
+        data = m_skeletons.data();
+        for( decltype(size) i = 0; i < size; ++ i, ++ data )
+          {
+            if( data->active )
+              {
+                glcheck(glBindBuffer( GL_ARRAY_BUFFER, data->buffer_ids[balls_vbo]));
+                glcheck(glEnableVertexAttribArray( atom_location ));
+                glcheck(glVertexAttribPointer( atom_location, 4, GL_DOUBLE, GL_FALSE, 0, 0 ));
+
+                glcheck(glBindBuffer( GL_ARRAY_BUFFER, data->buffer_ids[colors_vbo]));
+                glcheck(glEnableVertexAttribArray( color_location ));
+                glcheck(glVertexAttribPointer( color_location, 4, GL_FLOAT, GL_FALSE, 0, 0 ));
+
+                glcheck(glPointSize( 6.0 ));
+                glcheck(glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, data->buffer_ids[isolated_vertices_ibo]));
+                glcheck(glDrawElements( GL_POINTS, data->number_of_isolated_atoms, GL_UNSIGNED_INT, (void*)0));
+
+                glcheck(glLineWidth( 4.0 ));
+                glcheck(glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, data->buffer_ids[isolated_links_ibo]));
+                glcheck(glDrawElements( GL_LINES, data->number_of_isolated_links << 1, GL_UNSIGNED_INT, (void*)0));
+              }
+          }
+      }
   }
 
   median_skeletons_renderable::skeleton_buffer::handle
@@ -198,6 +263,17 @@ BEGIN_MP_NAMESPACE
    median_skeletons_renderable::get( skeleton_buffer::handle h)
    {
      return m_skeletons.get( h );
+   }
+
+   void
+   median_skeletons_renderable::render_isolated_atoms( bool render )
+   {
+     m_render_isolated_atoms = render;
+   }
+   void
+   median_skeletons_renderable::render_isolated_links( bool render )
+   {
+     m_render_isolated_links = render;
    }
 
 
