@@ -256,7 +256,8 @@ BEGIN_MP_NAMESPACE
 
   void median_skeletons_renderable::remove( skeleton_buffer::handle h)
   {
-    m_skeletons.get( h ).destroyed = true;
+    if( h.is_valid() )
+      m_skeletons.get( h ).destroyed = true;
   }
 
    median_skeletons_renderable::storage&
