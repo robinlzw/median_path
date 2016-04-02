@@ -6,11 +6,12 @@ Rectangle {
   height: Style.geometry_button.height
   property string label: "LABEL"
   property bool active: true
-  color: active ? Style.geometry_button.background_active : Style.geometry_button.background_inactive
+  property bool available: true
+  color: available ? ( active ? Style.geometry_button.background_active : Style.geometry_button.background_inactive) : Style.geometry_button.background_unavailable
   Text {
     text: label
     anchors.centerIn: parent
     font.pointSize: Style.geometry_button.font_size
-    color: active ? Style.geometry_button.font_color_active : Style.geometry_button.font_color_inactive
+    color: available ? (active ? Style.geometry_button.font_color_active : Style.geometry_button.font_color_inactive) : Style.geometry_button.font_color_unavailable
   }
 }

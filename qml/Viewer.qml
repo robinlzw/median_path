@@ -44,14 +44,19 @@ Rectangle {
 	GeometryButton {
 	  id:voronoi_balls
 	  label: "Voronoi Balls"
-	    
+	  available: glwindow.has_voronoi_geometry
+	  active: glwindow.voronoi_geometry_active	    
 	  MouseArea {
 	    anchors.fill: parent
 		onClicked: {
-	      voronoi_balls.active = true
-	      polar_balls.active = false
-	      shrinking_balls.active = false
-	      glwindow.request_voronoi_geometry()
+		  if( voronoi_balls.available )
+		    {
+		      if( !glwindow.request_voronoi_geometry()
+		       && !glwindow.request_delaunay_reconstruction()
+		       && !glwindow.request_weighted_alpha_reconstruction()
+		       && !glwindow.request_powershape_reconstruction() )
+		       glwindow.request_voronoi_reconstruction();
+		    }
         }
 	  }
 	}
@@ -59,21 +64,19 @@ Rectangle {
 	GeometryButton {
 	  id:polar_balls
 	  label: "Polar Balls"
-	  active: false
+	  available: glwindow.has_polar_geometry
+	  active: glwindow.polar_geometry_active
 	  MouseArea {
 	    anchors.fill: parent
 		onClicked: {
-		  if( voronoi_reconstruction.active )
+		  if( polar_balls.available )
 		    {
-		      voronoi_reconstruction.active = false
-		      delaunay_reconstruction.active = true
-		      glwindow.request_delaunay_reconstruction()
+		      if( !glwindow.request_polar_geometry()
+		       && !glwindow.request_delaunay_reconstruction()
+		       && !glwindow.request_weighted_alpha_reconstruction()
+		       && !glwindow.request_powershape_reconstruction() )
+		       glwindow.request_voronoi_reconstruction();
 		    }
-		
-		  voronoi_balls.active = false
-		  polar_balls.active = true
-		  shrinking_balls.active = false
-		  glwindow.request_polar_geometry()
 		}
 	  }	    
 	}
@@ -81,22 +84,19 @@ Rectangle {
 	GeometryButton {
 	  id:shrinking_balls
 	  label: "Shrinking Balls"
-	  active: false
+	  available: glwindow.has_shrinking_geometry
+	  active: glwindow.shrinking_geometry_active
 	  MouseArea {
 	    anchors.fill: parent
 		onClicked: {
-		  if( voronoi_reconstruction.active || powershape_reconstruction.active )
+		  if( shrinking_balls.available )
 		    {
-		      voronoi_reconstruction.active = false
-		      powershape_reconstruction.active = false
-		      delaunay_reconstruction.active = true
-		      glwindow.request_delaunay_reconstruction()
+		      if( !glwindow.request_shrinking_geometry()
+		       && !glwindow.request_delaunay_reconstruction()
+		       && !glwindow.request_weighted_alpha_reconstruction()
+		       && !glwindow.request_powershape_reconstruction() )
+		       glwindow.request_voronoi_reconstruction();
 		    }
-		
-		  voronoi_balls.active = false
-		  polar_balls.active = false
-		  shrinking_balls.active = true
-		  glwindow.request_shrinking_geometry()
 		}
 	  }	    
 	}
@@ -112,68 +112,54 @@ Rectangle {
     TopologyButton {
       id: delaunay_reconstruction
       label: "Delaunay Reconstruction"
-      active: true
+      active: glwindow.delaunay_reconstruction_active
+      available: glwindow.has_delaunay_reconstruction
       MouseArea {
         anchors.fill: parent
         onClicked: {
-          delaunay_reconstruction.active = true
-          weighted_alpha_reconstruction.active = false
-          powershape_reconstruction.active = false
-          voronoi_reconstruction.active = false
-          glwindow.request_delaunay_reconstruction()
+          if( delaunay_reconstruction.available )
+          	glwindow.request_delaunay_reconstruction()
         }
       }
     }
     TopologyButton {
       id: weighted_alpha_reconstruction
       label: "Weighted Alpha Reconstruction"
-      active: false
+      active: glwindow.weighted_alpha_reconstruction_active
+      available: glwindow.has_weighted_alpha_reconstruction
       MouseArea {
         anchors.fill: parent
         onClicked: {
-          delaunay_reconstruction.active = false
-          weighted_alpha_reconstruction.active = true
-          powershape_reconstruction.active = false
-          voronoi_reconstruction.active = false
-          glwindow.request_weighted_alpha_reconstruction()
+          if( weighted_alpha_reconstruction.available )
+          	glwindow.request_weighted_alpha_reconstruction()
         }
       }
     }
     TopologyButton {
       id: powershape_reconstruction
       label: "Powershape Reconstruction"
-      active: false
+      active: glwindow.powershape_reconstruction_active
+      available: glwindow.has_powershape_reconstruction
       visible: voronoi_balls.active || polar_balls.active
       MouseArea {
         anchors.fill: parent
         onClicked: {
-          if( powershape_reconstruction.visible )
-          {
-            delaunay_reconstruction.active = false
-            weighted_alpha_reconstruction.active = false
-            powershape_reconstruction.active = true
-            voronoi_reconstruction.active = false
-            glwindow.request_powershape_reconstruction()
-          }
+          if( powershape_reconstruction.available )
+           glwindow.request_powershape_reconstruction()
         }
       }
     }
     TopologyButton {
       id: voronoi_reconstruction
       label: "Voronoi Reconstruction"
-      active: false
+      active: glwindow.voronoi_reconstruction_active
+      available: glwindow.has_voronoi_reconstruction
       visible: voronoi_balls.active
       MouseArea {
         anchors.fill: parent
         onClicked: {
-          if( voronoi_reconstruction.visible )
-          {
-            delaunay_reconstruction.active = false
-            weighted_alpha_reconstruction.active = false
-            powershape_reconstruction.active = false
-            voronoi_reconstruction.active = true
+          if( voronoi_reconstruction.available )
             glwindow.request_voronoi_reconstruction()
-          }
         }
       }
     }        
