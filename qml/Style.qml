@@ -5,6 +5,7 @@ QtObject {
 
   property QtObject z: QtObject {
 	property int topology_button:1000
+	property int rendering_button:950
 	property int geometry_button:900
     property int scene_window: 500
   }
@@ -35,10 +36,20 @@ QtObject {
     property int width: 200
   }
   
+  property QtObject rendering_button: QtObject {
+    property color background_inactive: "#ED91AF"
+    property color background_active: "#EB427A"
+    property color font_color_active: "#000000"
+    property color font_color_inactive: "#858585"
+    
+    property int font_size: 10
+    property int height: 20
+    property int width: 200
+  }
+  
   property QtObject main_window: QtObject {
     property int initial_width: 800
     property int initial_height: 800
-  
   }
 }
 

@@ -76,8 +76,8 @@
           break;
       }
 
-    m_skeletons->render_isolated_atoms( true );
-    m_skeletons->render_isolated_links( true );
+    m_skeletons->render_isolated_atoms( false );
+    m_skeletons->render_isolated_links( false );
 
     emit_available_geometry_methods_has_changed();
     emit_available_topology_methods_has_changed();
@@ -137,61 +137,57 @@
     return true;
   }
 
-  void simple_gl_window::request_voronoi_reconstruction()
+  bool simple_gl_window::request_voronoi_reconstruction()
   {
-    if( m_topology != voronoi_reconstruction )
+    if( m_handles[ m_geometry ][ m_topology ].is_valid() )
+      m_skeletons->get( m_handles[ m_geometry ][ m_topology ] ).active = false;
+    m_topology = voronoi_reconstruction;
+    emit_active_topology_method_has_changed();
+    if( m_handles[ m_geometry ][ m_topology ].is_valid() )
       {
-        if( m_handles[ m_geometry ][ m_topology ].is_valid() )
-          m_skeletons->get( m_handles[ m_geometry ][ m_topology ] ).active = false;
-        m_topology = voronoi_reconstruction;
-        emit_active_topology_method_has_changed();
-        if( m_handles[ m_geometry ][ m_topology ].is_valid() )
-          {
-            m_skeletons->get( m_handles[ m_geometry ][ m_topology ] ).active = true;
-          }
+        m_skeletons->get( m_handles[ m_geometry ][ m_topology ] ).active = true;
+        return true;
       }
+    return false;
   }
-  void simple_gl_window::request_powershape_reconstruction()
+  bool simple_gl_window::request_powershape_reconstruction()
   {
-    if( m_topology != powershape_reconstruction )
+    if( m_handles[ m_geometry ][ m_topology ].is_valid() )
+      m_skeletons->get( m_handles[ m_geometry ][ m_topology ] ).active = false;
+    m_topology = powershape_reconstruction;
+    emit_active_topology_method_has_changed();
+    if( m_handles[ m_geometry ][ m_topology ].is_valid() )
       {
-        if( m_handles[ m_geometry ][ m_topology ].is_valid() )
-          m_skeletons->get( m_handles[ m_geometry ][ m_topology ] ).active = false;
-        m_topology = powershape_reconstruction;
-        emit_active_topology_method_has_changed();
-        if( m_handles[ m_geometry ][ m_topology ].is_valid() )
-          {
-            m_skeletons->get( m_handles[ m_geometry ][ m_topology ] ).active = true;
-          }
+        m_skeletons->get( m_handles[ m_geometry ][ m_topology ] ).active = true;
+        return true;
       }
+    return false;
   }
-  void simple_gl_window::request_delaunay_reconstruction()
+  bool simple_gl_window::request_delaunay_reconstruction()
   {
-    if( m_topology != delaunay_reconstruction )
+    if( m_handles[ m_geometry ][ m_topology ].is_valid() )
+      m_skeletons->get( m_handles[ m_geometry ][ m_topology ] ).active = false;
+    m_topology = delaunay_reconstruction;
+    emit_active_topology_method_has_changed();
+    if( m_handles[ m_geometry ][ m_topology ].is_valid() )
       {
-        if( m_handles[ m_geometry ][ m_topology ].is_valid() )
-          m_skeletons->get( m_handles[ m_geometry ][ m_topology ] ).active = false;
-        m_topology = delaunay_reconstruction;
-        emit_active_topology_method_has_changed();
-        if( m_handles[ m_geometry ][ m_topology ].is_valid() )
-          {
-            m_skeletons->get( m_handles[ m_geometry ][ m_topology ] ).active = true;
-          }
+        m_skeletons->get( m_handles[ m_geometry ][ m_topology ] ).active = true;
+        return true;
       }
+    return false;
   }
-  void simple_gl_window::request_weighted_alpha_reconstruction()
+  bool simple_gl_window::request_weighted_alpha_reconstruction()
   {
-    if( m_topology != weighted_alpha_reconstruction )
+    if( m_handles[ m_geometry ][ m_topology ].is_valid() )
+      m_skeletons->get( m_handles[ m_geometry ][ m_topology ] ).active = false;
+    m_topology = weighted_alpha_reconstruction;
+    emit_active_topology_method_has_changed();
+    if( m_handles[ m_geometry ][ m_topology ].is_valid() )
       {
-        if( m_handles[ m_geometry ][ m_topology ].is_valid() )
-          m_skeletons->get( m_handles[ m_geometry ][ m_topology ] ).active = false;
-        m_topology = weighted_alpha_reconstruction;
-        emit_active_topology_method_has_changed();
-        if( m_handles[ m_geometry ][ m_topology ].is_valid() )
-          {
-            m_skeletons->get( m_handles[ m_geometry ][ m_topology ] ).active = true;
-          }
+        m_skeletons->get( m_handles[ m_geometry ][ m_topology ] ).active = true;
+        return true;
       }
+    return false;
   }
 
   void simple_gl_window::render_isolated_atoms( bool render )

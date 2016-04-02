@@ -104,6 +104,54 @@ Rectangle {
   
   Column {
     spacing: 10
+	id: rendering_selection
+	z: Style.z.rendering_button
+	y: 10
+	x: parent.width - 10 - Style.rendering_button.width
+	
+	RenderingButton {
+	  id: isolated_atoms_rendering
+	  label: "Render Isolated Atoms"
+	  active: false
+	  MouseArea {
+	    anchors.fill: parent
+	    onClicked: {
+	      if( isolated_atoms_rendering.active )
+	      {
+	        isolated_atoms_rendering.active = false
+	      }
+	      else
+	      {
+	        isolated_atoms_rendering.active = true;
+	      }
+	      glwindow.render_isolated_atoms( isolated_atoms_rendering.active )
+	    }
+	  }
+	}
+	RenderingButton {
+	  id: isolated_links_rendering
+	  label: "Render Isolated Links"
+	  active: false
+	  MouseArea {
+	    anchors.fill: parent
+	    onClicked: {
+	      if( isolated_links_rendering.active )
+	      {
+	        isolated_links_rendering.active = false
+	      }
+	      else
+	      {
+	        isolated_links_rendering.active = true;
+	      }
+	      glwindow.render_isolated_links( isolated_links_rendering.active )
+	    }
+	  }
+	}	
+	  
+  }
+  
+  Column {
+    spacing: 10
     id: topology_selection
 	z: Style.z.topology_button
 	y: geometry_selection.y + 10 + Style.geometry_button.height

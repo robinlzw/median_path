@@ -344,6 +344,14 @@ static void prepare_directories( application_parameters& params )
   boost::filesystem::create_directories( params.output_directory + "/shrinking_ball/weighted_alpha_shape");
 }
 
+static void save_execution_time_to_file( statistics& stats, std::ofstream& file )
+{
+  file << stats.mesh_name << " & "
+      << stats.voronoi_voronoi.execution_time << " & " << stats.voronoi_powershape.execution_time << " & " << stats.voronoi_delaunay.execution_time << " & " << stats.voronoi_alpha.execution_time << " & "
+      << stats.powershape_powershape.execution_time << " & " << stats.powershape_delaunay.execution_time << " & " << stats.powershape_alpha.execution_time << " & "
+      << stats.shrinking_ball_delaunay.execution_time << " & " << stats.shrinking_ball_alpha.execution_time << "\n";
+}
+
 int main( int argc, char* argv[] )
 {
   int return_value = EXIT_SUCCESS;
@@ -362,6 +370,8 @@ int main( int argc, char* argv[] )
       skeletonizer_params.m_structurer_parameters.m_neighbors_should_intersect = true;
 
       std::vector< statistics > stats;
+
+      std::ofstream execution_time_file( params.output_directory + "/execution_times.txt", std::ios_base::app );
 
       for( auto& filename : params.input_mesh_names )
         {
@@ -382,6 +392,8 @@ int main( int argc, char* argv[] )
           stats.push_back( stat );
 
           input.save( params.output_directory + "/shapes/" + stat.mesh_name + ".ply");
+
+          save_execution_time_to_file( stats.back(), execution_time_file );
         }
 
       std::cout << "Execution statistics:\n";

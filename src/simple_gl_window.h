@@ -45,10 +45,10 @@ public:
    * If the topology method is available for the current geometry method, those functions
    * change the active skeleton.
    */
-  Q_INVOKABLE void request_voronoi_reconstruction();
-  Q_INVOKABLE void request_powershape_reconstruction();
-  Q_INVOKABLE void request_delaunay_reconstruction();
-  Q_INVOKABLE void request_weighted_alpha_reconstruction();
+  Q_INVOKABLE bool request_voronoi_reconstruction();
+  Q_INVOKABLE bool request_powershape_reconstruction();
+  Q_INVOKABLE bool request_delaunay_reconstruction();
+  Q_INVOKABLE bool request_weighted_alpha_reconstruction();
 
   Q_INVOKABLE void render_isolated_atoms( bool render );
   Q_INVOKABLE void render_isolated_links( bool render );
