@@ -50,8 +50,10 @@ public:
   Q_INVOKABLE bool request_delaunay_reconstruction();
   Q_INVOKABLE bool request_weighted_alpha_reconstruction();
 
+  Q_INVOKABLE void render_triangles( bool render );
   Q_INVOKABLE void render_isolated_atoms( bool render );
   Q_INVOKABLE void render_isolated_links( bool render );
+  Q_INVOKABLE void render_border_junction_links( bool render );
 
   void load_benchmark( const std::string& shape_stem, const std::string& benchmark_directory, const std::string& extension );
 
