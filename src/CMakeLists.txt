@@ -21,3 +21,5 @@ add_mp_app( sgp_benchmark_viewer
 	skeletons_renderable.cc skeletons_renderable.h)
 	
 add_mp_app( prepare_mesh_for_benchmark prepare_mesh_for_benchmark.cc )
+
+add_mp_app( export_for_alex export_for_alex.cc )
