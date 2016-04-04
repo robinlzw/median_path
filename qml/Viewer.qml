@@ -108,7 +108,25 @@ Rectangle {
 	z: Style.z.rendering_button
 	y: 10
 	x: parent.width - 10 - Style.rendering_button.width
-	
+	RenderingButton {
+	  id: triangles_rendering
+	  label: "Render Triangles"
+	  active: true
+	  MouseArea {
+	    anchors.fill: parent
+	    onClicked: {
+	      if( triangles_rendering.active )
+	      {
+	        triangles_rendering.active = false
+	      }
+	      else
+	      {
+	        triangles_rendering.active = true;
+	      }
+	      glwindow.render_triangles( triangles_rendering.active )
+	    }
+	  }
+	}	
 	RenderingButton {
 	  id: isolated_atoms_rendering
 	  label: "Render Isolated Atoms"
@@ -146,7 +164,27 @@ Rectangle {
 	      glwindow.render_isolated_links( isolated_links_rendering.active )
 	    }
 	  }
+	}
+	RenderingButton {
+	  id: border_junction_links_rendering
+	  label: "Render Border (red)/Junction (green)"
+	  active: false
+	  MouseArea {
+	    anchors.fill: parent
+	    onClicked: {
+	      if( border_junction_links_rendering.active )
+	      {
+	        border_junction_links_rendering.active = false
+	      }
+	      else
+	      {
+	        border_junction_links_rendering.active = true;
+	      }
+	      glwindow.render_border_junction_links( border_junction_links_rendering.active )
+	    }
+	  }
 	}	
+		
 	  
   }
   

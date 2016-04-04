@@ -30,7 +30,11 @@
           "shaders/flat_skeleton.vert",
           "shaders/flat_skeleton.frag"
         });
-        m_skeletons = new median_path::median_skeletons_renderable( skeleton_program, isolated_program );
+        auto border_junction_program = std::make_shared<graphics_origin::application::shader_program>( std::list<std::string>{
+          "shaders/border_junction.vert",
+          "shaders/flat_skeleton.frag"
+        });
+        m_skeletons = new median_path::median_skeletons_renderable( skeleton_program, isolated_program, border_junction_program );
         add_renderable( m_skeletons );
       }
     else
@@ -76,8 +80,10 @@
           break;
       }
 
+    m_skeletons->render_triangles( true );
     m_skeletons->render_isolated_atoms( false );
     m_skeletons->render_isolated_links( false );
+    m_skeletons->render_borders_junctions( false );
 
     emit_available_geometry_methods_has_changed();
     emit_available_topology_methods_has_changed();
@@ -190,6 +196,12 @@
     return false;
   }
 
+  void simple_gl_window::render_border_junction_links( bool render )
+  {
+    if( m_skeletons )
+      m_skeletons->render_borders_junctions( render );
+  }
+
   void simple_gl_window::render_isolated_atoms( bool render )
   {
     if( m_skeletons )
@@ -199,6 +211,11 @@
   {
     if( m_skeletons )
       m_skeletons->render_isolated_links( render );
+  }
+  void simple_gl_window::render_triangles( bool render )
+  {
+    if( m_skeletons )
+      m_skeletons->render_triangles( render );
   }
 
 

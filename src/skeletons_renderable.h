@@ -17,7 +17,7 @@ BEGIN_MP_NAMESPACE
   class median_skeletons_renderable
     : public graphics_origin::application::renderable {
 
-    enum { balls_vbo, colors_vbo, isolated_vertices_ibo, links_ibo, isolated_links_ibo, faces_ibo, number_of_buffers };
+    enum { balls_vbo, colors_vbo, isolated_vertices_ibo, links_ibo, isolated_links_ibo, border_links_ibo, junction_links_ibo, faces_ibo, number_of_buffers };
   public:
 
     struct storage {
@@ -26,6 +26,8 @@ BEGIN_MP_NAMESPACE
       unsigned int vao;
       median_skeleton::atom_index number_of_isolated_atoms;
       median_skeleton::link_index number_of_isolated_links;
+      median_skeleton::link_index number_of_border_links;
+      median_skeleton::link_index number_of_junction_links;
       bool dirty;
       bool active;
       bool destroyed;
@@ -44,7 +46,8 @@ BEGIN_MP_NAMESPACE
 
     median_skeletons_renderable(
         graphics_origin::application::shader_program_ptr program,
-        graphics_origin::application::shader_program_ptr isolated);
+        graphics_origin::application::shader_program_ptr isolated,
+        graphics_origin::application::shader_program_ptr border_junction );
     ~median_skeletons_renderable();
 
     handle
@@ -57,8 +60,10 @@ BEGIN_MP_NAMESPACE
 
     storage& get( skeleton_buffer::handle h);
 
+    void render_triangles( bool render );
     void render_isolated_atoms( bool render );
     void render_isolated_links( bool render );
+    void render_borders_junctions( bool render );
 
   private:
     void update_gpu_data() override;
@@ -67,8 +72,11 @@ BEGIN_MP_NAMESPACE
 
     skeleton_buffer m_skeletons;
     graphics_origin::application::shader_program_ptr m_isolated_program;
+    graphics_origin::application::shader_program_ptr m_border_junction_program;
+    bool m_render_triangles;
     bool m_render_isolated_atoms;
     bool m_render_isolated_links;
+    bool m_render_borders_junctions;
   };
 
 

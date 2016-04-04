@@ -18,6 +18,8 @@ BEGIN_MP_NAMESPACE
       buffer_ids[id] = other.buffer_ids[id];
     number_of_isolated_atoms = other.number_of_isolated_atoms;
     number_of_isolated_links = other.number_of_isolated_links;
+    number_of_border_links = other.number_of_border_links;
+    number_of_junction_links = other.number_of_junction_links;
     vao = other.vao;
     dirty = other.dirty;
     active = other.active;
@@ -28,6 +30,7 @@ BEGIN_MP_NAMESPACE
   median_skeletons_renderable::storage::storage()
     : vao{ 0 },
       number_of_isolated_atoms{0}, number_of_isolated_links{0},
+      number_of_border_links{0}, number_of_junction_links{0},
       dirty{true}, active{ false }, destroyed{false}
   {
     for( int id = 0; id < number_of_buffers; ++ id )
@@ -37,9 +40,11 @@ BEGIN_MP_NAMESPACE
 
   median_skeletons_renderable::median_skeletons_renderable(
       graphics_origin::application::shader_program_ptr program,
-      graphics_origin::application::shader_program_ptr isolated )
-    : m_isolated_program{ isolated },
-      m_render_isolated_atoms{ false }, m_render_isolated_links{ false }
+      graphics_origin::application::shader_program_ptr isolated,
+      graphics_origin::application::shader_program_ptr border_junction )
+    : m_isolated_program{ isolated }, m_border_junction_program{ border_junction },
+      m_render_triangles{true},
+      m_render_isolated_atoms{ false }, m_render_isolated_links{ false }, m_render_borders_junctions{ false }
   {
     m_model = gpu_mat4(1.0);
     m_program = program;
@@ -69,6 +74,8 @@ BEGIN_MP_NAMESPACE
     std::vector< median_skeleton::atom_index > indices;
     std::vector<gpu_vec4> colors;
     std::vector< median_skeleton::atom_index > isolated;
+    std::vector< median_skeleton::atom_index > borders;
+    std::vector< median_skeleton::atom_index > junctions;
     auto data = m_skeletons.data();
     for( size_t i = 0; i < m_skeletons.get_size();  )
       {
@@ -131,9 +138,12 @@ BEGIN_MP_NAMESPACE
                   glcheck(glBindBuffer( GL_ARRAY_BUFFER, data->buffer_ids[isolated_vertices_ibo]));
                   glcheck(glBufferData( GL_ARRAY_BUFFER, data->number_of_isolated_atoms * sizeof(median_skeleton::atom_index), isolated.data(), GL_STATIC_DRAW));
 
+
                   const median_skeleton::link_index nblinks = data->skeleton.get_number_of_links();
                   indices.resize( nblinks * 2 );
                   isolated.resize( 0 );
+                  borders.resize( 0 );
+                  junctions.resize( 0 );
                   # pragma omp parallel for
                   for( median_skeleton::link_index j = 0; j < nblinks; ++ j )
                     {
@@ -141,12 +151,29 @@ BEGIN_MP_NAMESPACE
                       size_t offset = j * 2;
                       indices[ offset    ] = data->skeleton.get_index( link.h1 );
                       indices[ offset + 1] = data->skeleton.get_index( link.h2 );
-                      if( !data->skeleton.get_number_of_faces( j ) )
+                      auto nbfaces = data->skeleton.get_number_of_faces( j );
+                      if( !nbfaces )
                         {
                           #pragma omp critical
                           {
                             isolated.push_back( indices[ offset ] );
                             isolated.push_back( indices[ offset + 1 ] );
+                          }
+                        }
+                      else if( nbfaces == 1 )
+                        {
+                          #pragma omp critical
+                          {
+                            borders.push_back( indices[ offset ] );
+                            borders.push_back( indices[ offset + 1 ] );
+                          }
+                        }
+                      else if( nbfaces > 2 )
+                        {
+                          #pragma omp critical
+                          {
+                            junctions.push_back( indices[ offset ] );
+                            junctions.push_back( indices[ offset + 1 ] );
                           }
                         }
                     }
@@ -157,6 +184,15 @@ BEGIN_MP_NAMESPACE
                   data->number_of_isolated_links = isolated.size() >> 1;
                   glcheck(glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, data->buffer_ids[isolated_links_ibo]));
                   glcheck(glBufferData( GL_ELEMENT_ARRAY_BUFFER, isolated.size() * sizeof(median_skeleton::atom_index), isolated.data(), GL_STATIC_DRAW));
+
+                  data->number_of_border_links = borders.size() >> 1;
+                  glcheck(glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, data->buffer_ids[border_links_ibo]));
+                  glcheck(glBufferData( GL_ELEMENT_ARRAY_BUFFER, borders.size() * sizeof(median_skeleton::atom_index), borders.data(), GL_STATIC_DRAW));
+
+                  data->number_of_junction_links = junctions.size() >> 1;
+                  glcheck(glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, data->buffer_ids[junction_links_ibo]));
+                  glcheck(glBufferData( GL_ELEMENT_ARRAY_BUFFER, junctions.size() * sizeof(median_skeleton::atom_index), junctions.data(), GL_STATIC_DRAW));
+
 
                   const median_skeleton::face_index nbfaces = data->skeleton.get_number_of_faces();
                   indices.resize( nbfaces * 3 );
@@ -189,18 +225,22 @@ BEGIN_MP_NAMESPACE
     glcheck(glUniformMatrix4fv( m_program->get_uniform_location( "model"), 1, GL_FALSE, glm::value_ptr( m_model )));
     glcheck(glUniformMatrix4fv( m_program->get_uniform_location( "view"), 1, GL_FALSE, glm::value_ptr( m_renderer->get_view_matrix() )));
     glcheck(glUniformMatrix4fv( m_program->get_uniform_location( "projection"), 1, GL_FALSE, glm::value_ptr( m_renderer->get_projection_matrix())));
+    glcheck(glUniform1i( m_program->get_uniform_location( "grayscale" ), m_render_borders_junctions ));
 
     auto size = m_skeletons.get_size();
     auto data = m_skeletons.data();
-    for( decltype(size) i = 0; i < size; ++ i, ++data )
+    if( m_render_triangles )
       {
-        if( data->active )
+        for( decltype(size) i = 0; i < size; ++ i, ++data )
           {
-            glcheck(glBindVertexArray( data->vao));
-            glcheck(glDrawElements( GL_TRIANGLES, data->skeleton.get_number_of_faces() * 3, GL_UNSIGNED_INT, (void*)0));
-          }
+            if( data->active )
+              {
+                glcheck(glBindVertexArray( data->vao));
+                glcheck(glDrawElements( GL_TRIANGLES, data->skeleton.get_number_of_faces() * 3, GL_UNSIGNED_INT, (void*)0));
+              }
+        }
+        glcheck(glBindVertexArray( 0 ));
       }
-    glcheck(glBindVertexArray( 0 ));
 
     if( m_render_isolated_atoms || m_render_isolated_links )
       {
@@ -237,6 +277,35 @@ BEGIN_MP_NAMESPACE
                     glcheck(glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, data->buffer_ids[isolated_links_ibo]));
                     glcheck(glDrawElements( GL_LINES, data->number_of_isolated_links << 1, GL_UNSIGNED_INT, (void*)0));
                   }
+              }
+          }
+      }
+    if( m_render_borders_junctions )
+      {
+        m_border_junction_program->bind();
+        glcheck(glUniformMatrix4fv( m_border_junction_program->get_uniform_location( "mvp" ),
+          1, GL_FALSE,
+          glm::value_ptr( m_renderer->get_projection_matrix() * m_renderer->get_view_matrix() * m_model )));
+
+        auto atom_location = m_border_junction_program->get_attribute_location( "atom" );
+        glcheck(glLineWidth( 4.0 ));
+
+        data = m_skeletons.data();
+        for( decltype(size) i = 0; i < size; ++ i, ++ data )
+          {
+            if( data->active )
+              {
+                glcheck(glBindBuffer( GL_ARRAY_BUFFER, data->buffer_ids[balls_vbo]));
+                glcheck(glEnableVertexAttribArray( atom_location ));
+                glcheck(glVertexAttribPointer( atom_location, 4, GL_DOUBLE, GL_FALSE, 0, 0 ));
+
+                glcheck(glUniform4fv( m_border_junction_program->get_uniform_location("color"), 1, glm::value_ptr(gpu_vec4{1,0,0,1.0})));
+                glcheck(glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, data->buffer_ids[border_links_ibo]));
+                glcheck(glDrawElements( GL_LINES, data->number_of_border_links << 1, GL_UNSIGNED_INT, (void*)0));
+
+                glcheck(glUniform4fv( m_border_junction_program->get_uniform_location("color"), 1, glm::value_ptr(gpu_vec4{0,0,1,1.0})));
+                glcheck(glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, data->buffer_ids[junction_links_ibo]));
+                glcheck(glDrawElements( GL_LINES, data->number_of_junction_links << 1, GL_UNSIGNED_INT, (void*)0));
               }
           }
       }
@@ -281,6 +350,17 @@ BEGIN_MP_NAMESPACE
    median_skeletons_renderable::render_isolated_links( bool render )
    {
      m_render_isolated_links = render;
+   }
+   void
+   median_skeletons_renderable::render_borders_junctions( bool render )
+   {
+     m_render_borders_junctions = render;
+   }
+
+   void
+   median_skeletons_renderable::render_triangles( bool render )
+   {
+     m_render_triangles = render;
    }
 
 
