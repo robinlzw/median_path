@@ -18,19 +18,32 @@ Rectangle {
     property int prevX: -1
     property int prevY: -1
     
+    onPressed: {
+      if( mouse.button == Qt.RightButton )
+      {
+         prevX = mouse.x
+         prevY = mouse.y
+      }
+    }
+    
+    onReleased: {
+      if( mouse.button == Qt.RightButton )
+      {
+         prevX = -1
+         prevY = -1
+      }
+    }
+    
     onPositionChanged: {
       if( pressedButtons & Qt.RightButton ) {
-        var dx = 0;
-        var dy = 0;
-        if( prevX > -1 ) {
-          dx = 0.01 * (mouse.x - prevX)
+        if( prevX > -1 && prevY > -1 )
+        {
+            var dx = 0.01 * (mouse.x - prevX)
+            var dy = 0.01 * (mouse.y - prevY)
+            cam1.mouse_rotation( dx, dy )
+            prevX = mouse.x
+            prevY = mouse.y
         }
-        if( prevY > -1 ) {
-          dy = 0.01 * (mouse.y - prevY)
-        }
-        cam1.mouse_rotation( dx, dy )
-        prevX = mouse.x
-        prevY = mouse.y
       }
     }
   }

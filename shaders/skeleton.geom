@@ -48,7 +48,8 @@ void main(void)
     dist = distances[0];
 	fragment_vertex = camera_vertex[0];
     fragment_color = colors[0];
-	fragment_normal = normalize(cross(camera_vertex[1] - camera_vertex[0], camera_vertex[2] - camera_vertex[0] ));
+    fragment_normal = normalize(cross(camera_vertex[1] - camera_vertex[0], camera_vertex[2] - camera_vertex[0] ));
+    
 	gl_Position = gl_in[0].gl_Position;
 	EmitVertex();  
 	

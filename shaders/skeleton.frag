@@ -3,40 +3,45 @@ uniform bool wireframe = true;
 
 out vec4 final_color;
 
-in 
-vec3 fragment_vertex;
-in 
-vec4 fragment_color ;
-flat in 
-vec3 fragment_normal;
+in vec3 fragment_vertex;
+in vec4 fragment_color ;
+flat in vec3 fragment_normal;
 noperspective in vec3 dist;
 
-uniform vec3 light_position;// = vec4(0,0,0,1);
-const vec4 light_ambient  = vec4(0.3, 0.3, 0.3, 1);
+// the light is on the camera for now 
+const float shininess = 22.0;
+const vec4 light_ambient  = vec4(0.1, 0.1, 0.1, 1);
 const vec4 light_specular = vec4(1.0, 1.0, 1.0, 1);
 const vec4 light_diffuse  = vec4(1.0, 1.0, 1.0, 1);
 
 void main()
 {
-  vec3 L = normalize( light_position - fragment_vertex );
-  vec3 E = normalize( -fragment_vertex );
-  vec3 R = -reflect( L, fragment_normal );
+  vec3 fragment_to_camera = normalize( - fragment_vertex ); // in the camera frame, camera is at (0,0,0)
+  vec3 fragment_to_light = fragment_to_camera; // light on the camera
+  
+  float diffuse_factor = abs( dot(fragment_normal, fragment_to_light));
+  
+  vec3 reflect_direction = reflect( -fragment_to_light, fragment_normal );
+  
+  
+  float specular_factor = pow(abs(dot(fragment_to_camera,reflect_direction)), shininess);
 
-  vec3 i_ambient  = light_ambient.xyz;
-  vec3 i_diffuse  = light_diffuse.xyz * abs( dot( fragment_normal, L ) );
-  vec3 i_specular = light_specular.xyz * pow( abs( dot(R, E ) ), 5 );
-
+  vec3 phong = 
+        light_ambient.xyz 
+     +  light_diffuse.xyz *  diffuse_factor
+     + light_specular.xyz * specular_factor;
+    
   if( wireframe )
   {
     float nearD = min(min(dist[0],dist[1]),dist[2]);
     float edge_intensity = exp2( -1.0 * nearD * nearD );
   
     final_color =  edge_intensity * vec4(0.1,0.1,0.1,1.0) 
-    + (1.0 - edge_intensity) * ( vec4(i_ambient + clamp( i_diffuse, 0, 1 ) + clamp( i_specular, 0, 1 ),1)*fragment_color);
+    + (1.0 - edge_intensity) * vec4( phong, 1 )*fragment_color;
   }
   else
   {
-    final_color = vec4(i_ambient + clamp( i_diffuse, 0, 1 ) + clamp( i_specular, 0, 1 ),1)*fragment_color;
+    final_color = vec4(phong, 1)*fragment_color;
   }
 
   
