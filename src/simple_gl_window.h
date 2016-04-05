@@ -55,6 +55,10 @@ public:
   Q_INVOKABLE void render_isolated_links( bool render );
   Q_INVOKABLE void render_border_junction_links( bool render );
 
+  Q_INVOKABLE void save_camera(const QString& filename );
+  Q_INVOKABLE void load_camera( const QString& filename );
+  Q_INVOKABLE void reset_camera();
+
   void load_benchmark( const std::string& shape_stem, const std::string& benchmark_directory, const std::string& extension );
 
 

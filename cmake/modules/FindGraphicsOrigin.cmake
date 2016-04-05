@@ -47,7 +47,7 @@ if( GRAPHICS_ORIGIN_INCLUDE_DIR )
 	set( Boost_USE_STATIC_RUNTIME OFF )
 	find_package( Boost
 	  REQUIRED
-	  COMPONENTS serialization filesystem log log_setup locale random system program_options )
+	  COMPONENTS serialization filesystem log log_setup locale random system program_options)
 	
 	if( Boost_FOUND )
 
@@ -115,6 +115,7 @@ if( GRAPHICS_ORIGIN_INCLUDE_DIR )
 	  find_package( Qt5Gui REQUIRED )
 	  find_package( Qt5Qml REQUIRED )
 	  find_package( Qt5Network REQUIRED )
+	  find_package( Qt5Widgets REQUIRED )
 	 
 	  # glew
 	  find_package( GLEW REQUIRED )
@@ -126,12 +127,12 @@ if( GRAPHICS_ORIGIN_INCLUDE_DIR )
     	${GRAPHICS_ORIGIN_APPLICATION_LIBRARIES}
     	${GRAPHICS_ORIGIN_GEOMETRY_LIBRARIES}
   		${GLEW_LIBRARIES} ${OPENGL_LIBRARIES}
-  		${Qt5Quick_LIBRARIES} ${Qt5Gui_LIBRARIES} ${Qt5Qml_LIBRARIES} ${Qt5Network_LIBRARIES} ${Qt5Core_LIBRARIES})
+  		${Qt5Quick_LIBRARIES} ${Qt5Gui_LIBRARIES} ${Qt5Qml_LIBRARIES} ${Qt5Network_LIBRARIES} ${Qt5Core_LIBRARIES} ${Qt5Widgets_LIBRARIES})
   	
   	set( GRAPHICS_ORIGIN_APPLICATION_INCLUDE_DIRS
   		${GRAPHICS_ORIGIN_GEOMETRY_INCLUDE_DIRS} 
 	  	${GLEW_INCLUDE_DIR} ${OPENGL_INCLUDE_DIR}
-  		${Qt5Quick_INCLUDE_DIRS} ${Qt5Gui_INCLUDE_DIRS} ${Qt5Qml_INCLUDE_DIRS} ${Qt5Network_INCLUDE_DIRS} ${Qt5Core_INCLUDE_DIRS})
+  		${Qt5Quick_INCLUDE_DIRS} ${Qt5Gui_INCLUDE_DIRS} ${Qt5Qml_INCLUDE_DIRS} ${Qt5Network_INCLUDE_DIRS} ${Qt5Core_INCLUDE_DIRS} ${Qt5Widgets_INCLUDE_DIRS})
 
   	set( GRAPHICS_ORIGIN_LIBRARIES
   		${GRAPHICS_ORIGIN_APPLICATION_LIBRARIES})

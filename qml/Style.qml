@@ -4,9 +4,11 @@ import QtQuick 2.3
 QtObject {
 
   property QtObject z: QtObject {
-	property int topology_button:1000
-	property int rendering_button:950
-	property int geometry_button:900
+    property int maximum: 2000
+	  property int topology_button:1000
+	  property int rendering_button:975
+	  property int geometry_button:950
+	  property int camera_button:925
     property int scene_window: 500
   }
   
@@ -22,6 +24,15 @@ QtObject {
     property int height: 20
     property int width: 100
   }
+  
+	property QtObject camera_button: QtObject {
+    property color background_active: "#A29DA3"
+    property color font_color_active: "#000000"
+    
+    property int font_size: 10
+    property int height: 20
+    property int width: 100
+  }  
   
   property QtObject topology_button: QtObject {
     property color background_inactive: "#C4F5C5"
@@ -44,7 +55,7 @@ QtObject {
     
     property int font_size: 10
     property int height: 20
-    property int width: 200
+    property int width: 250
   }
   
   property QtObject main_window: QtObject {

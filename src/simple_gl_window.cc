@@ -7,6 +7,9 @@
 
 # include <graphics-origin/application/shader_program.h>
 # include <graphics-origin/tools/log.h>
+# include <graphics-origin/application/camera.h>
+
+# include <fstream>
 
 
   simple_gl_window::simple_gl_window( QQuickItem* parent )
@@ -14,6 +17,60 @@
   {
     initialize_renderer( new median_path::simple_gl_renderer );
   }
+
+  void simple_gl_window::save_camera(const QString& filename )
+  {
+    std::string f = filename.toUtf8().constData();
+    if( !f.empty() )
+      {
+        std::ofstream output( f );
+        if( output.is_open() )
+          {
+            output << m_renderer->get_view_matrix();
+            output.close();
+            LOG( info, "camera view matrix saved to file [" << f << "]");
+          }
+        else
+          {
+            LOG( error, "cannot save to file [" << f << "]");
+          }
+      }
+  }
+
+  void simple_gl_window::load_camera( const QString& filename )
+  {
+    std::string f = filename.toUtf8().constData();
+    if( !f.empty() )
+      {
+        std::ifstream input( f );
+        if( input.is_open() )
+          {
+            median_path::gpu_mat4 view;
+            input >> view;
+            if( !input.fail() )
+              {
+                m_renderer->set_view_matrix( view );
+                LOG( info, "camera view loaded from [" << f << "]");
+              }
+            else
+              {
+                LOG( info, "failed to read camera from [" << f << "]");
+              }
+            input.close();
+
+          }
+        else
+          {
+            LOG( error, "cannot open camera file [" << f << "]");
+          }
+      }
+  }
+
+  void simple_gl_window::reset_camera()
+  {
+    m_renderer->set_view_matrix( glm::lookAt( median_path::gpu_vec3{3,0,0}, median_path::gpu_vec3{}, median_path::gpu_vec3{0,0,1}) );
+  }
+
 
   void
   simple_gl_window::load_benchmark( const std::string& shape_stem, const std::string& benchmark_directory, const std::string& extension )
