@@ -2,6 +2,7 @@ import QtQuick 2.5
 import QtQuick.Layouts 1.0
 import QtQuick.Controls 1.4
 import QtQuick.Controls.Styles 1.4
+import QtQuick.Dialogs 1.2
 import MedianPath 1.0
 import "."
 
@@ -187,6 +188,76 @@ Rectangle {
 		
 	  
   }
+
+  Row {
+    id: camera_row
+    spacing: 10
+    x: 10
+    y: parent.height - 10 - Style.camera_button.height
+    z: Style.z.camera_button
+    property int status: 0
+    
+    FileDialog {
+      id: camera_file_dialog
+      title: "Choose a camera file"
+      folder: shortcuts.home
+      visible: false
+      onAccepted: {
+        var path = camera_file_dialog.fileUrl.toString();
+        path = path.replace(/^(file:\/{2})/,"");
+        path = decodeURIComponent( path );
+        if( camera_row.status == 1 )
+        {
+          glwindow.load_camera( path  )
+        }
+        else if( camera_row.status == 2 )
+        {
+          glwindow.save_camera( path )
+        }
+        camera_row.status = 0
+        visible: false
+      }
+      onRejected: {
+				camera_row.status = 0
+        visible: false
+      }
+    }
+    
+    CameraButton {
+			label: "Load Camera"      
+      MouseArea {
+        anchors.fill: parent
+        onClicked: {
+          camera_row.status = 1
+          camera_file_dialog.selectExisting = true
+          camera_file_dialog.title = "Load a Camera file"
+					camera_file_dialog.visible = true
+        }
+      }
+    }
+    
+    CameraButton {
+      label: "Save Camera"
+      MouseArea {
+        anchors.fill: parent
+        onClicked: {
+          camera_row.status = 2
+          camera_file_dialog.selectExisting = false
+ 					camera_file_dialog.title = "Save a Camera file"
+          camera_file_dialog.visible = true
+        }
+      }
+    }
+    CameraButton {
+      label: "Reset Camera"
+      MouseArea {
+        anchors.fill: parent
+        onClicked: {
+          glwindow.reset_camera()
+        }
+      }
+    }
+  }  
   
   Column {
     spacing: 10

@@ -17,6 +17,7 @@
 # include <iostream>
 
 # include <QGuiApplication>
+# include <QApplication>
 
 static const std::string version_string =
   "SGP 2016 Benchmark Viewer tool v1.0 ©2016 Thomas Delame";
@@ -97,7 +98,8 @@ int main( int argc, char* argv[] )
   application_parameters params = application_parameters( argc, argv );
 
   int dummy_argc = 1;
-  QGuiApplication qgui( dummy_argc, argv );
+//  QGuiApplication qgui( dummy_argc, argv );
+  QApplication qgui( dummy_argc, argv );
 
   qmlRegisterType<simple_gl_window>("MedianPath", 1, 0, "GLWindow");
   qmlRegisterType<median_path::simple_camera>("MedianPath", 1, 0, "GLCamera");
