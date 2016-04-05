@@ -127,7 +127,45 @@ Rectangle {
 	      glwindow.render_triangles( triangles_rendering.active )
 	    }
 	  }
+	}
+	RenderingButton {
+	  id: wireframe_rendering
+	  label: "Render Wireframe"
+	  active: true
+	  MouseArea {
+	    anchors.fill: parent
+	    onClicked: {
+	      if( wireframe_rendering.active )
+	      {
+	        wireframe_rendering.active = false
+	      }
+	      else
+	      {
+	        wireframe_rendering.active = true;
+	      }
+	      glwindow.render_wireframe( wireframe_rendering.active )
+	    }
+	  }
 	}	
+	RenderingButton {
+	  id: radii_colors_rendering
+	  label: "Use Radii Colors"
+	  active: true
+	  MouseArea {
+	    anchors.fill: parent
+	    onClicked: {
+	      if( radii_colors_rendering.active )
+	      {
+	        radii_colors_rendering.active = false
+	      }
+	      else
+	      {
+	        radii_colors_rendering.active = true;
+	      }
+	      glwindow.use_radii_colors( radii_colors_rendering.active )
+	    }
+	  }
+	}			
 	RenderingButton {
 	  id: isolated_atoms_rendering
 	  label: "Render Isolated Atoms"
@@ -189,6 +227,45 @@ Rectangle {
 	  
   }
 
+  Row {
+    id: color_row
+    spacing: 10
+    x: parent.width - 10 - Style.color_button.width
+    y: parent.height - 10 - Style.color_button.height
+    z: Style.z.color_button
+    property int status: 0
+    ColorDialog {
+      id: color_dialog
+      title: "Please choose a color"
+      onAccepted: {
+        if( color_row.status == 1 )
+        {
+          glwindow.set_atom_color( color_dialog.color )        
+          atom_color.color = color_dialog.color
+        }
+        color_row.status = 0
+        visible:false
+      }
+      onRejected: {
+        color_row.status = 0
+        visible:false
+      }
+    
+    }
+    
+    ColorButton {
+      id: atom_color
+      label: "Atom Color"
+      MouseArea {
+        anchors.fill: parent
+        onClicked: {
+          color_row.status = 1
+          color_dialog.title = "Select a color for atoms"
+          color_dialog.visible = true
+        }
+      }
+    }
+  }
   Row {
     id: camera_row
     spacing: 10

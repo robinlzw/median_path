@@ -6,6 +6,7 @@
 # define MEDIAN_PATH_SIMPLE_GL_WINDOW_H_
 # include <graphics-origin/application/gl_window.h>
 # include "skeletons_renderable.h"
+# include "../median-path/skeletonization.h"
 
 class simple_gl_window
   : public graphics_origin::application::gl_window {
@@ -54,12 +55,20 @@ public:
   Q_INVOKABLE void render_isolated_atoms( bool render );
   Q_INVOKABLE void render_isolated_links( bool render );
   Q_INVOKABLE void render_border_junction_links( bool render );
+  Q_INVOKABLE void render_wireframe( bool render );
+  Q_INVOKABLE void use_radii_colors( bool use );
 
   Q_INVOKABLE void save_camera(const QString& filename );
   Q_INVOKABLE void load_camera( const QString& filename );
   Q_INVOKABLE void reset_camera();
+  Q_INVOKABLE void set_atom_color( const QColor& color );
 
-  void load_benchmark( const std::string& shape_stem, const std::string& benchmark_directory, const std::string& extension );
+  //fixme: put the viewer parameters in a header and send an instance to this function
+  void load_benchmark(
+      const std::string& shape_stem,
+      const std::string& benchmark_directory,
+      const std::string& extension,
+      std::vector< median_path::skeletonizer::parameters::geometry_method>& geometries );
 
 
   bool get_has_voronoi_geometry() const;
@@ -106,13 +115,16 @@ private:
   void emit_available_geometry_methods_has_changed();
   void emit_available_topology_methods_has_changed();
 
-  enum{ voronoi_geometry, polar_geometry, shrinking_geometry, number_of_geometries };
-  enum{ delaunay_reconstruction, weighted_alpha_reconstruction,
-    powershape_reconstruction, voronoi_reconstruction, number_of_reconstructions};
-  median_path::median_skeletons_renderable::handle m_handles[number_of_geometries][number_of_reconstructions];
+  static constexpr int number_of_geometries = 3;
+  static constexpr int number_of_topologies = 4;
+
+  median_path::median_skeletons_renderable::handle m_handles[ number_of_geometries ][ number_of_topologies ];
   median_path::median_skeletons_renderable* m_skeletons;
-  int m_geometry;
-  int m_topology;
+  typedef median_path::skeletonizer::parameters::geometry_method geometry_method;
+  typedef median_path::structurer::parameters::topology_method topology_method;
+
+  geometry_method m_geometry;
+  topology_method m_topology;
 };
 
 # endif

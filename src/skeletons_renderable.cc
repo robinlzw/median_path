@@ -42,9 +42,11 @@ BEGIN_MP_NAMESPACE
       graphics_origin::application::shader_program_ptr program,
       graphics_origin::application::shader_program_ptr isolated,
       graphics_origin::application::shader_program_ptr border_junction )
-    : m_isolated_program{ isolated }, m_border_junction_program{ border_junction },
+    : m_atom_color{ 0, 0.25, 0.5, 1.0 },
+      m_isolated_program{ isolated }, m_border_junction_program{ border_junction },
       m_render_triangles{true},
-      m_render_isolated_atoms{ false }, m_render_isolated_links{ false }, m_render_borders_junctions{ false }
+      m_render_isolated_atoms{ false }, m_render_isolated_links{ false }, m_render_borders_junctions{ false },
+      m_render_wireframe{ false }, m_use_radii_colors{ true }
   {
     m_model = gpu_mat4(1.0);
     m_program = program;
@@ -218,6 +220,12 @@ BEGIN_MP_NAMESPACE
   }
 
   void
+  median_skeletons_renderable::set_atom_color( const gpu_vec4& color )
+  {
+    m_atom_color = color;
+  }
+
+  void
   median_skeletons_renderable::do_render()
   {
     glcheck(glUniform2fv( m_program->get_uniform_location( "window_dimensions"), 1, glm::value_ptr( m_renderer->get_window_dimensions())));
@@ -226,6 +234,9 @@ BEGIN_MP_NAMESPACE
     glcheck(glUniformMatrix4fv( m_program->get_uniform_location( "view"), 1, GL_FALSE, glm::value_ptr( m_renderer->get_view_matrix() )));
     glcheck(glUniformMatrix4fv( m_program->get_uniform_location( "projection"), 1, GL_FALSE, glm::value_ptr( m_renderer->get_projection_matrix())));
     glcheck(glUniform1i( m_program->get_uniform_location( "grayscale" ), m_render_borders_junctions ));
+    glcheck(glUniform1i( m_program->get_uniform_location( "wireframe" ), m_render_wireframe ));
+    glcheck(glUniform1i( m_program->get_uniform_location( "use_atom_color"), m_use_radii_colors ));
+    glcheck(glUniform4fv( m_program->get_uniform_location( "global_color"), 1, glm::value_ptr(m_atom_color)));
 
     auto size = m_skeletons.get_size();
     auto data = m_skeletons.data();
@@ -361,6 +372,18 @@ BEGIN_MP_NAMESPACE
    median_skeletons_renderable::render_triangles( bool render )
    {
      m_render_triangles = render;
+   }
+
+   void
+   median_skeletons_renderable::render_wireframe( bool render )
+   {
+     m_render_wireframe = render;
+   }
+
+   void
+   median_skeletons_renderable::use_radii_colors( bool use )
+   {
+     m_use_radii_colors = use;
    }
 
 
