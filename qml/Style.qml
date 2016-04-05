@@ -9,6 +9,7 @@ QtObject {
 	  property int rendering_button:975
 	  property int geometry_button:950
 	  property int camera_button:925
+	  property int color_button:900
     property int scene_window: 500
   }
   
@@ -25,7 +26,7 @@ QtObject {
     property int width: 100
   }
   
-	property QtObject camera_button: QtObject {
+  property QtObject camera_button: QtObject {
     property color background_active: "#A29DA3"
     property color font_color_active: "#000000"
     
@@ -33,6 +34,15 @@ QtObject {
     property int height: 20
     property int width: 100
   }  
+  
+  property QtObject color_button: QtObject {
+    property color background_active: "#004080"
+    property color font_color_active: "#000000"
+    
+    property int font_size: 10
+    property int height: 20
+    property int width: 100
+  }   
   
   property QtObject topology_button: QtObject {
     property color background_inactive: "#C4F5C5"

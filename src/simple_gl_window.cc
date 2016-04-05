@@ -12,8 +12,12 @@
 # include <fstream>
 
 
+  constexpr int simple_gl_window::number_of_geometries;
+  constexpr int simple_gl_window::number_of_topologies;
+
+
   simple_gl_window::simple_gl_window( QQuickItem* parent )
-    : graphics_origin::application::gl_window( parent ), m_skeletons{ nullptr }, m_geometry{0}, m_topology{0}
+    : graphics_origin::application::gl_window( parent ), m_skeletons{ nullptr }, m_geometry{geometry_method::VORONOI_BALLS}, m_topology{topology_method::DELAUNAY_RECONSTRUCTION}
   {
     initialize_renderer( new median_path::simple_gl_renderer );
   }
@@ -73,7 +77,9 @@
 
 
   void
-  simple_gl_window::load_benchmark( const std::string& shape_stem, const std::string& benchmark_directory, const std::string& extension )
+  simple_gl_window::load_benchmark(
+      const std::string& shape_stem, const std::string& benchmark_directory, const std::string& extension,
+      std::vector< median_path::skeletonizer::parameters::geometry_method>& geometries )
   {
     if( ! m_skeletons )
       {
@@ -98,7 +104,7 @@
       {
         for( int i = 0; i < number_of_geometries; ++ i )
           {
-            for( int j = 0; j < number_of_reconstructions; ++ j )
+            for( int j = 0; j < number_of_topologies; ++ j )
               {
                 m_skeletons->remove( m_handles[i][j] );
                 m_handles[i][j] = median_path::median_skeletons_renderable::handle();
@@ -106,29 +112,60 @@
           }
       }
 
-    m_handles[voronoi_geometry][voronoi_reconstruction] = m_skeletons->add( benchmark_directory + "/voronoi/voronoi/" + shape_stem + "." + extension );
-    m_handles[voronoi_geometry][powershape_reconstruction] = m_skeletons->add( benchmark_directory + "/voronoi/powershape/" + shape_stem + "." + extension );
-    m_handles[voronoi_geometry][delaunay_reconstruction] = m_skeletons->add( benchmark_directory + "/voronoi/delaunay/" + shape_stem + "." + extension );
-    m_handles[voronoi_geometry][weighted_alpha_reconstruction] = m_skeletons->add( benchmark_directory + "/voronoi/weighted_alpha_shape/" + shape_stem + "." + extension );
+    if( geometries.empty() )
+      {
+        m_handles[geometry_method::VORONOI_BALLS][topology_method::VORONOI] = m_skeletons->add( benchmark_directory + "/voronoi/voronoi/" + shape_stem + "." + extension );
+        m_handles[geometry_method::VORONOI_BALLS][topology_method::POWERSHAPE] = m_skeletons->add( benchmark_directory + "/voronoi/powershape/" + shape_stem + "." + extension );
+        m_handles[geometry_method::VORONOI_BALLS][topology_method::DELAUNAY_RECONSTRUCTION] = m_skeletons->add( benchmark_directory + "/voronoi/delaunay/" + shape_stem + "." + extension );
+        m_handles[geometry_method::VORONOI_BALLS][topology_method::WEIGHTED_ALPHA_SHAPE] = m_skeletons->add( benchmark_directory + "/voronoi/weighted_alpha_shape/" + shape_stem + "." + extension );
 
-    m_handles[polar_geometry][powershape_reconstruction] = m_skeletons->add( benchmark_directory + "/powershape/powershape/" + shape_stem + "." + extension );
-    m_handles[polar_geometry][delaunay_reconstruction] = m_skeletons->add( benchmark_directory + "/powershape/delaunay/" + shape_stem + "." + extension );
-    m_handles[polar_geometry][weighted_alpha_reconstruction] = m_skeletons->add( benchmark_directory + "/powershape/weighted_alpha_shape/" + shape_stem + "." + extension );
+        m_handles[geometry_method::POLAR_BALLS][topology_method::POWERSHAPE] = m_skeletons->add( benchmark_directory + "/powershape/powershape/" + shape_stem + "." + extension );
+        m_handles[geometry_method::POLAR_BALLS][topology_method::DELAUNAY_RECONSTRUCTION] = m_skeletons->add( benchmark_directory + "/powershape/delaunay/" + shape_stem + "." + extension );
+        m_handles[geometry_method::POLAR_BALLS][topology_method::WEIGHTED_ALPHA_SHAPE] = m_skeletons->add( benchmark_directory + "/powershape/weighted_alpha_shape/" + shape_stem + "." + extension );
 
-    m_handles[shrinking_geometry][delaunay_reconstruction] = m_skeletons->add( benchmark_directory + "/shrinking_ball/delaunay/" + shape_stem + "." + extension );
-    m_handles[shrinking_geometry][weighted_alpha_reconstruction] = m_skeletons->add( benchmark_directory + "/shrinking_ball/weighted_alpha_shape/" + shape_stem + "." + extension );
+        m_handles[geometry_method::SHRINKING_BALLS][topology_method::DELAUNAY_RECONSTRUCTION] = m_skeletons->add( benchmark_directory + "/shrinking_ball/delaunay/" + shape_stem + "." + extension );
+        m_handles[geometry_method::SHRINKING_BALLS][topology_method::WEIGHTED_ALPHA_SHAPE] = m_skeletons->add( benchmark_directory + "/shrinking_ball/weighted_alpha_shape/" + shape_stem + "." + extension );
+      }
+    else
+      {
+        std::sort( geometries.begin(), geometries.end() );
+        auto last = std::unique( geometries.begin(), geometries.end() );
+        geometries.erase( last, geometries.end() );
+        for( auto& g : geometries )
+          {
+            switch( g )
+            {
+              case geometry_method::VORONOI_BALLS:
+                m_handles[geometry_method::VORONOI_BALLS][topology_method::VORONOI] = m_skeletons->add( benchmark_directory + "/voronoi/voronoi/" + shape_stem + "." + extension );
+                m_handles[geometry_method::VORONOI_BALLS][topology_method::POWERSHAPE] = m_skeletons->add( benchmark_directory + "/voronoi/powershape/" + shape_stem + "." + extension );
+                m_handles[geometry_method::VORONOI_BALLS][topology_method::DELAUNAY_RECONSTRUCTION] = m_skeletons->add( benchmark_directory + "/voronoi/delaunay/" + shape_stem + "." + extension );
+                m_handles[geometry_method::VORONOI_BALLS][topology_method::WEIGHTED_ALPHA_SHAPE] = m_skeletons->add( benchmark_directory + "/voronoi/weighted_alpha_shape/" + shape_stem + "." + extension );
+                break;
 
+              case geometry_method::POLAR_BALLS:
+                m_handles[geometry_method::POLAR_BALLS][topology_method::POWERSHAPE] = m_skeletons->add( benchmark_directory + "/powershape/powershape/" + shape_stem + "." + extension );
+                m_handles[geometry_method::POLAR_BALLS][topology_method::DELAUNAY_RECONSTRUCTION] = m_skeletons->add( benchmark_directory + "/powershape/delaunay/" + shape_stem + "." + extension );
+                m_handles[geometry_method::POLAR_BALLS][topology_method::WEIGHTED_ALPHA_SHAPE] = m_skeletons->add( benchmark_directory + "/powershape/weighted_alpha_shape/" + shape_stem + "." + extension );
+                break;
+
+              case geometry_method::SHRINKING_BALLS:
+                m_handles[geometry_method::SHRINKING_BALLS][topology_method::DELAUNAY_RECONSTRUCTION] = m_skeletons->add( benchmark_directory + "/shrinking_ball/delaunay/" + shape_stem + "." + extension );
+                m_handles[geometry_method::SHRINKING_BALLS][topology_method::WEIGHTED_ALPHA_SHAPE] = m_skeletons->add( benchmark_directory + "/shrinking_ball/weighted_alpha_shape/" + shape_stem + "." + extension );
+                break;
+            }
+          }
+      }
 
     bool found_active = false;
     for( int i = 0; i < number_of_geometries; ++ i )
       {
-        for( int j = 0; j < number_of_reconstructions; ++ j )
+        for( int j = 0; j < number_of_topologies; ++ j )
           {
             if( m_handles[i][j].is_valid() )
               {
                 m_skeletons->get( m_handles[i][j] ).active = true;
-                m_geometry = i;
-                m_topology = j;
+                m_geometry = static_cast<geometry_method>(i);
+                m_topology = static_cast<topology_method>(j);
                 found_active = true;
                 break;
               }
@@ -141,6 +178,8 @@
     m_skeletons->render_isolated_atoms( false );
     m_skeletons->render_isolated_links( false );
     m_skeletons->render_borders_junctions( false );
+    m_skeletons->render_wireframe( true );
+    m_skeletons->use_radii_colors( true );
 
     emit_available_geometry_methods_has_changed();
     emit_available_topology_methods_has_changed();
@@ -150,12 +189,13 @@
 
   bool simple_gl_window::request_voronoi_geometry()
   {
-    if( m_geometry != voronoi_geometry )
+    if( m_geometry != geometry_method::VORONOI_BALLS)
       {
         if( m_handles[ m_geometry ][ m_topology ].is_valid() )
           m_skeletons->get( m_handles[ m_geometry ][ m_topology ] ).active = false;
-        m_geometry = voronoi_geometry;
+        m_geometry = geometry_method::VORONOI_BALLS;
         emit_active_geometry_method_has_changed();
+        emit_available_topology_methods_has_changed();
         if( m_handles[ m_geometry ][ m_topology ].is_valid() )
           {
             m_skeletons->get( m_handles[ m_geometry ][ m_topology ] ).active = true;
@@ -167,12 +207,13 @@
   }
   bool simple_gl_window::request_polar_geometry()
   {
-    if( m_geometry != polar_geometry )
+    if( m_geometry != geometry_method::POLAR_BALLS )
       {
         if( m_handles[ m_geometry ][ m_topology ].is_valid() )
           m_skeletons->get( m_handles[ m_geometry ][ m_topology ] ).active = false;
-        m_geometry = polar_geometry;
+        m_geometry = geometry_method::POLAR_BALLS;
         emit_active_geometry_method_has_changed();
+        emit_available_topology_methods_has_changed();
         if( m_handles[ m_geometry ][ m_topology ].is_valid() )
           {
             m_skeletons->get( m_handles[ m_geometry ][ m_topology ] ).active = true;
@@ -184,12 +225,13 @@
   }
   bool simple_gl_window::request_shrinking_geometry()
   {
-    if( m_geometry != shrinking_geometry )
+    if( m_geometry != geometry_method::SHRINKING_BALLS )
       {
         if( m_handles[ m_geometry ][ m_topology ].is_valid() )
           m_skeletons->get( m_handles[ m_geometry ][ m_topology ] ).active = false;
-        m_geometry = shrinking_geometry;
+        m_geometry = geometry_method::SHRINKING_BALLS;
         emit_active_geometry_method_has_changed();
+        emit_available_topology_methods_has_changed();
         if( m_handles[ m_geometry ][ m_topology ].is_valid() )
           {
             m_skeletons->get( m_handles[ m_geometry ][ m_topology ] ).active = true;
@@ -204,7 +246,7 @@
   {
     if( m_handles[ m_geometry ][ m_topology ].is_valid() )
       m_skeletons->get( m_handles[ m_geometry ][ m_topology ] ).active = false;
-    m_topology = voronoi_reconstruction;
+    m_topology = topology_method::VORONOI;
     emit_active_topology_method_has_changed();
     if( m_handles[ m_geometry ][ m_topology ].is_valid() )
       {
@@ -217,7 +259,7 @@
   {
     if( m_handles[ m_geometry ][ m_topology ].is_valid() )
       m_skeletons->get( m_handles[ m_geometry ][ m_topology ] ).active = false;
-    m_topology = powershape_reconstruction;
+    m_topology = topology_method::POWERSHAPE;
     emit_active_topology_method_has_changed();
     if( m_handles[ m_geometry ][ m_topology ].is_valid() )
       {
@@ -230,7 +272,7 @@
   {
     if( m_handles[ m_geometry ][ m_topology ].is_valid() )
       m_skeletons->get( m_handles[ m_geometry ][ m_topology ] ).active = false;
-    m_topology = delaunay_reconstruction;
+    m_topology = topology_method::DELAUNAY_RECONSTRUCTION;
     emit_active_topology_method_has_changed();
     if( m_handles[ m_geometry ][ m_topology ].is_valid() )
       {
@@ -243,7 +285,7 @@
   {
     if( m_handles[ m_geometry ][ m_topology ].is_valid() )
       m_skeletons->get( m_handles[ m_geometry ][ m_topology ] ).active = false;
-    m_topology = weighted_alpha_reconstruction;
+    m_topology = topology_method::WEIGHTED_ALPHA_SHAPE;
     emit_active_topology_method_has_changed();
     if( m_handles[ m_geometry ][ m_topology ].is_valid() )
       {
@@ -274,31 +316,47 @@
     if( m_skeletons )
       m_skeletons->render_triangles( render );
   }
+  void simple_gl_window::render_wireframe( bool render )
+  {
+    if( m_skeletons )
+      m_skeletons->render_wireframe( render );
+  }
+  void simple_gl_window::use_radii_colors( bool use )
+  {
+    if( m_skeletons )
+      m_skeletons->use_radii_colors( use );
+  }
+
+  void simple_gl_window::set_atom_color( const QColor& color )
+  {
+    if( m_skeletons )
+      m_skeletons->set_atom_color( median_path::gpu_vec4{ color.redF(), color.greenF(), color.blueF(), 1.0 } );
+  }
 
 
   bool simple_gl_window::get_has_voronoi_geometry() const
   {
-    for( int i = 0; i < number_of_reconstructions; ++ i )
+    for( int i = 0; i < number_of_topologies; ++ i )
       {
-        if( m_handles[ voronoi_geometry ][ i ].is_valid() )
+        if( m_handles[ geometry_method::VORONOI_BALLS ][ i ].is_valid() )
           return true;
       }
     return false;
   }
   bool simple_gl_window::get_has_polar_geometry() const
   {
-    for( int i = 0; i < number_of_reconstructions; ++ i )
+    for( int i = 0; i < number_of_topologies; ++ i )
       {
-        if( m_handles[ polar_geometry ][ i ].is_valid() )
+        if( m_handles[ geometry_method::POLAR_BALLS ][ i ].is_valid() )
           return true;
       }
     return false;
   }
   bool simple_gl_window::get_has_shrinking_geometry() const
   {
-    for( int i = 0; i < number_of_reconstructions; ++ i )
+    for( int i = 0; i < number_of_topologies; ++ i )
       {
-        if( m_handles[ shrinking_geometry ][ i ].is_valid() )
+        if( m_handles[ geometry_method::SHRINKING_BALLS ][ i ].is_valid() )
           return true;
       }
     return false;
@@ -306,49 +364,49 @@
 
   bool simple_gl_window::get_voronoi_geometry_active() const
   {
-    return m_geometry == voronoi_geometry;
+    return m_geometry == geometry_method::VORONOI_BALLS;
   }
   bool simple_gl_window::get_polar_geometry_active() const
   {
-    return m_geometry == polar_geometry;
+    return m_geometry == geometry_method::POLAR_BALLS;
   }
   bool simple_gl_window::get_shrinking_geometry_active() const
   {
-    return m_geometry == shrinking_geometry;
+    return m_geometry == geometry_method::SHRINKING_BALLS;
   }
 
   bool simple_gl_window::get_has_voronoi_reconstruction() const
   {
-    return m_handles[ m_geometry ][ voronoi_reconstruction ].is_valid();
+    return m_handles[ m_geometry ][ topology_method::VORONOI ].is_valid();
   }
   bool simple_gl_window::get_has_powershape_reconstruction() const
   {
-    return m_handles[ m_geometry ][ powershape_reconstruction ].is_valid();
+    return m_handles[ m_geometry ][ topology_method::POWERSHAPE ].is_valid();
   }
   bool simple_gl_window::get_has_delaunay_reconstruction() const
   {
-    return m_handles[ m_geometry ][ delaunay_reconstruction ].is_valid();
+    return m_handles[ m_geometry ][ topology_method::DELAUNAY_RECONSTRUCTION ].is_valid();
   }
   bool simple_gl_window::get_has_weighted_alpha_reconstruction() const
   {
-    return m_handles[ m_geometry ][ weighted_alpha_reconstruction ].is_valid();
+    return m_handles[ m_geometry ][ topology_method::WEIGHTED_ALPHA_SHAPE ].is_valid();
   }
 
   bool simple_gl_window::get_voronoi_reconstruction_active() const
   {
-    return m_topology == voronoi_reconstruction;
+    return m_topology == topology_method::VORONOI;
   }
   bool simple_gl_window::get_powershape_reconstruction_active() const
   {
-    return m_topology == powershape_reconstruction;
+    return m_topology == topology_method::POWERSHAPE;
   }
   bool simple_gl_window::get_delaunay_reconstruction_active() const
   {
-    return m_topology == delaunay_reconstruction;
+    return m_topology == topology_method::DELAUNAY_RECONSTRUCTION;
   }
   bool simple_gl_window::get_weighted_alpha_reconstruction_active() const
   {
-    return m_topology == weighted_alpha_reconstruction;
+    return m_topology == topology_method::WEIGHTED_ALPHA_SHAPE;
   }
   void simple_gl_window::emit_active_geometry_method_has_changed()
   {
