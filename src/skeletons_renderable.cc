@@ -229,7 +229,6 @@ BEGIN_MP_NAMESPACE
   median_skeletons_renderable::do_render()
   {
     glcheck(glUniform2fv( m_program->get_uniform_location( "window_dimensions"), 1, glm::value_ptr( m_renderer->get_window_dimensions())));
-    glcheck(glUniform3fv( m_program->get_uniform_location( "light_position"), 1, glm::value_ptr( m_renderer->get_camera()->get_position() )));
     glcheck(glUniformMatrix4fv( m_program->get_uniform_location( "model"), 1, GL_FALSE, glm::value_ptr( m_model )));
     glcheck(glUniformMatrix4fv( m_program->get_uniform_location( "view"), 1, GL_FALSE, glm::value_ptr( m_renderer->get_view_matrix() )));
     glcheck(glUniformMatrix4fv( m_program->get_uniform_location( "projection"), 1, GL_FALSE, glm::value_ptr( m_renderer->get_projection_matrix())));
