@@ -42,7 +42,7 @@ BEGIN_MP_NAMESPACE
       graphics_origin::application::shader_program_ptr program,
       graphics_origin::application::shader_program_ptr isolated,
       graphics_origin::application::shader_program_ptr border_junction )
-    : m_atom_color{ 0, 0.25, 0.5, 1.0 },
+    : m_atom_color{ 0.56, 0.619, 0.764, 1.0 },
       m_isolated_program{ isolated }, m_border_junction_program{ border_junction },
       m_render_triangles{true},
       m_render_isolated_atoms{ false }, m_render_isolated_links{ false }, m_render_borders_junctions{ false },

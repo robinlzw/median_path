@@ -68,7 +68,8 @@ public:
       const std::string& shape_stem,
       const std::string& benchmark_directory,
       const std::string& extension,
-      std::vector< median_path::skeletonizer::parameters::geometry_method>& geometries );
+      std::vector< median_path::skeletonizer::parameters::geometry_method>& geometries,
+      std::vector< median_path::structurer::parameters::topology_method>& topologies );
 
 
   bool get_has_voronoi_geometry() const;

@@ -36,7 +36,7 @@ QtObject {
   }  
   
   property QtObject color_button: QtObject {
-    property color background_active: "#004080"
+    property color background_active: "#8f9ec3"
     property color font_color_active: "#000000"
     
     property int font_size: 10
