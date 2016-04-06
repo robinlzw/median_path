@@ -84,6 +84,7 @@ struct application_parameters {
   std::string input_directory;
   std::string extension;
   std::vector< median_path::skeletonizer::parameters::geometry_method > geometries;
+  std::vector< median_path::structurer::parameters::topology_method > topologies;
 
   application_parameters()
   {}
@@ -109,7 +110,12 @@ struct application_parameters {
          "geometry methods to load in the viewer. Possible values are:\n"
          "  * shrinking_balls\n"
          "  * polar_balls\n"
-         "  * voronoi_balls\n")
+         "  * voronoi_balls")
+     ("topologies,t", po::value<decltype(topologies)>(&topologies)->multitoken(),
+         "topology methods to load in the viewer. Possible values are:\n"
+         "  * weighted_alpha_shape\n"
+         "  * delaunay\n"
+         "  * voronoi")
     ;
 
     po::variables_map vm;
@@ -159,7 +165,9 @@ int main( int argc, char* argv[] )
   auto window = app.rootObject()->findChild<simple_gl_window*>("glwindow");
   window->load_benchmark(
       params.input_stem, params.input_directory, params.extension,
-      params.geometries );
+      params.geometries,
+      params.topologies
+                        );
 
   app.raise();
   return qgui.exec();

@@ -79,7 +79,8 @@
   void
   simple_gl_window::load_benchmark(
       const std::string& shape_stem, const std::string& benchmark_directory, const std::string& extension,
-      std::vector< median_path::skeletonizer::parameters::geometry_method>& geometries )
+      std::vector< median_path::skeletonizer::parameters::geometry_method>& geometries,
+      std::vector< median_path::structurer::parameters::topology_method>& topologies )
   {
     if( ! m_skeletons )
       {
@@ -114,47 +115,63 @@
 
     if( geometries.empty() )
       {
-        m_handles[geometry_method::VORONOI_BALLS][topology_method::VORONOI] = m_skeletons->add( benchmark_directory + "/voronoi/voronoi/" + shape_stem + "." + extension );
-        m_handles[geometry_method::VORONOI_BALLS][topology_method::POWERSHAPE] = m_skeletons->add( benchmark_directory + "/voronoi/powershape/" + shape_stem + "." + extension );
-        m_handles[geometry_method::VORONOI_BALLS][topology_method::DELAUNAY_RECONSTRUCTION] = m_skeletons->add( benchmark_directory + "/voronoi/delaunay/" + shape_stem + "." + extension );
-        m_handles[geometry_method::VORONOI_BALLS][topology_method::WEIGHTED_ALPHA_SHAPE] = m_skeletons->add( benchmark_directory + "/voronoi/weighted_alpha_shape/" + shape_stem + "." + extension );
-
-        m_handles[geometry_method::POLAR_BALLS][topology_method::POWERSHAPE] = m_skeletons->add( benchmark_directory + "/powershape/powershape/" + shape_stem + "." + extension );
-        m_handles[geometry_method::POLAR_BALLS][topology_method::DELAUNAY_RECONSTRUCTION] = m_skeletons->add( benchmark_directory + "/powershape/delaunay/" + shape_stem + "." + extension );
-        m_handles[geometry_method::POLAR_BALLS][topology_method::WEIGHTED_ALPHA_SHAPE] = m_skeletons->add( benchmark_directory + "/powershape/weighted_alpha_shape/" + shape_stem + "." + extension );
-
-        m_handles[geometry_method::SHRINKING_BALLS][topology_method::DELAUNAY_RECONSTRUCTION] = m_skeletons->add( benchmark_directory + "/shrinking_ball/delaunay/" + shape_stem + "." + extension );
-        m_handles[geometry_method::SHRINKING_BALLS][topology_method::WEIGHTED_ALPHA_SHAPE] = m_skeletons->add( benchmark_directory + "/shrinking_ball/weighted_alpha_shape/" + shape_stem + "." + extension );
+        geometries.push_back( geometry_method::VORONOI_BALLS );
+        geometries.push_back( geometry_method::POLAR_BALLS );
+        geometries.push_back( geometry_method::SHRINKING_BALLS );
       }
     else
       {
         std::sort( geometries.begin(), geometries.end() );
-        auto last = std::unique( geometries.begin(), geometries.end() );
-        geometries.erase( last, geometries.end() );
-        for( auto& g : geometries )
-          {
-            switch( g )
-            {
-              case geometry_method::VORONOI_BALLS:
-                m_handles[geometry_method::VORONOI_BALLS][topology_method::VORONOI] = m_skeletons->add( benchmark_directory + "/voronoi/voronoi/" + shape_stem + "." + extension );
-                m_handles[geometry_method::VORONOI_BALLS][topology_method::POWERSHAPE] = m_skeletons->add( benchmark_directory + "/voronoi/powershape/" + shape_stem + "." + extension );
-                m_handles[geometry_method::VORONOI_BALLS][topology_method::DELAUNAY_RECONSTRUCTION] = m_skeletons->add( benchmark_directory + "/voronoi/delaunay/" + shape_stem + "." + extension );
-                m_handles[geometry_method::VORONOI_BALLS][topology_method::WEIGHTED_ALPHA_SHAPE] = m_skeletons->add( benchmark_directory + "/voronoi/weighted_alpha_shape/" + shape_stem + "." + extension );
-                break;
-
-              case geometry_method::POLAR_BALLS:
-                m_handles[geometry_method::POLAR_BALLS][topology_method::POWERSHAPE] = m_skeletons->add( benchmark_directory + "/powershape/powershape/" + shape_stem + "." + extension );
-                m_handles[geometry_method::POLAR_BALLS][topology_method::DELAUNAY_RECONSTRUCTION] = m_skeletons->add( benchmark_directory + "/powershape/delaunay/" + shape_stem + "." + extension );
-                m_handles[geometry_method::POLAR_BALLS][topology_method::WEIGHTED_ALPHA_SHAPE] = m_skeletons->add( benchmark_directory + "/powershape/weighted_alpha_shape/" + shape_stem + "." + extension );
-                break;
-
-              case geometry_method::SHRINKING_BALLS:
-                m_handles[geometry_method::SHRINKING_BALLS][topology_method::DELAUNAY_RECONSTRUCTION] = m_skeletons->add( benchmark_directory + "/shrinking_ball/delaunay/" + shape_stem + "." + extension );
-                m_handles[geometry_method::SHRINKING_BALLS][topology_method::WEIGHTED_ALPHA_SHAPE] = m_skeletons->add( benchmark_directory + "/shrinking_ball/weighted_alpha_shape/" + shape_stem + "." + extension );
-                break;
-            }
-          }
+        geometries.erase( std::unique( geometries.begin(), geometries.end() ), geometries.end() );
       }
+    if( topologies.empty() )
+      {
+        topologies.push_back( topology_method::VORONOI );   
+        topologies.push_back( topology_method::POWERSHAPE );
+        topologies.push_back( topology_method::DELAUNAY_RECONSTRUCTION );
+        topologies.push_back( topology_method::WEIGHTED_ALPHA_SHAPE );
+      }
+    else
+      {
+        std::sort( topologies.begin(), topologies.end() );
+        topologies.erase( std::unique( topologies.begin(), topologies.end() ), topologies.end() );
+      }
+      
+      
+    for( auto& g : geometries )
+        {
+        switch( g )
+        {
+            case geometry_method::VORONOI_BALLS:
+                
+                if( std::find( topologies.begin(), topologies.end(), topology_method::VORONOI ) != topologies.end() )
+            m_handles[geometry_method::VORONOI_BALLS][topology_method::VORONOI] = m_skeletons->add( benchmark_directory + "/voronoi/voronoi/" + shape_stem + "." + extension );
+                if( std::find( topologies.begin(), topologies.end(), topology_method::POWERSHAPE ) != topologies.end() )
+            m_handles[geometry_method::VORONOI_BALLS][topology_method::POWERSHAPE] = m_skeletons->add( benchmark_directory + "/voronoi/powershape/" + shape_stem + "." + extension );
+            if( std::find( topologies.begin(), topologies.end(), topology_method::DELAUNAY_RECONSTRUCTION ) != topologies.end() )
+            m_handles[geometry_method::VORONOI_BALLS][topology_method::DELAUNAY_RECONSTRUCTION] = m_skeletons->add( benchmark_directory + "/voronoi/delaunay/" + shape_stem + "." + extension );
+            if( std::find( topologies.begin(), topologies.end(), topology_method::WEIGHTED_ALPHA_SHAPE ) != topologies.end() )
+            m_handles[geometry_method::VORONOI_BALLS][topology_method::WEIGHTED_ALPHA_SHAPE] = m_skeletons->add( benchmark_directory + "/voronoi/weighted_alpha_shape/" + shape_stem + "." + extension );
+            break;
+
+            case geometry_method::POLAR_BALLS:
+                if( std::find( topologies.begin(), topologies.end(), topology_method::POWERSHAPE ) != topologies.end() )
+            m_handles[geometry_method::POLAR_BALLS][topology_method::POWERSHAPE] = m_skeletons->add( benchmark_directory + "/powershape/powershape/" + shape_stem + "." + extension );
+            if( std::find( topologies.begin(), topologies.end(), topology_method::DELAUNAY_RECONSTRUCTION ) != topologies.end() )
+            m_handles[geometry_method::POLAR_BALLS][topology_method::DELAUNAY_RECONSTRUCTION] = m_skeletons->add( benchmark_directory + "/powershape/delaunay/" + shape_stem + "." + extension );
+            if( std::find( topologies.begin(), topologies.end(), topology_method::WEIGHTED_ALPHA_SHAPE ) != topologies.end() )
+            m_handles[geometry_method::POLAR_BALLS][topology_method::WEIGHTED_ALPHA_SHAPE] = m_skeletons->add( benchmark_directory + "/powershape/weighted_alpha_shape/" + shape_stem + "." + extension );
+            break;
+
+            case geometry_method::SHRINKING_BALLS:
+            if( std::find( topologies.begin(), topologies.end(), topology_method::DELAUNAY_RECONSTRUCTION ) != topologies.end() )
+            m_handles[geometry_method::SHRINKING_BALLS][topology_method::DELAUNAY_RECONSTRUCTION] = m_skeletons->add( benchmark_directory + "/shrinking_ball/delaunay/" + shape_stem + "." + extension );
+            if( std::find( topologies.begin(), topologies.end(), topology_method::WEIGHTED_ALPHA_SHAPE ) != topologies.end() )
+            m_handles[geometry_method::SHRINKING_BALLS][topology_method::WEIGHTED_ALPHA_SHAPE] = m_skeletons->add( benchmark_directory + "/shrinking_ball/weighted_alpha_shape/" + shape_stem + "." + extension );
+            break;
+        }
+        }
+    
 
     bool found_active = false;
     for( int i = 0; i < number_of_geometries; ++ i )
