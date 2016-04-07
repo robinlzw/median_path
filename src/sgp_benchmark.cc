@@ -202,6 +202,7 @@ static void benchmark_voronoi_reconstruction(
   stats.links = result.get_number_of_links();
   stats.faces = result.get_number_of_faces();
   stats.execution_time = algorithm.get_execution_time();
+  LOG( info, "voronoi reconstruction took: " << stats.execution_time );
   result.save(
       app_params.get_output_filename(
           filename,
@@ -223,6 +224,7 @@ static void benchmark_powershape_reconstruction(
   stats.links = result.get_number_of_links();
   stats.faces = result.get_number_of_faces();
   stats.execution_time = algorithm.get_execution_time();
+  LOG( info, "powershape reconstruction took: " << stats.execution_time );
   result.save(
       app_params.get_output_filename(
           filename,
@@ -244,6 +246,7 @@ static void benchmark_delaunay_reconstruction(
   stats.links = result.get_number_of_links();
   stats.faces = result.get_number_of_faces();
   stats.execution_time = algorithm.get_execution_time();
+  LOG( info, "delaunay reconstruction took: " << stats.execution_time );
   result.save(
       app_params.get_output_filename(
           filename,
@@ -265,6 +268,7 @@ static void benchmark_weighted_alpha_shape_reconstruction(
   stats.links = result.get_number_of_links();
   stats.faces = result.get_number_of_faces();
   stats.execution_time = algorithm.get_execution_time();
+  LOG( info, "WASS reconstruction took: " << stats.execution_time );
   result.save(
       app_params.get_output_filename(
           filename,
@@ -280,6 +284,7 @@ static void benchmark_from_voronoi_skeletonization(
     median_path::skeletonizer::parameters& params,
     statistics& stats )
 {
+  LOG( info, "will now perform reconstructions on Voronoi balls");
   params.m_geometry_method = median_path::skeletonizer::parameters::VORONOI_BALLS;
 
   params.m_structurer_parameters.m_topology_method = median_path::structurer::parameters::DELAUNAY_RECONSTRUCTION;
@@ -302,6 +307,7 @@ static void benchmark_from_powershape_skeletonization(
     median_path::skeletonizer::parameters& params,
     statistics& stats )
 {
+  LOG( info, "will now perform reconstructions on polar balls");
   params.m_geometry_method = median_path::skeletonizer::parameters::POLAR_BALLS;
 
   params.m_structurer_parameters.m_topology_method = median_path::structurer::parameters::DELAUNAY_RECONSTRUCTION;
@@ -321,6 +327,7 @@ static void benchmark_from_shrinking_ball_skeletonization(
     median_path::skeletonizer::parameters& params,
     statistics& stats )
 {
+  LOG( info, "will now perform reconstructions on shrinking balls");
   params.m_geometry_method = median_path::skeletonizer::parameters::SHRINKING_BALLS;
   params.m_shrinking_ball.m_radius_method = median_path::skeletonizer::shrinking_ball_parameters::CONSTANT;
   benchmark_delaunay_reconstruction( input, filename, app_params, params, stats.shrinking_ball_delaunay );
