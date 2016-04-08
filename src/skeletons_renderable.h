@@ -67,6 +67,7 @@ BEGIN_MP_NAMESPACE
     void render_wireframe( bool render );
     void use_radii_colors( bool use );
     void set_atom_color( const gpu_vec4& color );
+    void set_isolated_color( const gpu_vec4& color );
   private:
     void update_gpu_data() override;
     void do_render() override;
@@ -76,6 +77,7 @@ BEGIN_MP_NAMESPACE
     graphics_origin::application::shader_program_ptr m_isolated_program;
     graphics_origin::application::shader_program_ptr m_border_junction_program;
     median_path::gpu_vec4 m_atom_color;
+    median_path::gpu_vec4 m_isolated_color;
     bool m_render_triangles;
     bool m_render_isolated_atoms;
     bool m_render_isolated_links;
