@@ -350,6 +350,11 @@
       m_skeletons->set_atom_color( median_path::gpu_vec4{ color.redF(), color.greenF(), color.blueF(), 1.0 } );
   }
 
+  void simple_gl_window::set_isolated_color( const QColor& color )
+  {
+    if( m_skeletons )
+      m_skeletons->set_isolated_color( median_path::gpu_vec4{ color.redF(), color.greenF(), color.blueF(), 1.0 } );
+  }
 
   bool simple_gl_window::get_has_voronoi_geometry() const
   {

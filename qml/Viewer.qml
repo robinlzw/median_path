@@ -243,7 +243,7 @@ Rectangle {
   Row {
     id: color_row
     spacing: 10
-    x: parent.width - 10 - Style.color_button.width
+    x: parent.width - 20 - 2 * Style.color_button.width
     y: parent.height - 10 - Style.color_button.height
     z: Style.z.color_button
     property int status: 0
@@ -255,6 +255,10 @@ Rectangle {
         {
           glwindow.set_atom_color( color_dialog.color )        
           atom_color.color = color_dialog.color
+        } else if( color_row.status == 2 )
+        {
+          glwindow.set_isolated_color( color_dialog.color )
+          isolated_color.color = color.dialog.color
         }
         color_row.status = 0
         visible:false
@@ -263,7 +267,6 @@ Rectangle {
         color_row.status = 0
         visible:false
       }
-    
     }
     
     ColorButton {
@@ -274,6 +277,20 @@ Rectangle {
         onClicked: {
           color_row.status = 1
           color_dialog.title = "Select a color for atoms"
+          color_dialog.visible = true
+        }
+      }
+    }
+    
+    ColorButton {
+      id: isolated_color
+      label: "Isolated Color"
+      color: "black"
+      MouseArea {
+        anchors.fill: parent
+        onClicked: {
+          color_row.status = 2
+          color_dialog.title = "Select a color for isolated elements"
           color_dialog.visible = true
         }
       }

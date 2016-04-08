@@ -62,6 +62,7 @@ public:
   Q_INVOKABLE void load_camera( const QString& filename );
   Q_INVOKABLE void reset_camera();
   Q_INVOKABLE void set_atom_color( const QColor& color );
+  Q_INVOKABLE void set_isolated_color( const QColor& color );
 
   //fixme: put the viewer parameters in a header and send an instance to this function
   void load_benchmark(
