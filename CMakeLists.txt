@@ -148,7 +148,3 @@ configure_file( "${MP_SOURCES_IN_DIR}/median_path.h.in" "${MP_HEADERS_IN_DIR}/me
 
 add_subdirectory( ${MP_SOURCES_IN_DIR} )
 add_subdirectory( ${MP_APPLICATIONS_IN_DIR} )
-
-
-message( "LIBRARIES = ${MP_LIBRARIES}")
-message( "INCLUDES  = ${MP_INCLUDE_DIRS}")
