@@ -152,7 +152,6 @@ int main( int argc, char* argv[] )
   application_parameters params = application_parameters( argc, argv );
 
   int dummy_argc = 1;
-//  QGuiApplication qgui( dummy_argc, argv );
   QApplication qgui( dummy_argc, argv );
 
   qmlRegisterType<simple_gl_window>("MedianPath", 1, 0, "GLWindow");
