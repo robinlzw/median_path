@@ -328,6 +328,12 @@
     if( m_skeletons )
       m_skeletons->render_isolated_links( render );
   }
+  void simple_gl_window::render_skeleton_points( bool render )
+  {
+    if( m_skeletons )
+      m_skeletons->render_skeleton_points( render );
+  }
+
   void simple_gl_window::render_triangles( bool render )
   {
     if( m_skeletons )

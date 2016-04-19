@@ -16,6 +16,7 @@ BEGIN_MP_NAMESPACE
     skeleton = std::move( other.skeleton );
     for( int id = 0; id < number_of_buffers; ++ id )
       buffer_ids[id] = other.buffer_ids[id];
+    number_of_atoms = other.number_of_atoms;
     number_of_isolated_atoms = other.number_of_isolated_atoms;
     number_of_isolated_links = other.number_of_isolated_links;
     number_of_border_links = other.number_of_border_links;
@@ -29,7 +30,7 @@ BEGIN_MP_NAMESPACE
 
   median_skeletons_renderable::storage::storage()
     : vao{ 0 },
-      number_of_isolated_atoms{0}, number_of_isolated_links{0},
+      number_of_atoms{0}, number_of_isolated_atoms{0}, number_of_isolated_links{0},
       number_of_border_links{0}, number_of_junction_links{0},
       dirty{true}, active{ false }, destroyed{false}
   {
@@ -44,7 +45,7 @@ BEGIN_MP_NAMESPACE
       graphics_origin::application::shader_program_ptr border_junction )
     : m_atom_color{ 0.56, 0.619, 0.764, 1.0 }, m_isolated_color{0,0,0,1.0},
       m_isolated_program{ isolated }, m_border_junction_program{ border_junction },
-      m_render_triangles{true},
+      m_render_skeleton_points{false}, m_render_triangles{true},
       m_render_isolated_atoms{ false }, m_render_isolated_links{ false }, m_render_borders_junctions{ false },
       m_render_wireframe{ false }, m_use_radii_colors{ true }
   {
@@ -100,6 +101,7 @@ BEGIN_MP_NAMESPACE
                 }
 
                 const median_skeleton::atom_index nbatoms = data->skeleton.get_number_of_atoms();
+                data->number_of_atoms = nbatoms;
                 int  atom_location = m_program->get_attribute_location( "atom" );
                 int color_location = m_program->get_attribute_location( "color");
 
@@ -257,7 +259,7 @@ BEGIN_MP_NAMESPACE
         glcheck(glBindVertexArray( 0 ));
       }
 
-    if( m_render_isolated_atoms || m_render_isolated_links )
+    if( m_render_isolated_atoms || m_render_isolated_links || m_render_skeleton_points )
       {
         m_isolated_program->bind();
         glcheck(glUniform1i( m_isolated_program->get_uniform_location( "use_atom_color"), m_use_radii_colors ));
@@ -280,6 +282,12 @@ BEGIN_MP_NAMESPACE
                 glcheck(glBindBuffer( GL_ARRAY_BUFFER, data->buffer_ids[colors_vbo]));
                 glcheck(glEnableVertexAttribArray( color_location ));
                 glcheck(glVertexAttribPointer( color_location, 4, GL_FLOAT, GL_FALSE, 0, 0 ));
+
+                if( m_render_skeleton_points )
+                  {
+                    glcheck(glPointSize( 4.0 ) );
+                    glcheck(glDrawArrays( GL_POINTS, 0, data->number_of_atoms ));
+                  }
 
                 if( m_render_isolated_atoms )
                   {
@@ -372,6 +380,12 @@ BEGIN_MP_NAMESPACE
    median_skeletons_renderable::render_borders_junctions( bool render )
    {
      m_render_borders_junctions = render;
+   }
+
+   void
+   median_skeletons_renderable::render_skeleton_points( bool render )
+   {
+     m_render_skeleton_points = render;
    }
 
    void

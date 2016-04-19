@@ -142,6 +142,25 @@ Rectangle {
 	  }
 	}
 	RenderingButton {
+	  id: points_rendering
+	  label: "Render Skeleton Points"
+	  active: false
+	  MouseArea {
+	    anchors.fill: parent
+	    onClicked: {
+	      if( points_rendering.active )
+	      {
+	        points_rendering.active = false
+	      }
+	      else
+	      {
+	        points_rendering.active = true;
+	      }
+	      glwindow.render_skeleton_points( points_rendering.active )
+	    }
+	  }
+	}	
+	RenderingButton {
 	  id: wireframe_rendering
 	  label: "Render Wireframe"
 	  active: true
