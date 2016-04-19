@@ -24,6 +24,7 @@ BEGIN_MP_NAMESPACE
       median_skeleton skeleton;
       unsigned int buffer_ids[number_of_buffers ];
       unsigned int vao;
+      median_skeleton::atom_index number_of_atoms;
       median_skeleton::atom_index number_of_isolated_atoms;
       median_skeleton::link_index number_of_isolated_links;
       median_skeleton::link_index number_of_border_links;
@@ -60,6 +61,7 @@ BEGIN_MP_NAMESPACE
 
     storage& get( skeleton_buffer::handle h);
 
+    void render_skeleton_points( bool render );
     void render_triangles( bool render );
     void render_isolated_atoms( bool render );
     void render_isolated_links( bool render );
@@ -78,6 +80,7 @@ BEGIN_MP_NAMESPACE
     graphics_origin::application::shader_program_ptr m_border_junction_program;
     median_path::gpu_vec4 m_atom_color;
     median_path::gpu_vec4 m_isolated_color;
+    bool m_render_skeleton_points;
     bool m_render_triangles;
     bool m_render_isolated_atoms;
     bool m_render_isolated_links;
