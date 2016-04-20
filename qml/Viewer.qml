@@ -161,6 +161,25 @@ Rectangle {
 	  }
 	}	
 	RenderingButton {
+	  id: balls_rendering
+	  label: "Render Balls"
+	  active: false
+	  MouseArea {
+	    anchors.fill: parent
+	    onClicked: {
+	      if( balls_rendering.active )
+	      {
+	        balls_rendering.active = false
+	      }
+	      else
+	      {
+	        balls_rendering.active = true;
+	      }
+	      glwindow.render_balls( balls_rendering.active )
+	    }
+	  }
+	}	
+	RenderingButton {
 	  id: wireframe_rendering
 	  label: "Render Wireframe"
 	  active: true
