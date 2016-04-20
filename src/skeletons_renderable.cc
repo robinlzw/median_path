@@ -42,10 +42,11 @@ BEGIN_MP_NAMESPACE
   median_skeletons_renderable::median_skeletons_renderable(
       graphics_origin::application::shader_program_ptr program,
       graphics_origin::application::shader_program_ptr isolated,
-      graphics_origin::application::shader_program_ptr border_junction )
+      graphics_origin::application::shader_program_ptr border_junction,
+      graphics_origin::application::shader_program_ptr ball )
     : m_atom_color{ 0.56, 0.619, 0.764, 1.0 }, m_isolated_color{0,0,0,1.0},
-      m_isolated_program{ isolated }, m_border_junction_program{ border_junction },
-      m_render_skeleton_points{false}, m_render_triangles{true},
+      m_points_and_line_program{ isolated }, m_border_junction_program{ border_junction }, m_ball_program{ ball },
+      m_render_balls{false}, m_render_skeleton_points{false}, m_render_triangles{true},
       m_render_isolated_atoms{ false }, m_render_isolated_links{ false }, m_render_borders_junctions{ false },
       m_render_wireframe{ false }, m_use_radii_colors{ true }
   {
@@ -261,15 +262,15 @@ BEGIN_MP_NAMESPACE
 
     if( m_render_isolated_atoms || m_render_isolated_links || m_render_skeleton_points )
       {
-        m_isolated_program->bind();
-        glcheck(glUniform1i( m_isolated_program->get_uniform_location( "use_atom_color"), m_use_radii_colors ));
-        glcheck(glUniform4fv( m_isolated_program->get_uniform_location( "global_color"), 1, glm::value_ptr(m_isolated_color)));
-        glcheck(glUniformMatrix4fv( m_isolated_program->get_uniform_location( "mvp" ),
+        m_points_and_line_program->bind();
+        glcheck(glUniform1i( m_points_and_line_program->get_uniform_location( "use_atom_color"), m_use_radii_colors ));
+        glcheck(glUniform4fv( m_points_and_line_program->get_uniform_location( "global_color"), 1, glm::value_ptr(m_isolated_color)));
+        glcheck(glUniformMatrix4fv( m_points_and_line_program->get_uniform_location( "mvp" ),
           1, GL_FALSE,
           glm::value_ptr( m_renderer->get_projection_matrix() * m_renderer->get_view_matrix() * m_model )));
 
-        auto atom_location = m_isolated_program->get_attribute_location( "atom" );
-        auto color_location = m_isolated_program->get_attribute_location( "color" );
+        auto atom_location = m_points_and_line_program->get_attribute_location( "atom" );
+        auto color_location = m_points_and_line_program->get_attribute_location( "color" );
         data = m_skeletons.data();
         for( decltype(size) i = 0; i < size; ++ i, ++ data )
           {
@@ -305,6 +306,35 @@ BEGIN_MP_NAMESPACE
               }
           }
       }
+
+    if( m_render_balls )
+      {
+        m_ball_program->bind();
+        int ball_location  = m_ball_program->get_attribute_location(  "ball_attribute" );
+        int color_location = m_ball_program->get_attribute_location( "color_attribute" );
+
+        glcheck(glUniform1i( m_ball_program->get_uniform_location( "use_atom_color"), m_use_radii_colors ));
+        glcheck(glUniform4fv( m_ball_program->get_uniform_location( "global_color"), 1, glm::value_ptr(m_atom_color)));
+        glcheck(glUniformMatrix4fv( m_ball_program->get_uniform_location("projection"), 1, GL_FALSE, glm::value_ptr( m_renderer->get_projection_matrix() )));
+        glcheck(glUniformMatrix4fv( m_ball_program->get_uniform_location( "mv"), 1, GL_FALSE, glm::value_ptr(m_renderer->get_view_matrix() * m_model)));
+
+        data = m_skeletons.data();
+        for( decltype(size) i = 0; i < size; ++ i, ++ data )
+          {
+            if( data->active )
+              {
+                glcheck(glBindBuffer( GL_ARRAY_BUFFER, data->buffer_ids[balls_vbo]));
+                glcheck(glEnableVertexAttribArray( ball_location ));
+                glcheck(glVertexAttribPointer( ball_location, 4, GL_DOUBLE, GL_FALSE, 0, 0 ));
+
+                glcheck(glBindBuffer( GL_ARRAY_BUFFER, data->buffer_ids[colors_vbo]));
+                glcheck(glEnableVertexAttribArray( color_location ));
+                glcheck(glVertexAttribPointer( color_location, 4, GL_FLOAT, GL_FALSE, 0, 0 ));
+                glcheck(glDrawArrays( GL_POINTS, 0, data->number_of_atoms ));
+              }
+          }
+      }
+
     if( m_render_borders_junctions )
       {
         m_border_junction_program->bind();
@@ -404,6 +434,12 @@ BEGIN_MP_NAMESPACE
    median_skeletons_renderable::use_radii_colors( bool use )
    {
      m_use_radii_colors = use;
+   }
+
+   void
+   median_skeletons_renderable::render_balls( bool render )
+   {
+     m_render_balls = render;
    }
 
 

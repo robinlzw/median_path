@@ -98,7 +98,12 @@
           "shaders/border_junction.vert",
           "shaders/flat_skeleton.frag"
         });
-        m_skeletons = new median_path::median_skeletons_renderable( skeleton_program, isolated_program, border_junction_program );
+        auto balls_program = std::make_shared<graphics_origin::application::shader_program>( std::list<std::string>{
+          "shaders/balls.vert",
+          "shaders/balls.frag",
+          "shaders/balls.geom"
+        });
+        m_skeletons = new median_path::median_skeletons_renderable( skeleton_program, isolated_program, border_junction_program, balls_program );
         add_renderable( m_skeletons );
       }
     else
@@ -333,7 +338,11 @@
     if( m_skeletons )
       m_skeletons->render_skeleton_points( render );
   }
-
+  void simple_gl_window::render_balls( bool render )
+  {
+    if( m_skeletons )
+      m_skeletons->render_balls( render );
+  }
   void simple_gl_window::render_triangles( bool render )
   {
     if( m_skeletons )

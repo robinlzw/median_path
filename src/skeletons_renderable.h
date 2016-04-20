@@ -47,8 +47,9 @@ BEGIN_MP_NAMESPACE
 
     median_skeletons_renderable(
         graphics_origin::application::shader_program_ptr program,
-        graphics_origin::application::shader_program_ptr isolated,
-        graphics_origin::application::shader_program_ptr border_junction );
+        graphics_origin::application::shader_program_ptr points_and_line,
+        graphics_origin::application::shader_program_ptr border_junction,
+        graphics_origin::application::shader_program_ptr ball );
     ~median_skeletons_renderable();
 
     handle
@@ -61,6 +62,7 @@ BEGIN_MP_NAMESPACE
 
     storage& get( skeleton_buffer::handle h);
 
+    void render_balls( bool render );
     void render_skeleton_points( bool render );
     void render_triangles( bool render );
     void render_isolated_atoms( bool render );
@@ -76,10 +78,12 @@ BEGIN_MP_NAMESPACE
     void remove_gpu_data() override;
 
     skeleton_buffer m_skeletons;
-    graphics_origin::application::shader_program_ptr m_isolated_program;
+    graphics_origin::application::shader_program_ptr m_points_and_line_program;
     graphics_origin::application::shader_program_ptr m_border_junction_program;
+    graphics_origin::application::shader_program_ptr m_ball_program;
     median_path::gpu_vec4 m_atom_color;
     median_path::gpu_vec4 m_isolated_color;
+    bool m_render_balls;
     bool m_render_skeleton_points;
     bool m_render_triangles;
     bool m_render_isolated_atoms;

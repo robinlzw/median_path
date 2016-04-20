@@ -51,6 +51,7 @@ public:
   Q_INVOKABLE bool request_delaunay_reconstruction();
   Q_INVOKABLE bool request_weighted_alpha_reconstruction();
 
+  Q_INVOKABLE void render_balls( bool render );
   Q_INVOKABLE void render_skeleton_points( bool render );
   Q_INVOKABLE void render_triangles( bool render );
   Q_INVOKABLE void render_isolated_atoms( bool render );
