@@ -417,30 +417,24 @@ BEGIN_MP_NAMESPACE
    {
      m_render_skeleton_points = render;
    }
-
    void
    median_skeletons_renderable::render_triangles( bool render )
    {
      m_render_triangles = render;
    }
-
    void
    median_skeletons_renderable::render_wireframe( bool render )
    {
      m_render_wireframe = render;
    }
-
    void
    median_skeletons_renderable::use_radii_colors( bool use )
    {
      m_use_radii_colors = use;
    }
-
    void
    median_skeletons_renderable::render_balls( bool render )
    {
      m_render_balls = render;
    }
-
-
 END_MP_NAMESPACE

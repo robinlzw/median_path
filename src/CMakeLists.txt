@@ -4,8 +4,6 @@ function( add_mp_app executable_name )
   set_property( TARGET ${executable_name} PROPERTY RUNTIME_OUTPUT_DIRECTORY ${MP_APPLICATIONS_OUT_DIR} )
 endfunction()
   
-add_mp_app( design_test design_test.cc )
-
 add_mp_app( skeletonizer skeletonizer.cc )
 
 add_mp_app( filter_balls_outside_mesh filter_balls_outside_mesh.cc )

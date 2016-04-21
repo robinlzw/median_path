@@ -3,7 +3,7 @@
  */
 # include "simple_qml_application.h"
 # include "simple_camera.h"
-# include "simple_gl_window.h"
+# include "sgp_benchmark_viewer_window.h"
 # include "../median-path/skeletonization.h"
 
 # include <graphics-origin/tools/log.h>
@@ -154,14 +154,14 @@ int main( int argc, char* argv[] )
   int dummy_argc = 1;
   QApplication qgui( dummy_argc, argv );
 
-  qmlRegisterType<simple_gl_window>("MedianPath", 1, 0, "GLWindow");
+  qmlRegisterType<sgp_benchmark_viewer_window>("MedianPath", 1, 0, "GLWindow");
   qmlRegisterType<median_path::simple_camera>("MedianPath", 1, 0, "GLCamera");
 
   median_path::simple_qml_application app;
-  app.setSource( QUrl::fromLocalFile("qml/Viewer.qml"));
+  app.setSource( QUrl::fromLocalFile("qml/SGPViewer.qml"));
   app.show();
 
-  auto window = app.rootObject()->findChild<simple_gl_window*>("glwindow");
+  auto window = app.rootObject()->findChild<sgp_benchmark_viewer_window*>("glwindow");
   window->load_benchmark(
       params.input_stem, params.input_directory, params.extension,
       params.geometries,
