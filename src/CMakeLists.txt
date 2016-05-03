@@ -12,7 +12,7 @@ add_mp_app( sgp_benchmark sgp_benchmark.cc )
 
 add_mp_app( sgp_benchmark_viewer
 	simple_qml_application.cc simple_qml_application.h
-	simple_gl_window.cc simple_gl_window.h
+	simple_benchmark_viewer_window.cc simple_benchmark_viewer_window.h
 	sgp_benchmark_viewer.cc
 	simple_camera.cc simple_camera.h
 	simple_gl_renderer.h
