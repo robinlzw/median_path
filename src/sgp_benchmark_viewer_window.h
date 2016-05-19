@@ -1,14 +1,13 @@
 /*  Created on: Mar 31, 2016
  *      Author: T. Delame (tdelame@gmail.com)
  */
-
 # ifndef MEDIAN_PATH_SIMPLE_GL_WINDOW_H_
 # define MEDIAN_PATH_SIMPLE_GL_WINDOW_H_
 # include <graphics-origin/application/gl_window.h>
 # include "skeletons_renderable.h"
 # include "../median-path/skeletonization.h"
 
-class simple_gl_window
+class sgp_benchmark_viewer_window
   : public graphics_origin::application::gl_window {
   Q_OBJECT
   Q_PROPERTY( bool has_voronoi_geometry READ get_has_voronoi_geometry NOTIFY has_voronoi_geometry_changed )
@@ -30,7 +29,7 @@ class simple_gl_window
   Q_PROPERTY( bool weighted_alpha_reconstruction_active READ get_weighted_alpha_reconstruction_active NOTIFY weighted_alpha_reconstruction_active_changed )
 
 public:
-  simple_gl_window( QQuickItem* parent = nullptr );
+  sgp_benchmark_viewer_window( QQuickItem* parent = nullptr );
 
   /**
    * If the geometry method is available, those methods change the active geometry method.

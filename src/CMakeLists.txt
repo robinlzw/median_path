@@ -4,8 +4,6 @@ function( add_mp_app executable_name )
   set_property( TARGET ${executable_name} PROPERTY RUNTIME_OUTPUT_DIRECTORY ${MP_APPLICATIONS_OUT_DIR} )
 endfunction()
   
-add_mp_app( design_test design_test.cc )
-
 add_mp_app( skeletonizer skeletonizer.cc )
 
 add_mp_app( filter_balls_outside_mesh filter_balls_outside_mesh.cc )
@@ -14,7 +12,7 @@ add_mp_app( sgp_benchmark sgp_benchmark.cc )
 
 add_mp_app( sgp_benchmark_viewer
 	simple_qml_application.cc simple_qml_application.h
-	simple_gl_window.cc simple_gl_window.h
+	simple_benchmark_viewer_window.cc simple_benchmark_viewer_window.h
 	sgp_benchmark_viewer.cc
 	simple_camera.cc simple_camera.h
 	simple_gl_renderer.h
