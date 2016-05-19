@@ -105,16 +105,16 @@ BEGIN_MP_NAMESPACE
     );
 
     static constexpr uint8_t atom_handle_bits = sizeof( atom_handle_type ) << 3;
-    static constexpr atom_handle_type max_atom_handle_index = ( 1U << atom_handle_index_bits ) - 1;
-    static constexpr atom_handle_type max_atom_handle_counter = ( 1U << (atom_handle_bits - atom_handle_index_bits - 2 )) - 1;
+    static constexpr atom_handle_type max_atom_handle_index = ( atom_handle_type{1} << atom_handle_index_bits ) - 1;
+    static constexpr atom_handle_type max_atom_handle_counter = ( atom_handle_type{1} << (atom_handle_bits - atom_handle_index_bits - 2 )) - 1;
 
     static constexpr uint8_t link_handle_bits = sizeof( link_handle_type ) << 3;
-    static constexpr link_handle_type max_link_handle_index = ( 1U << link_handle_index_bits ) - 1;
-    static constexpr link_handle_type max_link_handle_counter = ( 1U << (link_handle_bits - link_handle_index_bits - 2 )) - 1;
+    static constexpr link_handle_type max_link_handle_index = ( link_handle_type{1} << link_handle_index_bits ) - 1;
+    static constexpr link_handle_type max_link_handle_counter = ( link_handle_type{1} << (link_handle_bits - link_handle_index_bits - 2 )) - 1;
 
     static constexpr uint8_t face_handle_bits = sizeof( face_handle_type ) << 3;
-    static constexpr face_handle_type max_face_handle_index = ( 1U << face_handle_index_bits ) - 1;
-    static constexpr face_handle_type max_face_handle_counter = ( 1U << (face_handle_bits - face_handle_index_bits - 2 )) - 1;
+    static constexpr face_handle_type max_face_handle_index = ( face_handle_type{1} << face_handle_index_bits ) - 1;
+    static constexpr face_handle_type max_face_handle_counter = ( face_handle_type{1} << (face_handle_bits - face_handle_index_bits - 2 )) - 1;
 
     enum{ STATUS_FREE = 0, STATUS_ALLOCATED = 1, STATUS_GARBAGE = 2 };
 

@@ -1,23 +1,31 @@
 # Note: This is the first version of the file. It has been tested on a limited set of plaforms.
 #   Proceed with caution and reports any failure/possible improvements. 
+#*
+# Options
+# -------
+#   GRAPHICS_ORIGIN_WITH_APPLICATION tells if the Graphisc-Origin application library is needed
+#   GRAPHICS_ORIGIN_WITH_OPENCL      tells if OpenCL should be used
 #
-# This module reads the following variables:
+# Filepath
+# --------
+#   GRAPHICS_ORIGIN_DIR hint to find the Graphics-Origin installation path, i.e. where the file
+#     graphics-origin/graphics_origin.h is.
 #
-# GRAPHICS_ORIGIN_DIR: variable to specify Graphics-Origin installation path
-# GRAPHICS_ORIGIN_WITH_CUDA: tells if CUDA is used in graphics origin libraries
-# GRAPHICS_ORIGIN_WITH_APPLICATION: tells if the graphics origin application library is needed
+# Variables defined
+# -----------------
+# GRAPHICS_ORIGIN_FOUND:        true if Graphics-Origin was found
+# GRAPHICS_ORIGIN_INCLUDE_DIR:  include directory for Graphics-Origin directories
+# GRAPHICS_ORIGIN_LIBRARY_DIR:  Graphics-Origin libraries directory
 #
-# try to find Graphics-Origin and set the following variables:
-# GRAPHICS_ORIGIN_FOUND:   if the library was found
-# GRAPHICS_ORIGIN_INCLUDE_DIR: include directory for Graphics-Origin directories
 # GRAPHICS_ORIGIN_INCLUDE_DIRS: include directories (include dependencies)
 # GRAPHICS_ORIGIN_LIBRARIES:    Graphics-Origin libraries and its dependencies
-# GRAPHICS_ORIGIN_LIBRARY_DIR:  Graphics-Origin libraries directory
 #
 # GRAPHICS_ORIGIN_TOOLS_LIBRARIES: Graphics-Origin tools library and its dependencies
 # GRAPHICS_ORIGIN_TOOLS_INCLUDE_DIRS: Graphics-Origin tools and dependencies include directories
+#
 # GRAPHICS_ORIGIN_GEOMETRY_LIBRARIES: Graphics-Origin geometry library and its dependencies
 # GRAPHICS_ORIGIN_GEOMETRY_INCLUDE_DIRS: Graphics-Origin geometry and dependencies include directories
+#
 # GRAPHICS_ORIGIN_APPLICATION_LIBRARIES: Graphics-Origin application library and its dependencies 
 # GRAPHICS_ORIGIN_APPLICATION_INCLUDE_DIRS: Graphics-Origin application and dependencies include directories
 
@@ -30,38 +38,54 @@ if( GRAPHICS_ORIGIN_INCLUDE_DIR )
   set( GRAPHICS_ORIGIN_LIBRARY_DIR "${GRAPHICS_ORIGIN_INCLUDE_DIR}/../lib")
   
   if( CMAKE_BUILD_TYPE STREQUAL "Debug" )
-  	set( GRAPHICS_ORIGIN_LIBRARY_DIR ${GRAPHICS_ORIGIN_LIBRARY_DIR}/debug )
+  	set( GRAPHICS_ORIGIN_LIBRARY_DIR "${GRAPHICS_ORIGIN_LIBRARY_DIR}/debug" )
+  elseif( CMAKE_BUILD_TYPE STREQUAL "Release" )
+    set( GRAPHICS_ORIGIN_LIBRARY_DIR "${GRAPHICS_ORIGIN_LIBRARY_DIR}/release" )
+  elseif( CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo" )
+    set( GRAPHICS_ORIGIN_LIBRARY_DIR "${GRAPHICS_ORIGIN_LIBRARY_DIR}/relwithdebinfo" )
   else()
-    set( GRAPHICS_ORIGIN_LIBRARY_DIR ${GRAPHICS_ORIGIN_LIBRARY_DIR}/release )
+    message( SEND_ERROR "${CMAKE_BUILD_TYPE} is not a recognized build type" )
   endif()
-
+  
+  set( GRAPHICS_ORIGIN_TOOLS_INCLUDE_DIRS "${GRAPHICS_ORIGIN_INCLUDE_DIR} ${GRAPHICS_ORIGIN_INCLUDE_DIR}/graphics-origin/extlibs" )
+	set( GRAPHICS_ORIGIN_GEOMETRY_INCLUDE_DIRS "${GRAPHICS_ORIGIN_INCLUDE_DIR} ${GRAPHICS_ORIGIN_INCLUDE_DIR}/graphics-origin/extlibs" )
+	set( GRAPHICS_ORIGIN_APPLICATION_INCLUDE_DIRS "${GRAPHICS_ORIGIN_INCLUDE_DIR} ${GRAPHICS_ORIGIN_INCLUDE_DIR}/graphics-origin/extlibs" )
+  
   #################
   # TOOLS LIBRARY #
   ##############################################################################
   find_library( GRAPHICS_ORIGIN_TOOLS_LIBRARIES graphics_origin_tools
-  	PATHS ${GRAPHICS_ORIGIN_LIBRARY_DIR} )
+  	PATHS
+  	  ${GRAPHICS_ORIGIN_LIBRARY_DIR} )
 
 	# boost
 	set( Boost_USE_MULTITHREADED ON )
 	set( Boost_USE_STATIC_LIBS OFF )
 	set( Boost_USE_STATIC_RUNTIME OFF )
-	find_package( Boost
-	  REQUIRED
-	  COMPONENTS serialization filesystem log log_setup locale random system program_options)
-	
+	find_package( Boost REQUIRED
+	  COMPONENTS 
+	    serialization filesystem log log_setup locale random system program_options)
 	if( Boost_FOUND )
-
-  	set( GRAPHICS_ORIGIN_TOOLS_LIBRARIES
-  	  ${GRAPHICS_ORIGIN_TOOLS_LIBRARIES} 
-  		${Boost_LIBRARIES})
-  	
-  	set( GRAPHICS_ORIGIN_TOOLS_INCLUDE_DIRS
-	    ${GRAPHICS_ORIGIN_INCLUDE_DIR}
-    	${Boost_INCLUDE_DIRS})
+  	set( GRAPHICS_ORIGIN_TOOLS_LIBRARIES ${GRAPHICS_ORIGIN_TOOLS_LIBRARIES}	${Boost_LIBRARIES})
+  	set( GRAPHICS_ORIGIN_TOOLS_INCLUDE_DIRS ${GRAPHICS_ORIGIN_TOOLS_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS})
   else()
   	message( SEND_ERROR "Could not find all the required Boost libraries" )
   endif()
-  
+
+	# OpenCL
+	#   OpenCL_FOUND          - True if OpenCL was found
+	#   OpenCL_INCLUDE_DIRS   - include directories for OpenCL
+	#   OpenCL_LIBRARIES      - link against this library to use OpenCL
+	if( GRAPHICS_ORIGIN_WITH_OPENCL )
+	  find_package( OpenCL )
+	  if( OpenCL_FOUND )
+	    set( GRAPHICS_ORIGIN_TOOLS_LIBRARIES ${GRAPHICS_ORIGIN_TOOLS_LIBRARIES}	${OpenCL_LIBRARIES})
+  		set( GRAPHICS_ORIGIN_TOOLS_INCLUDE_DIRS ${GRAPHICS_ORIGIN_TOOLS_INCLUDE_DIRS} ${OpenCL_INCLUDE_DIRS})
+	  else()
+	    message( SEND_ERROR "Cannot find OpenCL to parallelize code. Disable OpenCL or help cmake to find it." )
+	  endif()
+	endif()
+	
   ####################
   # GEOMETRY LIBRARY #
   ##############################################################################
@@ -81,19 +105,6 @@ if( GRAPHICS_ORIGIN_INCLUDE_DIR )
 	else()
 	  message( SEND_ERROR "Could not find OpenMesh library for Graphics-Origin::geometry" )	
 	endif()
-	# cuda
-	if( GRAPHICS_ORIGIN_WITH_CUDA )
-	  find_package( CUDA REQUIRED )
-	  if( NOT CUDA_FOUND )
-	    message( SEND_ERROR "Could not find CUDA libraries for Graphics-Origin::geometry" )
-	  else()
-	    set( GRAPHICS_ORIGIN_GEOMETRY_LIBRARY ${GRAPHICS_ORIGIN_GEOMETRY_LIBRARY}
-	    	${CUDA_CUDA_LIBRARY} ${CUDA_CUDART_LIBRARY})
-	    set( GRAPHICS_ORIGIN_GEOMETRY_INCLUDE_DIRS ${GRAPHICS_ORIGIN_GEOMETRY_INCLUDE_DIRS}
-	    	${CUDA_TOOLKIT_INCLUDE} )
-	    	
-	  endif()
-	endif() 
 	
   set( GRAPHICS_ORIGIN_LIBRARIES
   	${GRAPHICS_ORIGIN_GEOMETRY_LIBRARIES})
@@ -102,7 +113,7 @@ if( GRAPHICS_ORIGIN_INCLUDE_DIR )
 
   #######################
   # APPLICATION LIBRARY #
-  ##############################################################################	
+  ##############################################################################
 	if( GRAPHICS_ORIGIN_WITH_APPLICATION )
 	
   	find_library( GRAPHICS_ORIGIN_APPLICATION_LIBRARIES graphics_origin_application
@@ -123,7 +134,7 @@ if( GRAPHICS_ORIGIN_INCLUDE_DIR )
 	  # gl
 	  find_package( OpenGL REQUIRED )
 	
-	  set( GRAPHICS_ORIGIN_APPLICATION_LIBRARIES
+	set( GRAPHICS_ORIGIN_APPLICATION_LIBRARIES
     	${GRAPHICS_ORIGIN_APPLICATION_LIBRARIES}
     	${GRAPHICS_ORIGIN_GEOMETRY_LIBRARIES}
   		${GLEW_LIBRARIES} ${OPENGL_LIBRARIES}
@@ -133,6 +144,7 @@ if( GRAPHICS_ORIGIN_INCLUDE_DIR )
   		${GRAPHICS_ORIGIN_GEOMETRY_INCLUDE_DIRS} 
 	  	${GLEW_INCLUDE_DIR} ${OPENGL_INCLUDE_DIR}
   		${Qt5Quick_INCLUDE_DIRS} ${Qt5Gui_INCLUDE_DIRS} ${Qt5Qml_INCLUDE_DIRS} ${Qt5Network_INCLUDE_DIRS} ${Qt5Core_INCLUDE_DIRS} ${Qt5Widgets_INCLUDE_DIRS})
+
 
   	set( GRAPHICS_ORIGIN_LIBRARIES
   		${GRAPHICS_ORIGIN_APPLICATION_LIBRARIES})

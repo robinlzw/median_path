@@ -25,3 +25,7 @@ add_mp_app( prepare_mesh_for_benchmark prepare_mesh_for_benchmark.cc )
 add_mp_app( export_for_alex export_for_alex.cc )
 
 add_mp_app( regularizer regularizer.cc )
+
+add_custom_command(
+	TARGET sgp_benchmark_viewer POST_BUILD
+	COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_SOURCE_DIR}/qml $<TARGET_FILE_DIR:sgp_benchmark_viewer>/qml )
