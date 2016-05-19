@@ -19,7 +19,6 @@
 
 # include <QGuiApplication>
 # include <QApplication>
-
 static const std::string version_string =
   "SGP 2016 Benchmark Viewer tool v1.0 ©2016 Thomas Delame";
 
