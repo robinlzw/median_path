@@ -58,7 +58,7 @@ BEGIN_MP_NAMESPACE
         delete_flags[ it->info() ] = false;
       }
 
-    skeleton.remove( [&skeleton, &delete_flags]( median_skeleton::atom& e )
+    skeleton.remove_atoms( [&skeleton, &delete_flags]( median_skeleton::atom& e )
      {
         return delete_flags[ skeleton.get_index( e ) ];
      }, true );

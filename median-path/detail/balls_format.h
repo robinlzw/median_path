@@ -29,7 +29,7 @@ namespace io {
 
         output << skeleton.get_number_of_atoms() << "\n";
         output.precision( 10 );
-        skeleton.process( [&output]( median_skeleton::atom& atom )
+        skeleton.process_atoms( [&output]( median_skeleton::atom& atom )
           {
             output << std::setw( 13 ) << atom.x << " "
                    << std::setw( 13 ) << atom.y << " "

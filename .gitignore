@@ -1,6 +1,7 @@
 .settings
 median-path/median_path.h
 build/
+doc/html
 .cproject
 .project
 

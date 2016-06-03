@@ -182,7 +182,7 @@ BEGIN_MP_NAMESPACE
         handles[i] = s.add( vec4{ i, 2 *i, 3 * i, 4 * i } );
       }
 
-    s.remove( [&s](median_skeleton::atom& a)->bool
+    s.remove_atoms( [&s](median_skeleton::atom& a)->bool
       {
         return !(s.get_index(a) & 1);
       });
@@ -208,7 +208,7 @@ BEGIN_MP_NAMESPACE
         handles[i] = s.add( vec4{ i, 2 *i, 3 * i, 4 * i } );
       }
 
-    s.process( [&s](median_skeleton::atom& a )
+    s.process_atoms( [&s](median_skeleton::atom& a )
      {
         a.y /= 2.0;
         a.z /= 3.0;
@@ -260,7 +260,7 @@ BEGIN_MP_NAMESPACE
         handles[i] = s.add( vec4{ i, i, i, i } );
       }
     // all odd atoms are removed,
-    s.remove( [&s]( median_skeleton::atom& atom ){ return s.get_index( atom ) & 1; }, true );
+    s.remove_atoms( [&s]( median_skeleton::atom& atom ){ return s.get_index( atom ) & 1; }, true );
     BOOST_REQUIRE_EQUAL( s.get_number_of_atoms(), 5 );
     // a_0    a_2    a_4
     //    a_8    a_6
@@ -303,7 +303,7 @@ BEGIN_MP_NAMESPACE
         handles[i] = s.add( vec4{ i, i, i, i } );
       }
     // all even atoms are removed,
-    s.remove( [&s]( median_skeleton::atom& atom ){ return !(s.get_index( atom ) & 1); }, true );
+    s.remove_atoms( [&s]( median_skeleton::atom& atom ){ return !(s.get_index( atom ) & 1); }, true );
 
     // a9 a1 a7 a3 a5
     BOOST_REQUIRE_EQUAL( s.get_number_of_atoms(), 5 );

@@ -38,7 +38,7 @@ namespace io {
       const auto nlinks = skeleton.get_number_of_links();
       const auto nfaces = skeleton.get_number_of_faces();
       real min_radius = REAL_MAX, max_radius = -1.0;
-      skeleton.process( [&min_radius,&max_radius]( median_skeleton::atom& atom )
+      skeleton.process_atoms( [&min_radius,&max_radius]( median_skeleton::atom& atom )
         {
           min_radius = std::min( min_radius, atom.w );
           max_radius = std::max( max_radius, atom.w );
