@@ -273,14 +273,13 @@ BEGIN_MP_NAMESPACE
     /**************************************************************************
      * ELEMENT DATA TYPES:                                                    *
      *  - a common structure to be stored in a container                      *
-     *  - six virtual functions to be able to call the constructor and        *
+     *  - five virtual functions to be able to call the constructor and       *
      *  destructors of the actual types:                                      *
      *     a) the property buffer destructor                                  *
      *     b) the property buffer resize                                      *
-     *     c) the property buffer clear                                       *
-     *     d) move an element inside the property buffer                      *
-     *     e) destroy a particular element in the buffer                      *
-     *     f) destroy a range of particular elements in the buffer            *
+     *     c) move an element inside the property buffer                      *
+     *     d) destroy a particular element in the buffer                      *
+     *     e) destroy a range of particular elements in the buffer            *
      **************************************************************************/
     struct base_property_buffer {
       base_property_buffer( size_t size, const std::string& name )
@@ -365,7 +364,6 @@ BEGIN_MP_NAMESPACE
           }
         else
           {
-            ///fixme: why do we need to handle this case separately in Release mode?
             base_property_buffer::m_buffer = reinterpret_cast< unsigned char* >( new value_type[ new_capacity ] );
           }
       }
@@ -1465,7 +1463,6 @@ BEGIN_MP_NAMESPACE
     // just delete this atom
     else
       {
-        e.~atom(); // not even necessary
         for( auto& property : m_atom_properties )
           property->destroy( index );
       }

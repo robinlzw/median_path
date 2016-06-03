@@ -99,7 +99,7 @@ int main( int argc, char* argv[] )
       graphics_origin::geometry::mesh_spatial_optimization mso( mesh, true, true );
       median_path::median_skeleton skeleton( params.input_skeleton_filename );
 
-      skeleton.remove( [&mso]( median_path::median_skeleton::atom& atom )
+      skeleton.remove_atoms( [&mso]( median_path::median_skeleton::atom& atom )
          {
             return !mso.contain( median_path::vec3(atom) );
          }, true );

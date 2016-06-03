@@ -9,7 +9,6 @@
 
 # include <string>
 # include <stdint.h>
-# include <functional>
 BEGIN_MP_NAMESPACE
 
   using graphics_origin::vec3;
@@ -27,25 +26,32 @@ BEGIN_MP_NAMESPACE
    * skeleton elements.
    *
    * For most methods, you have the choice to identify skeleton elements by
-   * handles, references or indices. Handles are safer way to identify elements,
-   * but is also slower. References and indices are faster, but could throw
+   * handles, references or indices. Handles are safer to identify elements,
+   * but also slower. References and indices are faster, but could throw
    * exception if they are incorrect. Indeed, both references and indices are
    * subject to change. Thus, you might have references or indices that were
    * correct at the moment you obtained them, but operations that happened
    * after invalidated them. Adding and removing elements are the operations that
-   * invalidate references and indices.
+   * invalidate references and indices. The handle of an element that was not
+   * deleted is always valid.
+   *
+   * For each skeleton elements, you have methods to:
+   * - add a new element
+   * - remove an existing element
+   * - get an existing element, or its handle or its index
+   * - process all elements
+   * - filter elements (select which elements will be removed).
    *
    * Maximum capacities:
    *   - 2^22 atoms
    *   - 2^44 links
    *   - 2^54 faces
    */
-  class median_skeleton {
-    typedef skeleton_datastructure<
-        uint32_t, 22,
-        uint64_t, 44,
-        uint64_t, 54 > datastructure;
+  class median_skeleton
+  {
+    typedef skeleton_datastructure< uint32_t, 22, uint64_t, 44, uint64_t, 54 > datastructure;
   public:
+    ///
     typedef datastructure::atom atom;
     typedef datastructure::link link;
     typedef datastructure::face face;
@@ -67,47 +73,20 @@ BEGIN_MP_NAMESPACE
      * atoms = {a2,a3}
      * face  = f
      */
-    struct atom_face_element {
+    struct atom_face_element
+    {
       link_handle links[3];
       atom_handle atoms[2];
       face_handle face;
 
-      atom_face_element( datastructure::face& f, face_handle fh, ushort i )
-        : face{ fh }
-      {
-        ushort i_plus_one = (i + 1) % 3;
-        ushort i_plus_two = (i + 2) % 3;
-
-        links[0] = f.links[ i ];
-        links[1] = f.links[ i_plus_one ];
-        links[2] = f.links[ i_plus_two ];
-
-        atoms[0] = f.atoms[ i_plus_one ];
-        atoms[1] = f.atoms[ i_plus_two ];
-      }
-
-      atom_face_element()
-        : links{ link_handle{}, link_handle{}, link_handle{} },
-          atoms{ atom_handle{}, atom_handle{} },
-          face{ face_handle{} }
-      {}
-
-      atom_face_element( atom_face_element&& other )
-        : face{ other.face }
-      {
-        links[0] = other.links[0]; links[1] = other.links[1]; links[2] = other.links[2];
-        atoms[0] = other.atoms[0]; atoms[1] = other.atoms[1];
-      }
-
+      atom_face_element(
+        datastructure::face& f, face_handle fh, ushort i );
+      atom_face_element( );
+      atom_face_element(
+        atom_face_element&& other );
       atom_face_element&
-      operator=( atom_face_element&& other )
-      {
-        links[0] = other.links[0]; links[1] = other.links[1]; links[2] = other.links[2];
-        atoms[0] = other.atoms[0]; atoms[1] = other.atoms[1];
-        face = other.face;
-        return *this;
-      }
-
+      operator=(
+        atom_face_element&& other );
     };
 
     /**@brief Map a link to a face passing by this link.
@@ -119,45 +98,23 @@ BEGIN_MP_NAMESPACE
      * opposite = a3
      * face  = f
      */
-    struct link_face_element {
+    struct link_face_element
+    {
       link_handle links[2];
       atom_handle opposite;
       face_handle face;
 
-      link_face_element( datastructure::face& f, face_handle fh, ushort i )
-        : face{ fh }
-      {
-        ushort i_plus_one = (i + 1) % 3;
-        ushort i_plus_two = (i + 2) % 3;
-        links[0] = f.links[ i_plus_one ];
-        links[1] = f.links[ i_plus_two ];
-        opposite = f.atoms[ i_plus_two ];
-      }
-
-      link_face_element()
-        : links{ link_handle{}, link_handle{} },
-          opposite{ atom_handle{} },
-          face{ face_handle{} }
-      {}
-
-      link_face_element( link_face_element&& other )
-        : face{ other.face }
-      {
-        links[0] = other.links[0]; links[1] = other.links[1];
-        opposite = other.opposite;
-      }
-
+      link_face_element(
+        datastructure::face& f, face_handle fh, ushort i );
+      link_face_element( );
+      link_face_element(
+        link_face_element&& other );
       link_face_element&
-      operator=( link_face_element&& other )
-      {
-        links[0] = other.links[0]; links[1] = other.links[1];
-        opposite = other.opposite;
-        face = other.face;
-        return *this;
-      }
+      operator=(
+        link_face_element&& other );
     };
 
-    typedef std::vector< std::pair<link_handle, atom_handle> > atom_links_property;
+    typedef std::vector< std::pair< link_handle, atom_handle > > atom_links_property;
     typedef std::vector< atom_face_element > atom_faces_property;
     typedef std::vector< link_face_element > link_faces_property;
 
@@ -172,25 +129,27 @@ BEGIN_MP_NAMESPACE
      * @param face_capacity Requested face capacity
      */
     median_skeleton(
-      atom_index atom_capacity = 0,
-      uint64_t link_capacity = 0,
+      atom_index atom_capacity = 0, uint64_t link_capacity = 0,
       uint64_t face_capacity = 0 );
     /**@brief Copy constructor
      *
      * Copy a skeleton into this. This operation is very fast as it is merely
      * a swap between two pointers. At the end of the copy, the other skeleton
      * is in a undefined, but valid, state. */
-    median_skeleton( median_skeleton&& other);
+    median_skeleton(
+      median_skeleton&& other );
     /**@brief Build from file
      *
      * Build a median skeleton from a file.
      * @param filename The path of the file describing the skeleton to build. */
-    median_skeleton( const std::string& filename );
+    median_skeleton(
+      const std::string& filename );
 
     median_skeleton&
-    operator=( median_skeleton&& other );
+    operator=(
+      median_skeleton&& other );
 
-    ~median_skeleton();
+    ~median_skeleton( );
     ///@}
 
     /**@name Utilities
@@ -205,9 +164,9 @@ BEGIN_MP_NAMESPACE
      * @param atom_capacity Requested atom capacity
      * @param link_capacity Requested link capacity
      * @param face_capacity Requested face capacity */
-    void clear(
-      atom_index atom_capacity = 0,
-      link_index link_capacity = 0,
+    void
+    clear(
+      atom_index atom_capacity = 0, link_index link_capacity = 0,
       face_index face_capacity = 0 );
 
     /**@brief Reserve place for atoms.
@@ -217,7 +176,9 @@ BEGIN_MP_NAMESPACE
      * destroyed. If the requested capacity is bigger than the current one, all buffers
      * are reallocated.
      * @param new_atoms_capacity The requested new atom*/
-    void reserve_atoms( atom_index new_atoms_capacity );
+    void
+    reserve_atoms(
+      atom_index new_atoms_capacity );
 
     /**@brief Reserve place for links.
      *
@@ -226,7 +187,9 @@ BEGIN_MP_NAMESPACE
      * destroyed. If the requested capacity is bigger than the current one, all buffers
      * are reallocated.
      * @param new_links_capacity The requested new link*/
-    void reserve_links( link_index new_links_capacity );
+    void
+    reserve_links(
+      link_index new_links_capacity );
 
     /**@brief Reserve place for faces.
      *
@@ -235,32 +198,68 @@ BEGIN_MP_NAMESPACE
      * destroyed. If the requested capacity is bigger than the current one, all buffers
      * are reallocated.
      * @param new_faces_capacity The requested new faces capacity.*/
-    void reserve_faces( face_index new_faces_capacity );
+    void
+    reserve_faces(
+      face_index new_faces_capacity );
 
     /**@brief Load a skeleton from a file.
      *
      * Load a median skeleton described by a file into this skeleton.
      * @param filename The path of the file describing the skeleton to build.
      * @return true if the load was successful */
-    bool load( const std::string& filename );
+    bool
+    load(
+      const std::string& filename );
 
     /**@brief Save a skeleton to a file.
      *
      * Save this skeleton to a file.
      * @param filename The path of the file to write this skeleton into.
      * @return true if the save was successful */
-    bool save( const std::string& filename );
+    bool
+    save(
+      const std::string& filename );
 
-    /**@brief Get the current number of atoms */
-    atom_index get_number_of_atoms() const noexcept;
-    /**@brief Get the current number of links */
-    link_index get_number_of_links() const noexcept;
-    /**@brief Get the current number of faces */
-    face_index get_number_of_faces() const noexcept;
+    /**@brief Get the current number of atoms
+     *
+     * Get the number of atoms currently in this skeleton.
+     * @return The current number of atoms. */
+    atom_index
+    get_number_of_atoms( ) const noexcept;
+    /**@brief Get the current number of links
+     *
+     * Get the number of links currently in this skeleton.
+     * @return The current number of links. */
+    link_index
+    get_number_of_links( ) const noexcept;
+    /**@brief Get the current number of faces
+     *
+     * Get the number of faces currently in this skeleton.
+     * @return The current number of faces. */
+    face_index
+    get_number_of_faces( ) const noexcept;
 
-    atom_index get_atoms_capacity() const noexcept;
-    link_index get_links_capacity() const noexcept;
-    face_index get_faces_capacity() const noexcept;
+    /**@brief Get the atoms capacity.
+     *
+     * Get the maximum number of atoms that can be handled by this skeleton
+     * without resizing its internal buffers.
+     * @return The atoms capacity. */
+    atom_index
+    get_atoms_capacity( ) const noexcept;
+    /**@brief Get the links capacity.
+     *
+     * Get the maximum number of links that can be handled by this skeleton
+     * without resizing its internal buffers.
+     * @return The links capacity. */
+    link_index
+    get_links_capacity( ) const noexcept;
+    /**@brief Get the faces capacity.
+     *
+     * Get the maximum number of faces that can be handled by this skeleton
+     * without resizing its internal buffers.
+     * @return The faces capacity. */
+    face_index
+    get_faces_capacity( ) const noexcept;
 
     /**@brief Get the number of user atom properties.
      *
@@ -268,7 +267,8 @@ BEGIN_MP_NAMESPACE
      * into account the internal atom properties used to manage the skeleton topology.
      * @return The number of user atom properties.
      */
-    uint64_t get_number_of_atom_properties() const noexcept;
+    uint64_t
+    get_number_of_atom_properties( ) const noexcept;
 
     /**@brief Get the number of user link properties.
      *
@@ -276,7 +276,8 @@ BEGIN_MP_NAMESPACE
      * into account the internal link properties used to manage the skeleton topology.
      * @return The number of user link properties.
      */
-    uint64_t get_number_of_link_properties() const noexcept;
+    uint64_t
+    get_number_of_link_properties( ) const noexcept;
 
     /**@brief Get the number of user face properties.
      *
@@ -284,14 +285,17 @@ BEGIN_MP_NAMESPACE
      * into account the internal face properties used to manage the skeleton topology.
      * @return The number of user face properties.
      */
-    uint64_t get_number_of_face_properties() const noexcept;
+    uint64_t
+    get_number_of_face_properties( ) const noexcept;
 
     /**@brief Compute the bounding box of atoms.
      *
      * This function computes the bounding box of all atoms contained in
      * this skeleton.
      * @param b The resulting bounding box. */
-    void compute_bounding_box( graphics_origin::geometry::aabox& b ) const;
+    void
+    compute_bounding_box(
+      graphics_origin::geometry::aabox& b ) const;
 
     /**@brief Compute the bounding box of atom centers.
      *
@@ -299,7 +303,9 @@ BEGIN_MP_NAMESPACE
      * skeleton.
      * @param b The resulting bounding box.
      */
-    void compute_centers_bounding_box( graphics_origin::geometry::aabox& b ) const;
+    void
+    compute_centers_bounding_box(
+      graphics_origin::geometry::aabox& b ) const;
 
     /**@brief Compute min and max radii.
      *
@@ -307,7 +313,9 @@ BEGIN_MP_NAMESPACE
      * skeleton.
      * @param minr The minimum radius.
      * @param maxr The maximum radius.*/
-    void compute_minmax_radii( real& minr, real& maxr ) const;
+    void
+    compute_minmax_radii(
+      real& minr, real& maxr ) const;
 
     /**@name Atom management
      * @{ */
@@ -318,7 +326,9 @@ BEGIN_MP_NAMESPACE
      * @param position Center of the atom to add.
      * @param radius Radius of the atom to add.
      * @return An atom handle that points to the newly created atom. */
-    atom_handle add( const vec3& position, const real& radius );
+    atom_handle
+    add(
+      const vec3& position, const real& radius );
     /**@brief Add an atom to the skeleton.
      *
      * Add an atom to this skeleton with its geometry stored in a
@@ -326,7 +336,9 @@ BEGIN_MP_NAMESPACE
      * @param ball A vec4 with xyz describing the atom center and w
      * storing the radius.
      * @return An atom handle that points to the newly created atom. */
-    atom_handle add( const vec4& ball );
+    atom_handle
+    add(
+      const vec4& ball );
 
     /**@brief Remove an atom know by its handle.
      *
@@ -335,7 +347,9 @@ BEGIN_MP_NAMESPACE
      * is already removed), the error is silently ignored.
      * @param handle Handle of the atom to remove.
      */
-    void remove( atom_handle handle );
+    void
+    remove(
+      atom_handle handle );
 
     /**@brief Remove an atom known by a reference.
      *
@@ -344,7 +358,9 @@ BEGIN_MP_NAMESPACE
      * tagged as a valid atom, an exception is thrown.
      * @param e Reference to the atom to remove.
      */
-    void remove( atom& e );
+    void
+    remove(
+      atom& e );
 
     /**@brief Access to an atom known by an handle.
      *
@@ -354,7 +370,9 @@ BEGIN_MP_NAMESPACE
      * invalidate the reference.
      * @param handle Handle of the atom in the tight buffer.
      */
-    atom& get( atom_handle handle ) const;
+    atom&
+    get(
+      atom_handle handle ) const;
 
     /**@brief Access to an atom known by an index.
      *
@@ -364,7 +382,9 @@ BEGIN_MP_NAMESPACE
      * invalidate the reference.
      * @param index Index of the atom in the tight buffer.
      */
-    atom& get_atom_by_index( atom_index index ) const;
+    atom&
+    get_atom_by_index(
+      atom_index index ) const;
 
     /**@brief Get the index of an atom known by its handle.
      *
@@ -372,21 +392,27 @@ BEGIN_MP_NAMESPACE
      * not point to a valid atom, an exception is thrown.
      * @param handle Handle of the atom we want the index.
      */
-    atom_index get_index( atom_handle handle ) const;
+    atom_index
+    get_index(
+      atom_handle handle ) const;
     /**@brief Get the index of an atom known by a reference.
      *
      * Get the index of an atom known by a reference. If the reference does
      * not point to a valid atom, an exception is thrown.
      * @param e Reference of the atom we want the index.
      */
-    atom_index get_index( atom& e ) const;
+    atom_index
+    get_index(
+      atom& e ) const;
     /**@brief Get the handle of an atom.
      *
      * Get the handle of an atom. If the atom points to memory that is
      * not tagged as a valid atom, an exception is thrown.
      * @param e Reference to the atom we want to know the handle.
      */
-    atom_handle get_handle( atom& e ) const;
+    atom_handle
+    get_handle(
+      atom& e ) const;
     /**@brief Check if an atom handle is valid.
      *
      * An atom handle is valid if it identifies a currently allocated
@@ -394,7 +420,9 @@ BEGIN_MP_NAMESPACE
      * valid.
      * @param handle The handle to check.
      */
-    bool is_valid( atom_handle handle ) const;
+    bool
+    is_valid(
+      atom_handle handle ) const;
 
     /**@brief Get the number of links of an atom.
      *
@@ -402,27 +430,27 @@ BEGIN_MP_NAMESPACE
      * the reference does not point to a valid atom, an exception is thrown.
      * @param e Reference the atom.
      * @return The number of links */
-    link_index get_number_of_links( atom& e ) const;
+    link_index
+    get_number_of_links(
+      atom& e ) const;
     /**@brief Get the number of links of an atom.
      *
      * Get the number of links attached to an atom known by its index. If
      * the index is invalid, an exception is thrown.
      * @param index Index of the atom.
      * @return The number of links */
-    link_index get_number_of_links( atom_index index ) const;
+    link_index
+    get_number_of_links(
+      atom_index index ) const;
     /**@brief Get the number of links of an atom.
      *
-     * Get the number of links attached to an atom known by its hande. If
+     * Get the number of links attached to an atom known by its handle. If
      * the handle is invalid, an exception is thrown.
      * @param handle Handle of the atom.
      * @return The number of links */
-    link_index get_number_of_links( atom_handle h ) const;
-
-    /**@brief A function to process atoms.
-     *
-     * A function of such a type can be applied on all valid atoms of a skeleton.
-     */
-    typedef std::function<void(atom&)> atom_processer;
+    link_index
+    get_number_of_links(
+      atom_handle h ) const;
 
     /**@brief Apply a process function on all atoms.
      *
@@ -431,14 +459,11 @@ BEGIN_MP_NAMESPACE
      * @param function The function to apply.
      * @param parallel A flag to activate a parallel processing.
      */
-    void process( atom_processer&& function, bool parallel = true );
+    template< typename atom_processer >
+      void
+      process_atoms(
+        atom_processer&& function, bool parallel = true );
 
-    /**@brief A function to select atoms to remove.
-     *
-     * A function of such a type is used to identify atoms to remove from a
-     * skeleton.
-     */
-    typedef std::function<bool(atom&)> atom_filter;
     /**@brief Filter atoms according to a filter function.
      *
      * This method select atoms to remove thanks to a filter function. The
@@ -448,7 +473,10 @@ BEGIN_MP_NAMESPACE
      * @param filter The filter function used to select atoms to remove.
      * @param parallel A flag to activate a parallel evaluation of the filter function.
      */
-    void remove( atom_filter&& filter, bool parallel = true );
+    template< typename atom_filter >
+      void
+      remove_atoms(
+        atom_filter&& filter, bool parallel = true );
 
     /**@name Link management
      * @{ */
@@ -459,7 +487,9 @@ BEGIN_MP_NAMESPACE
      * @param handle1 The handle of the first atom.
      * @param handle2 The handle of the second atom.
      * @return An link handle that points to the newly created link. */
-    link_handle add( atom_handle handle1, atom_handle handle2 );
+    link_handle
+    add(
+      atom_handle handle1, atom_handle handle2 );
     /**@brief Add a link to the skeleton.
      *
      * Add a link between two atoms. If one of the atom references is invalid,
@@ -467,7 +497,9 @@ BEGIN_MP_NAMESPACE
      * @param atom1 Reference to the first atom.
      * @param atom2 Reference to the second atom.
      * @return An link handle that points to the newly created link. */
-    link_handle add( atom& atom1, atom& atom2 );
+    link_handle
+    add(
+      atom& atom1, atom& atom2 );
     /**@brief Add a link to the skeleton.
      *
      * Add a link between two atoms. If one of the atom indices is invalid,
@@ -476,7 +508,9 @@ BEGIN_MP_NAMESPACE
      * @param idx1 Index of the first atom.
      * @param idx2 Index of the second atom.
      * @return An link handle that points to the newly created link. */
-    link_handle add( atom_index idx1, atom_index idx2 );
+    link_handle
+    add(
+      atom_index idx1, atom_index idx2 );
     /**@brief Remove a link know by its handle.
      *
      * Remove a link from the skeleton. Its faces will
@@ -486,7 +520,9 @@ BEGIN_MP_NAMESPACE
      * is already removed), the error is silently ignored.
      * @param handle Handle of the link to remove.
      */
-    void remove( link_handle handle );
+    void
+    remove(
+      link_handle handle );
 
     /**@brief Remove a link known by a reference.
      *
@@ -497,7 +533,9 @@ BEGIN_MP_NAMESPACE
      * tagged as a valid link, an exception is thrown.
      * @param e Reference to the link to remove.
      */
-    void remove( link& e );
+    void
+    remove(
+      link& e );
 
     /**@brief Access to a link known by an handle.
      *
@@ -507,7 +545,9 @@ BEGIN_MP_NAMESPACE
      * invalidate the reference.
      * @param handle Handle of the link in the tight buffer.
      */
-    link& get( link_handle handle ) const;
+    link&
+    get(
+      link_handle handle ) const;
 
     /**@brief Access to a link known by an index.
      *
@@ -517,7 +557,9 @@ BEGIN_MP_NAMESPACE
      * invalidate the reference.
      * @param index Index of the link in the tight buffer.
      */
-    link& get_link_by_index( link_index index ) const;
+    link&
+    get_link_by_index(
+      link_index index ) const;
 
     /**@brief Get the index of a link known by its handle.
      *
@@ -525,21 +567,27 @@ BEGIN_MP_NAMESPACE
      * not point to a valid link, an exception is thrown.
      * @param handle Handle of the link we want the index.
      */
-    link_index get_index( link_handle handle ) const;
+    link_index
+    get_index(
+      link_handle handle ) const;
     /**@brief Get the index of a link known by a reference.
      *
      * Get the index of a link known by a reference. If the reference does
      * not point to a valid link, an exception is thrown.
      * @param e Reference of the link we want the index.
      */
-    link_index get_index( link& e ) const;
+    link_index
+    get_index(
+      link& e ) const;
     /**@brief Get the handle of a link.
      *
      * Get the handle of a link. If the link points to memory that is
      * not tagged as a valid link, an exception is thrown.
      * @param e Reference to the link we want to know the handle.
      */
-    link_handle get_handle( link& e ) const;
+    link_handle
+    get_handle(
+      link& e ) const;
     /**@brief Check if a link handle is valid.
      *
      * An link handle is valid if it identifies a currently allocated
@@ -547,13 +595,9 @@ BEGIN_MP_NAMESPACE
      * valid.
      * @param handle The handle to check.
      */
-    bool is_valid( link_handle handle ) const;
-
-    /**@brief A function to process links.
-     *
-     * A function of such a type can be applied on all valid links of a skeleton.
-     */
-    typedef std::function<void(link&)> link_processer;
+    bool
+    is_valid(
+      link_handle handle ) const;
 
     /**@brief Apply a process function on all links.
      *
@@ -562,14 +606,11 @@ BEGIN_MP_NAMESPACE
      * @param function The function to apply.
      * @param parallel A flag to activate a parallel processing.
      */
-    void process( link_processer&& function, bool parallel = true );
+    template< typename link_processer >
+      void
+      process_links(
+        link_processer&& function, bool parallel = true );
 
-    /**@brief A function to select links to remove.
-     *
-     * A function of such a type is used to identify links to remove from a
-     * skeleton.
-     */
-    typedef std::function<bool(link&)> link_filter;
     /**@brief Filter links according to a filter function.
      *
      * This method select links to remove thanks to a filter function. The
@@ -578,7 +619,10 @@ BEGIN_MP_NAMESPACE
      * removals. This function will invalidate references and indices to links.
      * @param filter The filter function used to select links to remove.
      * @param parallel A flag to activate a parallel evaluation of the filter function. */
-    void remove( link_filter&& filter, bool parallel = true );
+    template< typename link_filter >
+      void
+      remove_links(
+        link_filter&& filter, bool parallel = true );
 
     /**@brief Get the number of faces of an link.
      *
@@ -586,25 +630,30 @@ BEGIN_MP_NAMESPACE
      * the reference does not point to a valid link, an exception is thrown.
      * @param e Reference the link.
      * @return The number of faces */
-    face_index get_number_of_faces( link& e ) const;
+    face_index
+    get_number_of_faces(
+      link& e ) const;
     /**@brief Get the number of faces of an link.
      *
      * Get the number of faces attached to an link known by its index. If
      * the index is invalid, an exception is thrown.
      * @param index Index of the link.
      * @return The number of faces */
-    face_index get_number_of_faces( link_index index ) const;
+    face_index
+    get_number_of_faces(
+      link_index index ) const;
     /**@brief Get the number of faces of an link.
      *
      * Get the number of faces attached to an link known by its hande. If
      * the handle is invalid, an exception is thrown.
      * @param handle Handle of the link.
      * @return The number of faces */
-    face_index get_number_of_faces( link_handle h ) const;
-
+    face_index
+    get_number_of_faces(
+      link_handle h ) const;
 
     /**@name Face management
-    * @{ */
+     * @{ */
     /**@brief Add a face to the skeleton.
      *
      * Add a face between three atoms. If one of the handles is invalid,
@@ -614,7 +663,9 @@ BEGIN_MP_NAMESPACE
      * @param handle2 The handle of the second atom.
      * @param handle3 The handle of the third atom.
      * @return An face handle that points to the newly created face. */
-    face_handle add( atom_handle handle1, atom_handle handle2, atom_handle handle3 );
+    face_handle
+    add(
+      atom_handle handle1, atom_handle handle2, atom_handle handle3 );
     /**@brief Add a face to the skeleton.
      *
      * Add a face between three atoms. If one of the atom references is invalid,
@@ -624,7 +675,9 @@ BEGIN_MP_NAMESPACE
      * @param atom2 Reference to the second atom.
      * @param atom3 Reference to the third atom.
      * @return An face handle that points to the newly created face. */
-    face_handle add( atom& atom1, atom& atom2, atom& atom3 );
+    face_handle
+    add(
+      atom& atom1, atom& atom2, atom& atom3 );
     /**@brief Add a face to the skeleton.
      *
      * Add a face between three atoms. If one of the atom indices is invalid,
@@ -635,7 +688,9 @@ BEGIN_MP_NAMESPACE
      * @param idx2 Index of the second atom.
      * @param idx3 Index of the third atom.
      * @return An face handle that points to the newly created face. */
-    face_handle add( atom_index idx1, atom_index idx2, atom_index idx3 );
+    face_handle
+    add(
+      atom_index idx1, atom_index idx2, atom_index idx3 );
     /**@brief Remove a face know by its handle.
      *
      * Remove a face from the skeleton. Its atoms and links will be
@@ -644,7 +699,9 @@ BEGIN_MP_NAMESPACE
      * is silently ignored.
      * @param handle Handle of the face to remove.
      */
-    void remove( face_handle handle );
+    void
+    remove(
+      face_handle handle );
 
     /**@brief Remove a face known by a reference.
      *
@@ -654,7 +711,9 @@ BEGIN_MP_NAMESPACE
      * tagged as a valid face, an exception is thrown.
      * @param e Reference to the face to remove.
      */
-    void remove( face& e );
+    void
+    remove(
+      face& e );
 
     /**@brief Access to a face known by an handle.
      *
@@ -664,7 +723,9 @@ BEGIN_MP_NAMESPACE
      * invalidate the reference.
      * @param handle Handle of the face in the tight buffer.
      */
-    face& get( face_handle handle ) const;
+    face&
+    get(
+      face_handle handle ) const;
 
     /**@brief Access to a face known by an index.
      *
@@ -674,7 +735,9 @@ BEGIN_MP_NAMESPACE
      * invalidate the reference.
      * @param index Index of the face in the tight buffer.
      */
-    face& get_face_by_index( face_index index ) const;
+    face&
+    get_face_by_index(
+      face_index index ) const;
 
     /**@brief Get the index of a face known by its handle.
      *
@@ -682,21 +745,27 @@ BEGIN_MP_NAMESPACE
      * not point to a valid face, an exception is thrown.
      * @param handle Handle of the face we want the index.
      */
-    face_index get_index( face_handle handle ) const;
+    face_index
+    get_index(
+      face_handle handle ) const;
     /**@brief Get the index of a face known by a reference.
      *
      * Get the index of a face known by a reference. If the reference does
      * not point to a valid face, an exception is thrown.
      * @param e Reference of the face we want the index.
      */
-    face_index get_index( face& e ) const;
+    face_index
+    get_index(
+      face& e ) const;
     /**@brief Get the handle of a face.
      *
      * Get the handle of a face. If the face points to memory that is
      * not tagged as a valid face, an exception is thrown.
      * @param e Reference to the face we want to know the handle.
-    */
-    face_handle get_handle( face& e ) const;
+     */
+    face_handle
+    get_handle(
+      face& e ) const;
     /**@brief Check if a face handle is valid.
      *
      * An face handle is valid if it identifies a currently allocated
@@ -704,13 +773,9 @@ BEGIN_MP_NAMESPACE
      * valid.
      * @param handle The handle to check.
      */
-    bool is_valid( face_handle handle ) const;
-
-    /**@brief A function to process faces.
-     *
-     * A function of such a type can be applied on all valid faces of a skeleton.
-     */
-    typedef std::function<void(face&)> face_processer;
+    bool
+    is_valid(
+      face_handle handle ) const;
 
     /**@brief Apply a process function on all faces.
      *
@@ -718,15 +783,12 @@ BEGIN_MP_NAMESPACE
      * valid face.
      * @param function The function to apply.
      * @param parallel A flag to activate a parallel processing.
-    */
-    void process( face_processer&& function, bool parallel = true );
-
-    /**@brief A function to select faces to remove.
-     *
-     * A function of such a type is used to identify faces to remove from a
-     * skeleton.
      */
-    typedef std::function<bool(face&)> face_filter;
+    template< typename face_processer >
+      void
+      process_faces(
+        face_processer&& function, bool parallel = true );
+
     /**@brief Filter faces according to a filter function.
      *
      * This method select faces to remove thanks to a filter function. The
@@ -736,18 +798,30 @@ BEGIN_MP_NAMESPACE
      * @param filter The filter function used to select faces to remove.
      * @param parallel A flag to activate a parallel evaluation of the filter function.
      */
-    void remove( face_filter&& filter, bool parallel = true );
+    template< typename face_filter >
+      void
+      remove_faces(
+        face_filter&& filter, bool parallel = true );
 
   private:
 
-    void remove_atom_special_properties( atom_index idx );
+    void
+    remove_atom_special_properties(
+      atom_index idx );
 
-    link_handle do_add_link( atom_index idx1, atom_index idx2 );
-    void remove_link_topology_properties( link_index idx, link_handle handle );
-    void remove_link_indices( bool* flags );
+    link_handle
+    do_add_link(
+      atom_index idx1, atom_index idx2 );
+    void
+    remove_link_topology_properties(
+      link_index idx, link_handle handle );
+    void
+    remove_link_indices(
+      bool* flags );
 
-
-    face_handle do_add_face( atom_index idx1, atom_index idx2, atom_index idx3 );
+    face_handle
+    do_add_face(
+      atom_index idx1, atom_index idx2, atom_index idx3 );
 
     /**@brief Remove all references to a face in atom and links topology properties.
      *
@@ -756,7 +830,9 @@ BEGIN_MP_NAMESPACE
      * @param idx Index of the face.
      * @param handle Handle of the face.
      */
-    void remove_face_topology_properties( face_index idx, face_handle handle  );
+    void
+    remove_face_topology_properties(
+      face_index idx, face_handle handle );
     /**@brief Remove all tagged faces.
      *
      * This function guarantees to remove each face with index i such that
@@ -764,14 +840,23 @@ BEGIN_MP_NAMESPACE
      * In particular, the face buffer remains tight, atom_faces_property
      * and link_faces_property are updated.
      * @param flags Identify the indices of faces to remove. */
-    void remove_faces_indices( bool* flags );
+    void
+    remove_faces_indices(
+      bool* flags );
 
-    void remove_link_to_face( link_index idx, face_handle handle );
-    void remove_atom_to_face( atom_index idx, face_handle handle );
-    void remove_atom_to_link( atom_index idx, link_handle handle );
+    void
+    remove_link_to_face(
+      link_index idx, face_handle handle );
+    void
+    remove_atom_to_face(
+      atom_index idx, face_handle handle );
+    void
+    remove_atom_to_link(
+      atom_index idx, link_handle handle );
 
     datastructure* m_impl;
   };
 
 END_MP_NAMESPACE
+# include "detail/median_skeleton.tcc"
 # endif 

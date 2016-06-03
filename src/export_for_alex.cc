@@ -141,7 +141,7 @@ int main( int argc, char* argv[] )
               << "end_header\n";
 
           output.precision( 8 );
-          s.process( [&output]( median_path::median_skeleton::atom& atom )
+          s.process_atoms( [&output]( median_path::median_skeleton::atom& atom )
            {
               output << std::fixed << std::setw( 11 ) << atom.x
                   << " " << std::setw( 11 ) << atom.y

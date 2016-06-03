@@ -29,7 +29,7 @@ BEGIN_MP_NAMESPACE
 
         output << "MOFF " << skeleton.get_number_of_atoms() << " " << skeleton.get_number_of_faces() << "\n";
         output.precision( 10 );
-        skeleton.process( [&output]( median_skeleton::atom& atom )
+        skeleton.process_atoms( [&output]( median_skeleton::atom& atom )
           {
             output << std::setw( 13 ) << atom.x << " "
                    << std::setw( 13 ) << atom.y << " "
@@ -38,7 +38,7 @@ BEGIN_MP_NAMESPACE
           }
         , false );
 
-        skeleton.process( [&output,&skeleton]( median_skeleton::face& face )
+        skeleton.process_faces( [&output,&skeleton]( median_skeleton::face& face )
           {
             output << "3 " << skeleton.get_index( face.atoms[0] ) << " "
                 << skeleton.get_index( face.atoms[1] ) << " "

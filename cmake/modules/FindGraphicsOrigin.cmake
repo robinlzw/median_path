@@ -14,7 +14,7 @@
 # Variables defined
 # -----------------
 # GRAPHICS_ORIGIN_FOUND:        true if Graphics-Origin was found
-# GRAPHICS_ORIGIN_INCLUDE_DIR:  include directory for Graphics-Origin directories
+# GRAPHICS_ORIGIN_INCLUDE_DIR:  include directory for Graphics-Origin headers
 # GRAPHICS_ORIGIN_LIBRARY_DIR:  Graphics-Origin libraries directory
 #
 # GRAPHICS_ORIGIN_INCLUDE_DIRS: include directories (include dependencies)
@@ -28,6 +28,9 @@
 #
 # GRAPHICS_ORIGIN_APPLICATION_LIBRARIES: Graphics-Origin application library and its dependencies 
 # GRAPHICS_ORIGIN_APPLICATION_INCLUDE_DIRS: Graphics-Origin application and dependencies include directories
+#
+# GRAPHICS_ORIGIN_CXX_FLAGS    flags to pass to the C++ compiler
+# GRAPHICS_ORIGIN_LINKER_FLAGS flags to pass to the C++ linker
 
 find_path( GRAPHICS_ORIGIN_INCLUDE_DIR graphics-origin/graphics_origin.h
   PATHS /usr/local/include /usr/include /opt/local/include ${GRAPHICS_ORIGIN_DIR}/include 
@@ -47,9 +50,7 @@ if( GRAPHICS_ORIGIN_INCLUDE_DIR )
     message( SEND_ERROR "${CMAKE_BUILD_TYPE} is not a recognized build type" )
   endif()
   
-  set( GRAPHICS_ORIGIN_TOOLS_INCLUDE_DIRS "${GRAPHICS_ORIGIN_INCLUDE_DIR} ${GRAPHICS_ORIGIN_INCLUDE_DIR}/graphics-origin/extlibs" )
-	set( GRAPHICS_ORIGIN_GEOMETRY_INCLUDE_DIRS "${GRAPHICS_ORIGIN_INCLUDE_DIR} ${GRAPHICS_ORIGIN_INCLUDE_DIR}/graphics-origin/extlibs" )
-	set( GRAPHICS_ORIGIN_APPLICATION_INCLUDE_DIRS "${GRAPHICS_ORIGIN_INCLUDE_DIR} ${GRAPHICS_ORIGIN_INCLUDE_DIR}/graphics-origin/extlibs" )
+  set( GRAPHICS_ORIGIN_TOOLS_INCLUDE_DIRS "${GRAPHICS_ORIGIN_INCLUDE_DIR}/graphics-origin/extlibs" )
   
   #################
   # TOOLS LIBRARY #
@@ -62,15 +63,28 @@ if( GRAPHICS_ORIGIN_INCLUDE_DIR )
 	set( Boost_USE_MULTITHREADED ON )
 	set( Boost_USE_STATIC_LIBS OFF )
 	set( Boost_USE_STATIC_RUNTIME OFF )
-	find_package( Boost REQUIRED
+	find_package( Boost REQUIRED QUIET
 	  COMPONENTS 
 	    serialization filesystem log log_setup locale random system program_options)
 	if( Boost_FOUND )
-  	set( GRAPHICS_ORIGIN_TOOLS_LIBRARIES ${GRAPHICS_ORIGIN_TOOLS_LIBRARIES}	${Boost_LIBRARIES})
-  	set( GRAPHICS_ORIGIN_TOOLS_INCLUDE_DIRS ${GRAPHICS_ORIGIN_TOOLS_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS})
-  else()
-  	message( SEND_ERROR "Could not find all the required Boost libraries" )
-  endif()
+  	  set( GRAPHICS_ORIGIN_TOOLS_LIBRARIES ${GRAPHICS_ORIGIN_TOOLS_LIBRARIES}	${Boost_LIBRARIES})
+  	  set( GRAPHICS_ORIGIN_TOOLS_INCLUDE_DIRS ${GRAPHICS_ORIGIN_TOOLS_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS})
+    else()
+      message( SEND_ERROR "Could not find all the required Boost libraries" )
+    endif()
+
+	# OpenMP
+	#   OpenMP_CXX_FLAGS - flags to add to the CXX compiler for OpenMP support
+	#   OPENMP_FOUND - true if openmp is detected
+	find_package( OpenMP QUIET )
+	if( OPENMP_FOUND )
+	  set( GRAPHICS_ORIGIN_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}" )
+	  if( CMAKE_CXX_COMPILER_ID STREQUAL "GNU" )
+	  	set( GRAPHICS_ORIGIN_LINKER_FLAGS "${GRAPHICS_ORIGIN_LINKER_FLAGS} -lgomp")
+	  endif()
+	else()
+	  message( SEND_ERROR "Cannot find OpenMP to parallelize code. Disable OpenMP or help cmake to find it." )
+	endif()
 
 	# OpenCL
 	#   OpenCL_FOUND          - True if OpenCL was found
@@ -92,14 +106,14 @@ if( GRAPHICS_ORIGIN_INCLUDE_DIR )
   find_library( GRAPHICS_ORIGIN_GEOMETRY_LIBRARIES graphics_origin_geometry
   	PATHS ${GRAPHICS_ORIGIN_LIBRARY_DIR} )  
 	# openmesh
-	find_package( OpenMesh REQUIRED )
+	find_package( OpenMesh REQUIRED QUIET )
 	if( OPENMESH_FOUND )
-		set( GRAPHICS_ORIGIN_GEOMETRY_LIBRARIES 
+	  set( GRAPHICS_ORIGIN_GEOMETRY_LIBRARIES 
   		${GRAPHICS_ORIGIN_GEOMETRY_LIBRARIES}
   		${GRAPHICS_ORIGIN_TOOLS_LIBRARIES}
   		${OPENMESH_LIBRARIES})
   		
-  	set( GRAPHICS_ORIGIN_GEOMETRY_INCLUDE_DIRS
+  	  set( GRAPHICS_ORIGIN_GEOMETRY_INCLUDE_DIRS
   		${GRAPHICS_ORIGIN_TOOLS_INCLUDE_DIRS}
   		${OPENMESH_INCLUDE_DIR})
 	else()
@@ -114,27 +128,38 @@ if( GRAPHICS_ORIGIN_INCLUDE_DIR )
   #######################
   # APPLICATION LIBRARY #
   ##############################################################################
-	if( GRAPHICS_ORIGIN_WITH_APPLICATION )
+  if( GRAPHICS_ORIGIN_WITH_APPLICATION )
 	
   	find_library( GRAPHICS_ORIGIN_APPLICATION_LIBRARIES graphics_origin_application
   		PATHS ${GRAPHICS_ORIGIN_LIBRARY_DIR} )  	
 	
 	  set( CMAKE_INCLUDE_CURRENT_DIR ON )
 	  set( CMAKE_AUTOMOC ON )
-	  find_package( Qt5Core REQUIRED )
-	  find_package( Qt5Quick REQUIRED )
-	  find_package( Qt5Gui REQUIRED )
-	  find_package( Qt5Qml REQUIRED )
-	  find_package( Qt5Network REQUIRED )
-	  find_package( Qt5Widgets REQUIRED )
+	  find_package( Qt5Core REQUIRED QUIET )
+	  find_package( Qt5Quick REQUIRED QUIET )
+	  find_package( Qt5Gui REQUIRED QUIET )
+	  find_package( Qt5Qml REQUIRED QUIET )
+	  find_package( Qt5Network REQUIRED QUIET )
+	  find_package( Qt5Widgets REQUIRED QUIET )
+	  
+	  if( NOT Qt5Core_FOUND OR NOT Qt5Quick_FOUND OR NOT Qt5Gui_FOUND
+	    OR NOT Qt5Qml_FOUND OR NOT Qt5Network_FOUND OR NOT Qt5Widgets_FOUND )
+	    message( SEND_ERROR "Failed to find all Qt5 components. Check the documentation of FindQt5*.cmake")
+	  endif() 
 	 
 	  # glew
-	  find_package( GLEW REQUIRED )
+	  find_package( GLEW REQUIRED QUIET )
+	  if( NOT GLEW_FOUND )
+	    message( SEND_ERROR "Failed to find GLEW." )
+	  endif()
 	  
 	  # gl
-	  find_package( OpenGL REQUIRED )
+	  find_package( OpenGL REQUIRED QUIET )
+	  if( NOT OpenGL_FOUND )
+	    message( SEND_ERROR "Failed to find OpenGL" )
+	  endif()
 	
-	set( GRAPHICS_ORIGIN_APPLICATION_LIBRARIES
+	  set( GRAPHICS_ORIGIN_APPLICATION_LIBRARIES
     	${GRAPHICS_ORIGIN_APPLICATION_LIBRARIES}
     	${GRAPHICS_ORIGIN_GEOMETRY_LIBRARIES}
   		${GLEW_LIBRARIES} ${OPENGL_LIBRARIES}
@@ -144,7 +169,6 @@ if( GRAPHICS_ORIGIN_INCLUDE_DIR )
   		${GRAPHICS_ORIGIN_GEOMETRY_INCLUDE_DIRS} 
 	  	${GLEW_INCLUDE_DIR} ${OPENGL_INCLUDE_DIR}
   		${Qt5Quick_INCLUDE_DIRS} ${Qt5Gui_INCLUDE_DIRS} ${Qt5Qml_INCLUDE_DIRS} ${Qt5Network_INCLUDE_DIRS} ${Qt5Core_INCLUDE_DIRS} ${Qt5Widgets_INCLUDE_DIRS})
-
 
   	set( GRAPHICS_ORIGIN_LIBRARIES
   		${GRAPHICS_ORIGIN_APPLICATION_LIBRARIES})

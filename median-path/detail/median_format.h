@@ -463,7 +463,7 @@ namespace io {
       writer.Key( "atoms" );
       writer.StartArray();
 
-        skeleton.process(
+        skeleton.process_atoms(
             [&writer]( median_skeleton::atom& a )
             {
               writer.Double( a.x );
@@ -482,7 +482,7 @@ namespace io {
       writer.Key( "links" );
       writer.StartArray();
 
-        skeleton.process(
+        skeleton.process_links(
             [&writer,&skeleton]( median_skeleton::link& l )
             {
               writer.Uint64( skeleton.get_index( l.h1 ) );
@@ -499,7 +499,7 @@ namespace io {
       writer.Key( "faces" );
       writer.StartArray();
 
-        skeleton.process(
+        skeleton.process_faces(
             [&writer,&skeleton]( median_skeleton::face& f )
             {
               writer.Uint64( skeleton.get_index( f.atoms[0] ) );
