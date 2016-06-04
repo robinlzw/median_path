@@ -23,6 +23,7 @@ project( Median-Path )
 set( Median-Path_VERSION_MAJOR 1 )
 set( Median-Path_VERSION_MINOR 0 )
 
+# For linux builds, Release is the default build type
 if( CMAKE_CXX_COMPILER_ID STREQUAL "GNU" )
   if( NOT CMAKE_BUILD_TYPE )
     set( CMAKE_BUILD_TYPE "Release" 
@@ -58,8 +59,8 @@ set( MP_APPLICATION_OUT_DIR_RELWITHDEBINFO "${MP_OUT_DIR}/relwithdebinfo/bin" )
 set( MP_TUTORIAL_OUT_DIR_RELWITHDEBINFO "${MP_OUT_DIR}/relwithdebinfo/tutorial" )
 set( MP_TEST_OUT_DIR_RELWITHDEBINFO "${MP_OUT_DIR}/relwithdebinfo/tests" )
 
-#*********************
-# projection options *
+#******************
+# project options *
 #*******************************************************************************
 option( MP_BUILD_APPS
   "Set to ON to build applications."
@@ -87,6 +88,7 @@ endif()
 #*******************************************************************************
 include_directories( "${MP_HEADERS_IN_DIR}" )
 
+# find Graphics-Origin
 set( GRAPHICS_ORIGIN_WITH_APPLICATION ${MP_BUILD_GRAPHIC_APPS} )
 set( GRAPHICS_ORIGIN_DIR  $ENV{GRAPHICS_ORIGIN_DIR}
   CACHE FILEPATH "Variable to try to find Graphics-Origin installation path")
@@ -95,19 +97,22 @@ include_directories( ${GRAPHICS_ORIGIN_INCLUDE_DIRS} )
 set( MP_INCLUDE_DIRS ${MP_INCLUDE_DIRS} ${GRAPHICS_ORIGIN_INCLUDE_DIRS})
 set( MP_LIBRARIES ${MP_LIBRARIES} ${GRAPHICS_ORIGIN_LIBRARIES} )
 
-
+# find CGAL
 set( CGAL_CORE_PACKAGE_DIR "/usr"
   CACHE FILEPATH "Variable to try to find CGAL_CORE package i.e. the directory where include/CGAL/CORE can be found" )
 #TODO: I have done quite a mess to compile with the CGAL libraries. 
 #TODO: clean that by using the cmake files given by CGAL or write another find package file for cgal
-find_package( GMP REQUIRED )
-find_package( MPFR REQUIRED )
-find_package( TBB REQUIRED COMPONENTS tbbmalloc )
+find_package( GMP REQUIRED QUIET )
 if( NOT GMP_FOUND )
   message( fatal "GMP not found")
 endif()
+find_package( MPFR REQUIRED QUIET )
 if( NOT MPFR_FOUND )
   message( fatal "MPFR not found")
+endif()
+find_package( TBB REQUIRED QUIET COMPONENTS tbbmalloc )
+if( NOT TBB_FOUND )
+  message( fatal "TBB not found")
 endif()
 include_directories( ${GMP_INCLUDE_DIR} ${MPFR_INCLUDE_DIR} ${TBB_INCLUDE_DIRS})
 set( MP_INCLUDE_DIRS "${MP_INCLUDE_DIRS} ${GMP_INCLUDE_DIR} ${MPFR_INCLUDE_DIR} ${TBB_INCLUDE_DIRS}")
@@ -144,14 +149,55 @@ else()
   message( SEND_ERROR "Compiler ${CMAKE_CXX_COMPILER_ID} not managed")
 endif()
 
+#***********
+# Products *
+#*******************************************************************************
+# median_path.h from a configuration file
+configure_file( "${MP_SOURCES_IN_DIR}/median_path.h.in" "${MP_HEADERS_IN_DIR}/median-path/median_path.h")
 
+function( mp_add_lib )
+  set( options "" )
+  set( oneValueArgs NAME )
+  set( multiValueArgs SOURCES LIBRARIES )
+  cmake_parse_arguments( LIB "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN} )
+  
+  add_library( ${LIB_NAME} SHARED ${LIB_SOURCES} )
+  
+  set_target_properties( ${LIB_NAME} 
+	PROPERTIES
+	COMPILE_DEFINITIONS "MP_EXPORTS"
+	
+	IMPORTED_LOCATION_RELEASE "${MP_LIBRARY_OUT_DIR_RELEASE}/${LIB_NAME}"
+	RUNTIME_OUTPUT_DIRECTORY_RELEASE "${MP_LIBRARY_OUT_DIR_RELEASE}"
+	ARCHIVE_OUTPUT_DIRECTORY_RELEASE "${MP_LIBRARY_OUT_DIR_RELEASE}"
+	LIBRARY_OUTPUT_DIRECTORY_RELEASE "${MP_LIBRARY_OUT_DIR_RELEASE}"
+    
+	IMPORTED_LOCATION_DEBUG "${MP_LIBRARY_OUT_DIR_DEBUG}/${LIB_NAME}"
+	RUNTIME_OUTPUT_DIRECTORY_DEBUG "${MP_LIBRARY_OUT_DIR_DEBUG}"
+	ARCHIVE_OUTPUT_DIRECTORY_DEBUG "${MP_LIBRARY_OUT_DIR_DEBUG}"
+	LIBRARY_OUTPUT_DIRECTORY_DEBUG "${MP_LIBRARY_OUT_DIR_DEBUG}"
+	
+    IMPORTED_LOCATION_RELWITHDEBINFO "${MP_LIBRARY_OUT_DIR_RELWITHDEBINFO}/${LIB_NAME}"
+	RUNTIME_OUTPUT_DIRECTORY_RELWITHDEBINFO "${MP_LIBRARY_OUT_DIR_RELWITHDEBINFO}"
+	ARCHIVE_OUTPUT_DIRECTORY_RELWITHDEBINFO "${MP_LIBRARY_OUT_DIR_RELWITHDEBINFO}"
+	LIBRARY_OUTPUT_DIRECTORY_RELWITHDEBINFO "${MP_LIBRARY_OUT_DIR_RELWITHDEBINFO}"
+  )
+  
+  target_link_libraries( ${LIB_NAME} ${LIB_LIBRARIES} )
+  
+endfunction( mp_add_lib )
+
+# build median path library
+add_subdirectory( ${MP_SOURCES_IN_DIR} )
+
+# build tests
 if( ${MP_BUILD_TESTS} )
   enable_testing()
   set( Boost_USE_MULTITHREADED ON )
   set( Boost_USE_STATIC_LIBS OFF )
   set( Boost_USE_STATIC_RUNTIME OFF )
   find_package( Boost
-    REQUIRED
+    REQUIRED QUIET
     COMPONENTS unit_test_framework )
   if( Boost_FOUND )
     set( MP_TEST_LIBRARIES 
@@ -161,11 +207,39 @@ if( ${MP_BUILD_TESTS} )
   endif()
 endif()
 
-configure_file( "${MP_SOURCES_IN_DIR}/median_path.h.in" "${MP_HEADERS_IN_DIR}/median-path/median_path.h")
+# build apps
+if( ${MP_BUILD_APPS} )
+  function( mp_add_executable )
+    set( options "" )
+    set( oneValueArgs NAME )
+    set( multiValueArgs SOURCES LIBRARIES )
+    cmake_parse_arguments( EXE "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN} )
+    
+    add_executable( ${EXE_NAME} ${EXE_SOURCES} )
+    
+    target_link_libraries( ${EXE_NAME} ${EXE_LIBRARIES} )
+    
+    set_target_properties( ${EXE_NAME}
+	  PROPERTIES
+	  RUNTIME_OUTPUT_DIRECTORY_RELEASE "${MP_APPLICATION_OUT_DIR_RELEASE}"
+	  ARCHIVE_OUTPUT_DIRECTORY_RELEASE "${MP_APPLICATION_OUT_DIR_RELEASE}"
+	  LIBRARY_OUTPUT_DIRECTORY_RELEASE "${MP_APPLICATION_OUT_DIR_RELEASE}"
 
-add_subdirectory( ${MP_SOURCES_IN_DIR} )
-add_subdirectory( ${MP_APP_IN_DIR} )
+	  RUNTIME_OUTPUT_DIRECTORY_DEBUG "${MP_APPLICATION_OUT_DIR_DEBUG}"
+	  ARCHIVE_OUTPUT_DIRECTORY_DEBUG "${MP_APPLICATION_OUT_DIR_DEBUG}"
+	  LIBRARY_OUTPUT_DIRECTORY_DEBUG "${MP_APPLICATION_OUT_DIR_DEBUG}"
+  
+	  RUNTIME_OUTPUT_DIRECTORY_RELWITHDEBINFO "${MP_APPLICATION_OUT_DIR_RELWITHDEBINFO}"
+	  ARCHIVE_OUTPUT_DIRECTORY_RELWITHDEBINFO "${MP_APPLICATION_OUT_DIR_RELWITHDEBINFO}"
+	  LIBRARY_OUTPUT_DIRECTORY_RELWITHDEBINFO "${MP_APPLICATION_OUT_DIR_RELWITHDEBINFO}"
+	)
+  endfunction( mp_add_executable )
+  
+  add_subdirectory( ${MP_APP_IN_DIR} )
+  
+endif()
 
+# build documentation
 if( ${MP_BUILD_DOC} )
   find_package( Doxygen )
   if( DOXYGEN_FOUND )
