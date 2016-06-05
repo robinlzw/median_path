@@ -10,11 +10,58 @@
 
 BEGIN_MP_NAMESPACE
 
-
-
+  /**@brief A class to skeletonize a shape.
+   *
+   * A skeleton is a shape representation model, just like boundary representation
+   * models (e.g. meshes) or volume representation models (e.g. implicit surfaces).
+   * However, shapes are rarely available in a skeleton representation.
+   *
+   * Skeletonization is the process that convert a shape known by a boundary or
+   * volume representation model into a skeleton. This class performs a (small)
+   * subset of the tremendous skeletonization available.
+   *
+   * In practice, a skeletonization is often decomposed into three steps:
+   * - geometry step, to sample medial atoms in order to capture the geometry
+   * of the shape
+   * - topology step, to sample the skeletal structure by connecting center
+   * of medial atoms with links and faces
+   * - regularization step, to simplify/clean a skeleton.
+   *
+   * For each step, there are many existing methods. Not all combination of
+   * methods are compatible. This class performs the geometry step, then
+   * calls \ref structurer to perform the topology step. Depending on the
+   * specificities of the geometry and topology steps, it calls the
+   * \ref regularizer before or after the topology step.
+   *
+   * Currently, the following geometry methods are implemented:
+   * - Voronoi balls, where a Voronoi diagram of a surface sampling of the
+   * shape is computed. All inside Voronoi vertices are used to build
+   * atoms (the radius is the distance between the vertex and the closest
+   * surface sample)
+   * - Polar balls, where only a subset of inside Voronoi vertices, the
+   * inside poles, are kept. An inside pole is the inside Voronoi vertex
+   * of the Voronoi cell of a sample s, that is the most distant of s.
+   * - Shrinking balls, currently the fastest method. For each surface sample,
+   * this method starts with a large tangent ball and shrink it iteratively
+   * until it is maximally inscribed.
+   *
+   * \note The skeletonizer only deals with triangular mesh as input. Indeed,
+   * it considers all mesh vertices as shape samples for the geometry methods.
+   * If you have a shape represented by another shape representation model, it
+   * is up to you to make the conversion. Keep in mind that the mesh vertices
+   * need to be quite close to each other. To give you an idea, the sampling
+   * should be made such that any point p of the input shape is at most at a
+   * distance of 0.2 * local_thickness(p) of any sample.
+   */
   class skeletonizer {
   public:
 
+    /**@brief Parameters for the shrinking ball geometry step.
+     *
+     * Compared to Voronoi and Polar balls methods, the shrinking balls
+     * method required additional parameters to iteratively shrink a ball.
+     *
+     */
     struct shrinking_ball_parameters {
       shrinking_ball_parameters();
 

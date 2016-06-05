@@ -1,0 +1,22 @@
+/**
+\mainpage Introduction
+
+(test)
+Median Path is a library to compute, manipulate, structure and render 3D medial skeletons.
+- \subpage skeletonization "Skeletonization"
+- \subpage manipulation "Skeleton Manipulation"
+*/
+
+/**
+\page skeletonization Skeletonization
+
+(test)
+There is a huge amount of skeletonizations available. Some of the most popular methods are implemented
+in Median Path.
+*/
+
+/**
+\page manipulation Skeleton Manipulation
+
+(test) How to manipulate skeletons in Median Path?
+*/
