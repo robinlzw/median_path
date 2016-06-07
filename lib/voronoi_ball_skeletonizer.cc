@@ -16,8 +16,6 @@
 
 BEGIN_MP_NAMESPACE
 
-  ///fixme: be carefull with the intersection of squared balls!
-
   void
   delaunay_reconstruction(
     median_skeleton& skeleton,
@@ -71,7 +69,10 @@ BEGIN_MP_NAMESPACE
 
   typedef CGAL::Triangulation_vertex_base_with_info_3< dt_vertex_info, dt_kernel > dt_vertex_base;
   typedef CGAL::Triangulation_cell_base_with_info_3< voronoi_ball, dt_kernel > dt_cell_base;
-  typedef CGAL::Triangulation_data_structure_3< dt_vertex_base, dt_cell_base, CGAL::Parallel_tag > dt_datastructure;
+  typedef CGAL::Triangulation_data_structure_3<
+      dt_vertex_base,
+      dt_cell_base,
+      CGAL::Parallel_tag > dt_datastructure;
   typedef CGAL::Delaunay_triangulation_3< dt_kernel, dt_datastructure > dt;
 
   static
@@ -89,14 +90,13 @@ BEGIN_MP_NAMESPACE
     // Since this data is useless after the construction, we can release it
     // after the construction, to decrease the memory consumption.
     const auto nsamples = input.kdtree_get_point_count( );
-    dt::Point* dtpoints = new dt::Point[ nsamples ];
-    dt_vertex_info* vinfos = new dt_vertex_info[ nsamples ];
+    std::vector< std::pair< dt::Point, dt_vertex_info > > dtpoints( nsamples );
     # pragma omp parallel for schedule(static)
     for( uint32_t i = 0; i < nsamples; ++i )
       {
         auto p = input.get_point( i );
-        dtpoints[i] = dt::Point( p[0], p[1], p[2] );
-        vinfos[i] = i;
+        dtpoints[i].first = dt::Point( p[0], p[1], p[2] );
+        dtpoints[i].second = i;
       }
 
     // Parallel DT construction requires a bounding box, to divide the
@@ -108,16 +108,11 @@ BEGIN_MP_NAMESPACE
         bbox.m_center.y - bbox.m_hsides.y, bbox.m_center.z - bbox.m_hsides.z,
         bbox.m_center.x + bbox.m_hsides.x, bbox.m_center.y + bbox.m_hsides.y,
         bbox.m_center.z + bbox.m_hsides.z ), params.m_dt_bounding_box_subdivisions );
-    dt* delaunay_tetrahedrisation = new dt(
-      boost::make_zip_iterator(
-        boost::make_tuple( dtpoints, vinfos ) ),
-      boost::make_zip_iterator(
-        boost::make_tuple( dtpoints + nsamples, vinfos + nsamples ) ),
-      &locking_datastructure );
+    dt* delaunay_tetrahedrisation = new dt( dtpoints.begin(), dtpoints.end(), &locking_datastructure );
 
     // Release now the memory of DT construction input.
-    delete[] dtpoints;
-    delete[] vinfos;
+//    delete[] dtpoints;
+//    delete[] vinfos;
 
     // For the Power Shape structuration, it is better to extend the bounding
     // box and insert its vertices in the DT, as the produced Voronoi vertices
