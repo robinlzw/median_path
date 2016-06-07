@@ -89,6 +89,8 @@ struct application_parameters {
   std::string output_name;
   std::string output_extension;
   median_path::skeletonizer::parameters skeletonizer_parameters;
+  median_path::skeletonizer::shrinking_balls_parameters shrinking_balls_params;
+  median_path::skeletonizer::voronoi_and_polar_balls_parameters voronoi_balls_params;
 
 
   application_parameters( int argc, char* argv[] )
@@ -144,9 +146,9 @@ struct application_parameters {
           "method to compute the initial radius of a shrinking ball. Possible values are:\n"
           "  * raytracing, to cast a ray at a vertex in the opposite direction of its normal. The closest intersection point will be use to determine a correct initial radius.\n"
           "  * constant, use the same initial value for all balls")
-        ("constant_radius", po::value<median_path::real>(&skeletonizer_parameters.m_shrinking_ball.m_constant_radius_ratio)->default_value(0.6, "0.6"),
+        ("constant_radius", po::value<median_path::real>(&shrinking_balls_params.m_constant_radius_ratio)->default_value(0.6, "0.6"),
           "ratio of the smallest dimension of the input shape bounding box to use as a global initial radius");
-        ("radius_variation_threshold", po::value<median_path::real>(&skeletonizer_parameters.m_shrinking_ball.m_min_radius_variation)->default_value(1e-6, "1e-6"),
+        ("radius_variation_threshold", po::value<median_path::real>(&shrinking_balls_params.m_min_radius_variation)->default_value(1e-6, "1e-6"),
             "when the radius shrinking ball do not change more than this threshold, the algorithm stops for this ball.");
 
 
@@ -179,6 +181,10 @@ struct application_parameters {
         }
 
 
+      if( skeletonizer_parameters.m_geometry_method == median_path::skeletonizer::parameters::SHRINKING_BALLS )
+        skeletonizer_parameters.m_shrinking_ball = shrinking_balls_params;
+      else
+        skeletonizer_parameters.m_voronoi_ball = voronoi_balls_params;
 
 
       for( auto iterator = input_filename.begin(), end = input_filename.end();

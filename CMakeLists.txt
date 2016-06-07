@@ -92,7 +92,7 @@ include_directories( "${MP_HEADERS_IN_DIR}" )
 set( GRAPHICS_ORIGIN_WITH_APPLICATION ${MP_BUILD_GRAPHIC_APPS} )
 set( GRAPHICS_ORIGIN_DIR  $ENV{GRAPHICS_ORIGIN_DIR}
   CACHE FILEPATH "Variable to try to find Graphics-Origin installation path")
-find_package( GraphicsOrigin )  
+find_package( GraphicsOrigin REQUIRED )  
 include_directories( ${GRAPHICS_ORIGIN_INCLUDE_DIRS} )
 set( MP_INCLUDE_DIRS ${MP_INCLUDE_DIRS} ${GRAPHICS_ORIGIN_INCLUDE_DIRS})
 set( MP_LIBRARIES ${MP_LIBRARIES} ${GRAPHICS_ORIGIN_LIBRARIES} )
