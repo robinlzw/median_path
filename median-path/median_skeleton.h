@@ -599,6 +599,16 @@ BEGIN_MP_NAMESPACE
     is_valid(
       link_handle handle ) const;
 
+    /**@brief Check if two atoms are connected by a link.
+     *
+     * Check if a link exist between two atoms.
+     * @param idx1 index of the first atom
+     * @param idx2 index of the second atom
+     * @return True if the two atoms are connected.*/
+    bool is_a_link(
+      atom_index idx1,
+      atom_index idx2 ) const;
+
     /**@brief Apply a process function on all links.
      *
      * This method apply, in parallel or not, a function on each

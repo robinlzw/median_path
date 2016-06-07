@@ -329,7 +329,7 @@ static void benchmark_from_shrinking_ball_skeletonization(
 {
   LOG( info, "will now perform reconstructions on shrinking balls");
   params.m_geometry_method = median_path::skeletonizer::parameters::SHRINKING_BALLS;
-  params.m_shrinking_ball.m_radius_method = median_path::skeletonizer::shrinking_ball_parameters::CONSTANT;
+  params.m_shrinking_ball.m_radius_method = median_path::skeletonizer::shrinking_balls_parameters::CONSTANT;
   benchmark_delaunay_reconstruction( input, filename, app_params, params, stats.shrinking_ball_delaunay );
   benchmark_weighted_alpha_shape_reconstruction( input, filename, app_params, params, stats.shrinking_ball_alpha );
 }

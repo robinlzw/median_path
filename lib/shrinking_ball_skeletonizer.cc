@@ -6,7 +6,7 @@
 
 BEGIN_MP_NAMESPACE
 
-  skeletonizer::shrinking_ball_parameters::shrinking_ball_parameters()
+  skeletonizer::shrinking_balls_parameters::shrinking_balls_parameters()
     : m_radius_method{ RAYTRACING },
       m_constant_radius_ratio{0.6},
       m_min_radius_variation{1e-6}
@@ -46,7 +46,7 @@ BEGIN_MP_NAMESPACE
      const skeletonizer::parameters& params )
   {
     input.build_kdtree();
-    if( params.m_shrinking_ball.m_radius_method == skeletonizer::shrinking_ball_parameters::RAYTRACING )
+    if( params.m_shrinking_ball.m_radius_method == skeletonizer::shrinking_balls_parameters::RAYTRACING )
       input.build_bvh();
     const auto nsamples = input.kdtree_get_point_count();
     output.clear( nsamples, 0, 0 );
@@ -75,7 +75,7 @@ BEGIN_MP_NAMESPACE
           const real* sample_normal = input.get_normal( i );
 
           real radius = global_initial_radius;
-          if( params.m_shrinking_ball.m_radius_method == skeletonizer::shrinking_ball_parameters::RAYTRACING )
+          if( params.m_shrinking_ball.m_radius_method == skeletonizer::shrinking_balls_parameters::RAYTRACING )
             {
               real distance;
               size_t face_idx;

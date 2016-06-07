@@ -92,14 +92,26 @@ BEGIN_MP_NAMESPACE
         &locking_datastructure);
 
     fixed_alpha_shape alpha_shape( regular_tetrahedrization, 0 );
+    output.reserve_links( alpha_shape.number_of_finite_edges() );
 
     if( params.m_build_faces )
       {
+        /**
+         * Note: we estimate roughly the number of facets since most of the facets are REGULAR
+         * or SINGULAR. If we process in parallel finite facets to count the exact number of
+         * face to add to the skeleton, we will lose more time than just allocating more faces
+         * than needed.
+         */
         auto nb_finite_facets = alpha_shape.number_of_finite_facets();
         output.reserve_faces( nb_finite_facets );
-        output.reserve_links( nb_finite_facets * 3 );
-        median_skeleton::atom_index indices[3];
 
+        /**
+         * Note: we cannot really parallelize the process here. Indeed, most of the facets will be
+         * included in the skeleton and adding a face to the skeleton should be done in a critical
+         * section. Thus, in a parallel processing, we will spend most of the time waiting to
+         * enter in the critical section.
+         */
+        median_skeleton::atom_index indices[3];
         for( auto fit = alpha_shape.facets_begin(), fitend = alpha_shape.facets_end();
             fit != fitend; ++ fit )
           {
@@ -119,9 +131,18 @@ BEGIN_MP_NAMESPACE
               }
           }
       }
-//    else
+    /**
+     * Note: this section of code is always executed, because some times, there are
+     * edges connected to any triangles. Thus, even if we build faces, those edges
+     * are not yet added to the skeleton. Also, if we make sure that we enter in
+     * the critical section (to add an edge), only for an edge that does not exist
+     * yet:
+     * - we already perform half of the work to check if the link exist
+     * - we perform 150% of the work when the does not exist
+     * With the overhead due to the parallel iteration of CGAL elements, we do not
+     * win anything.
+     */
       {
-        output.reserve_links( alpha_shape.number_of_finite_edges() );
         for( auto eit = alpha_shape.edges_begin(), eitend = alpha_shape.edges_end();
             eit != eitend; ++ eit )
           {
@@ -133,6 +154,4 @@ BEGIN_MP_NAMESPACE
           }
       }
   }
-
-
 END_MP_NAMESPACE

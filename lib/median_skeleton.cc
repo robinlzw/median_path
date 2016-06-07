@@ -612,6 +612,27 @@ BEGIN_MP_NAMESPACE
     MP_THROW_EXCEPTION( skeleton_invalid_atom_index );
   }
 
+  bool
+  median_skeleton::is_a_link(
+        atom_index idx1,
+        atom_index idx2 ) const
+  {
+# ifndef MP_SKELETON_NO_CHECK
+    if( idx1 >= m_impl->m_atoms_size || idx2 >= m_impl->m_atoms_size )
+      MP_THROW_EXCEPTION( skeleton_invalid_atom_index );
+# endif
+    auto entry_index2 = m_impl->m_atom_index_to_handle_index[idx2];
+    atom_handle handle2( entry_index2, m_impl->m_atom_handles[entry_index2].counter );
+    auto& links1 = m_impl->m_atom_properties[ atom_links_property_index ]->get< atom_links_property >( idx1 );
+
+    for( auto& link : links1 )
+      {
+        if( link.second == handle2 )
+          return true;
+      }
+    return false;
+  }
+
   median_skeleton::link_handle
   median_skeleton::do_add_link(
     atom_index idx1, atom_index idx2 )

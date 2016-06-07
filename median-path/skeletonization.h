@@ -38,9 +38,10 @@ BEGIN_MP_NAMESPACE
    * shape is computed. All inside Voronoi vertices are used to build
    * atoms (the radius is the distance between the vertex and the closest
    * surface sample)
-   * - Polar balls, where only a subset of inside Voronoi vertices, the
-   * inside poles, are kept. An inside pole is the inside Voronoi vertex
-   * of the Voronoi cell of a sample s, that is the most distant of s.
+   * - Polar balls, starts by a Voronoi balls method, followed by a filter
+   * that keep a subset of inside Voronoi vertices: the inside poles.
+   * An inside pole is the inside Voronoi vertex of the Voronoi cell of a
+   * sample s, that is the most distant of s.
    * - Shrinking balls, currently the fastest method. For each surface sample,
    * this method starts with a large tangent ball and shrink it iteratively
    * until it is maximally inscribed.
@@ -58,12 +59,11 @@ BEGIN_MP_NAMESPACE
 
     /**@brief Parameters for the shrinking ball geometry step.
      *
-     * Compared to Voronoi and Polar balls methods, the shrinking balls
-     * method required additional parameters to iteratively shrink a ball.
-     *
+     * The shrinking balls method require additional parameters to iteratively
+     * shrink a ball. Those parameters are defined by this structure.
      */
-    struct shrinking_ball_parameters {
-      shrinking_ball_parameters();
+    struct shrinking_balls_parameters {
+      shrinking_balls_parameters();
 
       /**@brief How to determine the initial radius.
        *
@@ -94,6 +94,36 @@ BEGIN_MP_NAMESPACE
       real m_min_radius_variation;
     };
 
+    /**@brief Parameters for the voronoi and polar balls geometry step.
+     *
+     * Even though the Voronoi and polar balls methods do not require any
+     * parameters in theory, some are needed in practice to parallelize the
+     * construction of the Delaunay triangulation (dual of the Voronoi diagram).
+     * Those parameters are defined by this structure.
+     */
+    struct voronoi_and_polar_balls_parameters {
+      voronoi_and_polar_balls_parameters();
+
+      /**@brief Number of subdivisions of the bounding box for the parallelization.
+       *
+       * To build the Delaunay triangulation in parallel, the bounding box of
+       * surface samples (also known as sites) is subdivided into cells. Each
+       * cell is processed in parallel and the results are then combined. This
+       * value tells how many subdivisions of the bounding box should be made.
+       */
+      unsigned int m_dt_bounding_box_subdivisions;
+
+      /**@brief Scale factor to apply to the samples' bounding box.
+       *
+       * For the Power Shape structuration, it is better to extent the
+       * bounding box and insert its vertices in the Delaunay triangulation,
+       * as the produced Voronoi vertices will constrain more the regular
+       * triangulation to improve the skeletal structure approximation.
+       * This can only be done during the geometry step.
+       * @note This value should have an absolute value greater than 1.0. */
+      real m_bounding_box_scale_factor;
+    };
+
     /**
      *
      * Not all combination of parameters are possible.
@@ -122,7 +152,8 @@ BEGIN_MP_NAMESPACE
       bool m_merge_clusters;
 
       union {
-        shrinking_ball_parameters m_shrinking_ball;
+        shrinking_balls_parameters m_shrinking_ball;
+        voronoi_and_polar_balls_parameters m_voronoi_ball;
       };
 
       bool m_build_topology;
