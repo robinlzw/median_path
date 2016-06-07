@@ -67,14 +67,14 @@ namespace std {
     return in;
   }
 
-  std::istream& operator>>( std::istream& in, median_path::skeletonizer::shrinking_ball_parameters::initial_radius_method& method )
+  std::istream& operator>>( std::istream& in, median_path::skeletonizer::shrinking_balls_parameters::initial_radius_method& method )
   {
     std::string token;
     in >> token;
     if( token == "raytracing" )
-      method = median_path::skeletonizer::shrinking_ball_parameters::RAYTRACING;
+      method = median_path::skeletonizer::shrinking_balls_parameters::RAYTRACING;
     else if( token == "constant" )
-      method = median_path::skeletonizer::shrinking_ball_parameters::CONSTANT;
+      method = median_path::skeletonizer::shrinking_balls_parameters::CONSTANT;
     else throw po::validation_error(
         po::validation_error::invalid_option_value,
         "initial_radius",
@@ -139,8 +139,8 @@ struct application_parameters {
       po::options_description shrinking_balls(
         "Skeletonization options specific to the shrinking balls method", line_length, line_length > 10 ? line_length -10 : line_length );
       shrinking_balls.add_options()
-        ("initial_radius", po::value<median_path::skeletonizer::shrinking_ball_parameters::initial_radius_method>(&skeletonizer_parameters.m_shrinking_ball.m_radius_method)
-          ->default_value(median_path::skeletonizer::shrinking_ball_parameters::RAYTRACING),
+        ("initial_radius", po::value<median_path::skeletonizer::shrinking_balls_parameters::initial_radius_method>(&skeletonizer_parameters.m_shrinking_ball.m_radius_method)
+          ->default_value(median_path::skeletonizer::shrinking_balls_parameters::RAYTRACING),
           "method to compute the initial radius of a shrinking ball. Possible values are:\n"
           "  * raytracing, to cast a ray at a vertex in the opposite direction of its normal. The closest intersection point will be use to determine a correct initial radius.\n"
           "  * constant, use the same initial value for all balls")

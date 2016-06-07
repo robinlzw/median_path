@@ -25,6 +25,11 @@ BEGIN_MP_NAMESPACE
       median_skeleton& output,
       const structurer::parameters& params );
 
+  skeletonizer::voronoi_and_polar_balls_parameters::voronoi_and_polar_balls_parameters() :
+      m_dt_bounding_box_subdivisions{ 10 },
+      m_bounding_box_scale_factor{ 10.0 }
+  {}
+
   skeletonizer::parameters::parameters()
     : m_geometry_method{ SHRINKING_BALLS },
       m_cluster_volume_factor{ 0.005 }, m_neighbors_for_cluster_detection{ 10 },
