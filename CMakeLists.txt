@@ -50,12 +50,12 @@ set( MP_TUTORIAL_OUT_DIR_DEBUG "${MP_OUT_DIR}/debug/tutorial" )
 set( MP_TEST_OUT_DIR_DEBUG "${MP_OUT_DIR}/debug/tests" )
 
 set( MP_LIBRARY_OUT_DIR_RELEASE "${MP_OUT_DIR}/release/lib" )
-set( MP_APPLICATION_OUT_DIR_RELEASE "${MP_OUT_DIR}/release/bin" )
+set( MP_APP_OUT_DIR_RELEASE "${MP_OUT_DIR}/release/bin" )
 set( MP_TUTORIAL_OUT_DIR_RELEASE "${MP_OUT_DIR}/release/tutorial" )
 set( MP_TEST_OUT_DIR_RELEASE "${MP_OUT_DIR}/release/tests" )
 
 set( MP_LIBRARY_OUT_DIR_RELWITHDEBINFO "${MP_OUT_DIR}/relwithdebinfo/lib" )
-set( MP_APPLICATION_OUT_DIR_RELWITHDEBINFO "${MP_OUT_DIR}/relwithdebinfo/bin" )
+set( MP_APP_OUT_DIR_RELWITHDEBINFO "${MP_OUT_DIR}/relwithdebinfo/bin" )
 set( MP_TUTORIAL_OUT_DIR_RELWITHDEBINFO "${MP_OUT_DIR}/relwithdebinfo/tutorial" )
 set( MP_TEST_OUT_DIR_RELWITHDEBINFO "${MP_OUT_DIR}/relwithdebinfo/tests" )
 
