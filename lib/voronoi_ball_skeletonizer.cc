@@ -346,12 +346,14 @@ BEGIN_MP_NAMESPACE
       {
         skeleton.reserve_faces( delaunay_tetrahedrization->number_of_finite_edges( ) );
 
+        std::vector <voronoi_ball > vballs;
         for( auto feit = delaunay_tetrahedrization->finite_edges_begin( ),
             feend = delaunay_tetrahedrization->finite_edges_end( );
             feit != feend; ++feit )
           {
             auto circulator = delaunay_tetrahedrization->incident_cells( *feit );
-            std::vector< voronoi_ball* > vballs;
+            vballs.resize(0);
+
             auto begin = circulator;
             bool ok = true;
             do
@@ -363,7 +365,7 @@ BEGIN_MP_NAMESPACE
                     ok = false;
                     break;
                   }
-                vballs.push_back( &info );
+                vballs.push_back( info );
                 ++circulator;
               }
             while( circulator != begin );
@@ -375,13 +377,13 @@ BEGIN_MP_NAMESPACE
                   {
                     for( size_t i = 2; i < nelements; ++i )
                       {
-                        if( vballs[i]->ball.intersect( vballs[0]->ball )
-                            && vballs[0]->ball.intersect( vballs[i - 1]->ball )
-                            && vballs[i]->ball.intersect(
-                              vballs[i - 1]->ball ) )
+                        if( vballs[i].ball.intersect( vballs[0].ball )
+                            && vballs[0].ball.intersect( vballs[i - 1].ball )
+                            && vballs[i].ball.intersect(
+                              vballs[i - 1].ball ) )
                           {
-                            skeleton.add( vballs[0]->idx, vballs[i - 1]->idx,
-                              vballs[i]->idx );
+                            skeleton.add( vballs[0].idx, vballs[i - 1].idx,
+                              vballs[i].idx );
                           }
                       }
                   }
@@ -390,8 +392,8 @@ BEGIN_MP_NAMESPACE
 
                     for( size_t i = 2; i < nelements; ++i )
                       {
-                        skeleton.add( vballs[0]->idx, vballs[i - 1]->idx,
-                          vballs[i]->idx );
+                        skeleton.add( vballs[0].idx, vballs[i - 1].idx,
+                          vballs[i].idx );
                       }
                   }
               }
