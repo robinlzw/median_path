@@ -26,8 +26,11 @@ BEGIN_MP_NAMESPACE
   // index of the mesh vertex corresponding to a DT vertex
   typedef uint32_t dt_vertex_info;
   static const dt_vertex_info null_dt_vertex_info = uint32_t( -1 );
-
+# ifdef MP_CGAL_MUST_USE_EPICK
+  typedef CGAL::Epick dt_kernel;
+# else
   typedef CGAL::Epeck dt_kernel;
+# endif
   struct voronoi_ball
   {
     /**
@@ -90,7 +93,7 @@ BEGIN_MP_NAMESPACE
     // Since this data is useless after the construction, we can release it
     // after the construction, to decrease the memory consumption.
     const auto nsamples = input.kdtree_get_point_count( );
-    std::vector< std::pair< dt::Point, dt_vertex_info > > dtpoints( nsamples );
+    std::pair< dt::Point, dt_vertex_info >* dtpoints = new std::pair<dt::Point, dt_vertex_info >[ nsamples ];
     # pragma omp parallel for schedule(static)
     for( uint32_t i = 0; i < nsamples; ++i )
       {
@@ -108,11 +111,10 @@ BEGIN_MP_NAMESPACE
         bbox.m_center.y - bbox.m_hsides.y, bbox.m_center.z - bbox.m_hsides.z,
         bbox.m_center.x + bbox.m_hsides.x, bbox.m_center.y + bbox.m_hsides.y,
         bbox.m_center.z + bbox.m_hsides.z ), params.m_dt_bounding_box_subdivisions );
-    dt* delaunay_tetrahedrisation = new dt( dtpoints.begin(), dtpoints.end(), &locking_datastructure );
+    dt* delaunay_tetrahedrisation = new dt( dtpoints, dtpoints + nsamples, &locking_datastructure );
 
     // Release now the memory of DT construction input.
-//    delete[] dtpoints;
-//    delete[] vinfos;
+    delete[] dtpoints;
 
     // For the Power Shape structuration, it is better to extend the bounding
     // box and insert its vertices in the DT, as the produced Voronoi vertices

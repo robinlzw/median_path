@@ -29,7 +29,7 @@ if( CMAKE_CXX_COMPILER_ID STREQUAL "GNU" )
     set( CMAKE_BUILD_TYPE "Release" 
       CACHE STRING "Choose the type of build, options are: Debug Release RelWithDebInfo." FORCE)
   endif(NOT CMAKE_BUILD_TYPE)
-endif()
+endif() 
 
 #****************************
 # directories configuration *
@@ -76,6 +76,10 @@ option(MP_BUILD_TESTS
 
 option(MP_BUILD_DOC 
   "Set to ON to build the documentation." 
+  ON)
+  
+option(MP_CGAL_EPECK_BUG
+  "Set to ON to hack the bug in CGAL Epeck Kernel. The geometry will be less precise with Polar and Voronoi balls, but will not cause segmentation fault"
   ON)
   
 if( MP_BUILD_GRAPHICS_APPS AND NOT MP_BUILD_APPS )
@@ -132,6 +136,9 @@ if( CMAKE_CXX_COMPILER_ID STREQUAL "GNU" )
     "${CMAKE_CXX_FLAGS_DEBUG} -O0 -ggdb -Wall -Wextra -DDEBUG" 
     CACHE STRING "GNU C++ compiler extra flags for debug build type" FORCE )
   set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DTHRUST_DEVICE_SYSTEM=THRUST_DEVICE_SYSTEM_OMP" )
+  if( MP_CGAL_EPECK_BUG )
+    set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DMP_CGAL_MUST_USE_EPICK" )
+  endif()
   set( CMAKE_LINKER_FLAGS "${CMAKE_LINKER_FLAGS} ${GRAPHICS_ORIGIN_LINKER_FLAGS}" )
 elseif( CMAKE_CXX_COMPILER_ID STREQUAL "MSVC" )
   set( CMAKE_CXX_FLAGS
@@ -144,6 +151,9 @@ elseif( CMAKE_CXX_COMPILER_ID STREQUAL "MSVC" )
     "${CMAKE_CXX_FLAGS_DEBUG} /Od /Zi /DDEBUG" 
     CACHE STRING "MSVC C++ compiler extra flags for debug build type" FORCE )	
   set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /DTHRUST_DEVICE_SYSTEM=THRUST_DEVICE_SYSTEM_OMP" )
+  if( MP_CGAL_EPECK_BUG )
+    set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /DMP_CGAL_MUST_USE_EPICK" )
+  endif()
   set( CMAKE_LINKER_FLAGS "${CMAKE_LINKER_FLAGS} ${GRAPHICS_ORIGIN_LINKER_FLAGS}" )
 else()
   message( SEND_ERROR "Compiler ${CMAKE_CXX_COMPILER_ID} not managed")
@@ -259,4 +269,5 @@ message(
 "MP_BUILD_APPS         = ${MP_BUILD_APPS}\n"
 "MP_BUILD_GRAPHIC_APPS = ${MP_BUILD_GRAPHIC_APPS}\n"
 "MP_BUILD_TESTS        = ${MP_BUILD_TESTS}\n"
-"MP_BUILD_DOC          = ${MP_BUILD_DOC}")
+"MP_BUILD_DOC          = ${MP_BUILD_DOC}\n"
+"MP_CGAL_EPECK_BUG     = ${MP_CGAL_EPECK_BUG}")
