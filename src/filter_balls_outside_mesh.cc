@@ -113,5 +113,5 @@ int main( int argc, char* argv[] )
       return_value = EXIT_FAILURE;
     }
   boost::log::core::get()->flush();
-  return EXIT_SUCCESS;
+  return return_value;
 }
