@@ -50,8 +50,8 @@ BEGIN_MP_NAMESPACE
       m_render_isolated_atoms{ false }, m_render_isolated_links{ false }, m_render_borders_junctions{ false },
       m_render_wireframe{ false }, m_use_radii_colors{ true }
   {
-    m_model = gpu_mat4(1.0);
-    m_program = program;
+    model = gpu_mat4(1.0);
+    program = program;
   }
 
   median_skeletons_renderable::~median_skeletons_renderable()
@@ -103,8 +103,8 @@ BEGIN_MP_NAMESPACE
 
                 const median_skeleton::atom_index nbatoms = data->skeleton.get_number_of_atoms();
                 data->number_of_atoms = nbatoms;
-                int  atom_location = m_program->get_attribute_location( "atom" );
-                int color_location = m_program->get_attribute_location( "color");
+                int  atom_location = program->get_attribute_location( "atom" );
+                int color_location = program->get_attribute_location( "color");
 
 
                 glcheck(glBindVertexArray( data->vao ));
@@ -236,14 +236,14 @@ BEGIN_MP_NAMESPACE
   void
   median_skeletons_renderable::do_render()
   {
-    glcheck(glUniform2fv( m_program->get_uniform_location( "window_dimensions"), 1, glm::value_ptr( m_renderer->get_window_dimensions())));
-    glcheck(glUniformMatrix4fv( m_program->get_uniform_location( "model"), 1, GL_FALSE, glm::value_ptr( m_model )));
-    glcheck(glUniformMatrix4fv( m_program->get_uniform_location( "view"), 1, GL_FALSE, glm::value_ptr( m_renderer->get_view_matrix() )));
-    glcheck(glUniformMatrix4fv( m_program->get_uniform_location( "projection"), 1, GL_FALSE, glm::value_ptr( m_renderer->get_projection_matrix())));
-    glcheck(glUniform1i( m_program->get_uniform_location( "grayscale" ), m_render_borders_junctions ));
-    glcheck(glUniform1i( m_program->get_uniform_location( "wireframe" ), m_render_wireframe ));
-    glcheck(glUniform1i( m_program->get_uniform_location( "use_atom_color"), m_use_radii_colors ));
-    glcheck(glUniform4fv( m_program->get_uniform_location( "global_color"), 1, glm::value_ptr(m_atom_color)));
+    glcheck(glUniform2fv( program->get_uniform_location( "window_dimensions"), 1, glm::value_ptr( m_renderer->get_window_dimensions())));
+    glcheck(glUniformMatrix4fv( program->get_uniform_location( "model"), 1, GL_FALSE, glm::value_ptr( model )));
+    glcheck(glUniformMatrix4fv( program->get_uniform_location( "view"), 1, GL_FALSE, glm::value_ptr( m_renderer->get_view_matrix() )));
+    glcheck(glUniformMatrix4fv( program->get_uniform_location( "projection"), 1, GL_FALSE, glm::value_ptr( m_renderer->get_projection_matrix())));
+    glcheck(glUniform1i( program->get_uniform_location( "grayscale" ), m_render_borders_junctions ));
+    glcheck(glUniform1i( program->get_uniform_location( "wireframe" ), m_render_wireframe ));
+    glcheck(glUniform1i( program->get_uniform_location( "use_atom_color"), m_use_radii_colors ));
+    glcheck(glUniform4fv( program->get_uniform_location( "global_color"), 1, glm::value_ptr(m_atom_color)));
 
     auto size = m_skeletons.get_size();
     auto data = m_skeletons.data();
@@ -267,7 +267,7 @@ BEGIN_MP_NAMESPACE
         glcheck(glUniform4fv( m_points_and_line_program->get_uniform_location( "global_color"), 1, glm::value_ptr(m_isolated_color)));
         glcheck(glUniformMatrix4fv( m_points_and_line_program->get_uniform_location( "mvp" ),
           1, GL_FALSE,
-          glm::value_ptr( m_renderer->get_projection_matrix() * m_renderer->get_view_matrix() * m_model )));
+          glm::value_ptr( m_renderer->get_projection_matrix() * m_renderer->get_view_matrix() * model )));
 
         auto atom_location = m_points_and_line_program->get_attribute_location( "atom" );
         auto color_location = m_points_and_line_program->get_attribute_location( "color" );
@@ -316,7 +316,7 @@ BEGIN_MP_NAMESPACE
         glcheck(glUniform1i( m_ball_program->get_uniform_location( "use_atom_color"), m_use_radii_colors ));
         glcheck(glUniform4fv( m_ball_program->get_uniform_location( "global_color"), 1, glm::value_ptr(m_atom_color)));
         glcheck(glUniformMatrix4fv( m_ball_program->get_uniform_location("projection"), 1, GL_FALSE, glm::value_ptr( m_renderer->get_projection_matrix() )));
-        glcheck(glUniformMatrix4fv( m_ball_program->get_uniform_location( "mv"), 1, GL_FALSE, glm::value_ptr(m_renderer->get_view_matrix() * m_model)));
+        glcheck(glUniformMatrix4fv( m_ball_program->get_uniform_location( "mv"), 1, GL_FALSE, glm::value_ptr(m_renderer->get_view_matrix() * model)));
 
         data = m_skeletons.data();
         for( decltype(size) i = 0; i < size; ++ i, ++ data )
@@ -340,7 +340,7 @@ BEGIN_MP_NAMESPACE
         m_border_junction_program->bind();
         glcheck(glUniformMatrix4fv( m_border_junction_program->get_uniform_location( "mvp" ),
           1, GL_FALSE,
-          glm::value_ptr( m_renderer->get_projection_matrix() * m_renderer->get_view_matrix() * m_model )));
+          glm::value_ptr( m_renderer->get_projection_matrix() * m_renderer->get_view_matrix() * model )));
 
         auto atom_location = m_border_junction_program->get_attribute_location( "atom" );
         glcheck(glLineWidth( 4.0 ));
