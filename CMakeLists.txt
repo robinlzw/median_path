@@ -8,6 +8,10 @@
 # MP_BUILD_APPS         Set to ON to build Median-Path applications
 # MP_BUILD_GRAPHIC_APPS Set to ON to build also graphic applications when MP_BUILD_APPS is ON. 
 #
+# Finding external libraries
+# --------------------------
+#
+#
 # Compilation Options
 # -------------------
 # MP_SKELETON_NO_CHECK Add this definition to perform less checks while accessing to skeleton elements.
