@@ -47,7 +47,7 @@
         std::ifstream input( f );
         if( input.is_open() )
           {
-            median_path::gpu_mat4 view;
+            median_path::gl_mat4 view;
             input >> view;
             if( !input.fail() )
               {
@@ -70,7 +70,7 @@
 
   void sgp_benchmark_viewer_window::reset_camera()
   {
-    m_renderer->set_view_matrix( glm::lookAt( median_path::gpu_vec3{3,0,0}, median_path::gpu_vec3{}, median_path::gpu_vec3{0,0,1}) );
+    m_renderer->set_view_matrix( glm::lookAt( median_path::gl_vec3{3,0,0}, median_path::gl_vec3{}, median_path::gl_vec3{0,0,1}) );
   }
 
 
@@ -360,13 +360,13 @@
   void sgp_benchmark_viewer_window::set_atom_color( const QColor& color )
   {
     if( m_skeletons )
-      m_skeletons->set_atom_color( median_path::gpu_vec4{ color.redF(), color.greenF(), color.blueF(), 1.0 } );
+      m_skeletons->set_atom_color( median_path::gl_vec4{ color.redF(), color.greenF(), color.blueF(), 1.0 } );
   }
 
   void sgp_benchmark_viewer_window::set_isolated_color( const QColor& color )
   {
     if( m_skeletons )
-      m_skeletons->set_isolated_color( median_path::gpu_vec4{ color.redF(), color.greenF(), color.blueF(), 1.0 } );
+      m_skeletons->set_isolated_color( median_path::gl_vec4{ color.redF(), color.greenF(), color.blueF(), 1.0 } );
   }
 
   bool sgp_benchmark_viewer_window::get_has_voronoi_geometry() const

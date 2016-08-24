@@ -50,7 +50,7 @@ BEGIN_MP_NAMESPACE
       m_render_isolated_atoms{ false }, m_render_isolated_links{ false }, m_render_borders_junctions{ false },
       m_render_wireframe{ false }, m_use_radii_colors{ true }
   {
-    model = gpu_mat4(1.0);
+    model = gl_mat4(1.0);
     program = program;
   }
 
@@ -76,7 +76,7 @@ BEGIN_MP_NAMESPACE
   median_skeletons_renderable::update_gpu_data()
   {
     std::vector< median_skeleton::atom_index > indices;
-    std::vector<gpu_vec4> colors;
+    std::vector<gl_vec4> colors;
     std::vector< median_skeleton::atom_index > isolated;
     std::vector< median_skeleton::atom_index > borders;
     std::vector< median_skeleton::atom_index > junctions;
@@ -124,7 +124,7 @@ BEGIN_MP_NAMESPACE
                   # pragma omp parallel for
                   for( median_skeleton::atom_index j = 0; j < nbatoms; ++ j )
                     {
-                      colors[ j ] = gpu_vec4(graphics_origin::get_color( data->skeleton.get_atom_by_index( j ).w, minr, maxr ), 1.0 );
+                      colors[ j ] = gl_vec4(graphics_origin::get_color( data->skeleton.get_atom_by_index( j ).w, minr, maxr ), 1.0 );
 
                       if( !data->skeleton.get_number_of_links( j ) )
                         {
@@ -133,7 +133,7 @@ BEGIN_MP_NAMESPACE
                         }
                     }
                   glcheck(glBindBuffer( GL_ARRAY_BUFFER, data->buffer_ids[colors_vbo]));
-                  glcheck(glBufferData( GL_ARRAY_BUFFER, sizeof(gpu_vec4) * nbatoms, colors.data(), GL_STATIC_DRAW));
+                  glcheck(glBufferData( GL_ARRAY_BUFFER, sizeof(gl_vec4) * nbatoms, colors.data(), GL_STATIC_DRAW));
                   glcheck(glEnableVertexAttribArray( color_location ));
                   glcheck(glVertexAttribPointer( color_location,
                     4, GL_FLOAT, GL_FALSE,
@@ -223,12 +223,12 @@ BEGIN_MP_NAMESPACE
   }
 
   void
-  median_skeletons_renderable::set_atom_color( const gpu_vec4& color )
+  median_skeletons_renderable::set_atom_color( const gl_vec4& color )
   {
     m_atom_color = color;
   }
   void
-  median_skeletons_renderable::set_isolated_color( const gpu_vec4& color )
+  median_skeletons_renderable::set_isolated_color( const gl_vec4& color )
   {
     m_isolated_color = color;
   }
@@ -354,11 +354,11 @@ BEGIN_MP_NAMESPACE
                 glcheck(glEnableVertexAttribArray( atom_location ));
                 glcheck(glVertexAttribPointer( atom_location, 4, GL_DOUBLE, GL_FALSE, 0, 0 ));
 
-                glcheck(glUniform4fv( m_border_junction_program->get_uniform_location("color"), 1, glm::value_ptr(gpu_vec4{1,0,0,1.0})));
+                glcheck(glUniform4fv( m_border_junction_program->get_uniform_location("color"), 1, glm::value_ptr(gl_vec4{1,0,0,1.0})));
                 glcheck(glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, data->buffer_ids[border_links_ibo]));
                 glcheck(glDrawElements( GL_LINES, data->number_of_border_links << 1, GL_UNSIGNED_INT, (void*)0));
 
-                glcheck(glUniform4fv( m_border_junction_program->get_uniform_location("color"), 1, glm::value_ptr(gpu_vec4{0,0,1,1.0})));
+                glcheck(glUniform4fv( m_border_junction_program->get_uniform_location("color"), 1, glm::value_ptr(gl_vec4{0,0,1,1.0})));
                 glcheck(glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, data->buffer_ids[junction_links_ibo]));
                 glcheck(glDrawElements( GL_LINES, data->number_of_junction_links << 1, GL_UNSIGNED_INT, (void*)0));
               }

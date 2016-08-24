@@ -39,11 +39,11 @@ BEGIN_MP_NAMESPACE
 
     graphics_origin::geometry::aabox bbox;
     skeleton.compute_centers_bounding_box( bbox );
-    bbox.m_hsides += 1e-6;
+    bbox.hsides += 1e-6;
     rt::Lock_data_structure locking_datastructure(
         CGAL::Bbox_3(
-            bbox.m_center.x - bbox.m_hsides.x, bbox.m_center.y - bbox.m_hsides.y, bbox.m_center.z - bbox.m_hsides.z,
-            bbox.m_center.x + bbox.m_hsides.x, bbox.m_center.y + bbox.m_hsides.y, bbox.m_center.z + bbox.m_hsides.z ),
+            bbox.center.x - bbox.hsides.x, bbox.center.y - bbox.hsides.y, bbox.center.z - bbox.hsides.z,
+            bbox.center.x + bbox.hsides.x, bbox.center.y + bbox.hsides.y, bbox.center.z + bbox.hsides.z ),
         8);
 
     rt regular_tetrahedrization(
