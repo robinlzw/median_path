@@ -27,8 +27,8 @@ BEGIN_MP_NAMESPACE
    * 3. face related.
    *
    * For each category, the data is accessible thanks to handle and is tightly
-   * in a buffer. Data can be added to a category dynamically, but there are
-   * some data that will always be stored in a skeleton:
+   * packed in a buffer. Data can be added to a category dynamically, but there
+   * are some data that will always be stored in a skeleton:
    *
    * - atoms
    * An atom is basically a vec4 augmented with some methods
@@ -128,37 +128,22 @@ BEGIN_MP_NAMESPACE
       atom_handle_type next_free_index : atom_handle_index_bits;
       atom_handle_type counter         : atom_handle_bits - atom_handle_index_bits - 2;
       atom_handle_type status          : 2;
-
       atom_handle_type atom_index;
-
-      atom_handle_entry()
-        : next_free_index{ 0 }, counter{ 0 },
-          status{ STATUS_FREE }, atom_index{ 0 }
-      {}
+      atom_handle_entry();
     };
     struct link_handle_entry {
       link_handle_type next_free_index : link_handle_index_bits;
       link_handle_type counter         : link_handle_bits - link_handle_index_bits - 2;
       link_handle_type status          : 2;
-
       link_handle_type link_index;
-
-      link_handle_entry()
-        : next_free_index{ 0 }, counter{ 0 },
-          status{ STATUS_FREE }, link_index{ 0 }
-      {}
+      link_handle_entry();
     };
     struct face_handle_entry {
       face_handle_type next_free_index : face_handle_index_bits;
       face_handle_type counter         : face_handle_bits - face_handle_index_bits - 2;
       face_handle_type status          : 2;
-
       face_handle_type face_index;
-
-      face_handle_entry()
-        : next_free_index{ 0 }, counter{ 0 },
-          status{ STATUS_FREE }, face_index{ 0 }
-      {}
+      face_handle_entry();
     };
 
     /**************************************************************************
@@ -168,59 +153,26 @@ BEGIN_MP_NAMESPACE
     struct atom_handle {
       atom_handle_type index  : atom_handle_index_bits;
       atom_handle_type counter: atom_handle_bits - atom_handle_index_bits;
-      atom_handle()
-        : index{ max_atom_handle_index },
-          counter{ max_atom_handle_counter + 1 }
-      {}
-      atom_handle( atom_handle_type idx, atom_handle_type ctr )
-        : index{ idx }, counter{ ctr }
-      {}
-      inline operator atom_handle_type() const
-      {
-        return (atom_handle_type(counter) << atom_handle_index_bits ) | index;
-      }
-      bool is_valid() const noexcept
-      {
-        return counter <= max_atom_handle_counter;
-      }
+      atom_handle();
+      atom_handle( atom_handle_type idx, atom_handle_type ctr );
+      inline operator atom_handle_type() const noexcept;
+      inline bool is_valid() const noexcept;
     };
     struct link_handle {
       link_handle_type index  : link_handle_index_bits;
       link_handle_type counter: link_handle_bits - link_handle_index_bits;
-      link_handle()
-        : index{ max_link_handle_index},
-          counter{ max_link_handle_counter + 1 }
-      {}
-      link_handle( link_handle_type idx, link_handle_type ctr )
-        : index{ idx }, counter{ ctr }
-      {}
-      inline operator link_handle_type() const
-      {
-        return (link_handle_type(counter) << link_handle_index_bits ) | index;
-      }
-      bool is_valid() const noexcept
-      {
-        return counter <= max_link_handle_counter;
-      }
+      link_handle();
+      link_handle( link_handle_type idx, link_handle_type ctr );
+      inline operator link_handle_type() const noexcept;
+      inline bool is_valid() const noexcept;
     };
     struct face_handle {
       face_handle_type index  : face_handle_index_bits;
       face_handle_type counter: face_handle_bits - face_handle_index_bits;
-      face_handle()
-        : index{ max_face_handle_index },
-          counter{ max_face_handle_counter + 1}
-      {}
-      face_handle( face_handle_type idx, face_handle_type ctr )
-        : index{ idx }, counter{ ctr }
-      {}
-      inline operator face_handle_type() const
-      {
-        return (face_handle_type(counter) << face_handle_index_bits ) | index;
-      }
-      bool is_valid() const noexcept
-      {
-        return counter <= max_face_handle_counter;
-      }
+      face_handle();
+      face_handle( face_handle_type idx, face_handle_type ctr );
+      inline operator face_handle_type() const noexcept;
+      bool is_valid() const noexcept;
     };
 
     /**************************************************************************
@@ -231,41 +183,14 @@ BEGIN_MP_NAMESPACE
      **************************************************************************/
     typedef GO_NAMESPACE::geometry::ball atom;
     struct link {
-
-      link()
-        : h1{}, h2{}
-      {}
-
-      link& operator=( link&& other )
-      {
-        h1 = other.h1;
-        h2 = other.h2;
-        return *this;
-      }
-
+      link();
+      link& operator=( link&& other );
       atom_handle h1;
       atom_handle h2;
     };
     struct face {
-
-      face()
-        : atoms{ atom_handle{}, atom_handle{}, atom_handle{} },
-          links{ link_handle{}, link_handle{}, link_handle{} }
-      {}
-
-      face& operator=( face&& other )
-      {
-        atoms[0] = other.atoms[0];
-        atoms[1] = other.atoms[1];
-        atoms[2] = other.atoms[2];
-
-        links[0] = other.links[0];
-        links[1] = other.links[1];
-        links[2] = other.links[2];
-
-        return *this;
-      }
-
+      face();
+      face& operator=( face&& other );
       atom_handle atoms[ 3 ];
       link_handle links[ 3 ];
     };
@@ -282,35 +207,22 @@ BEGIN_MP_NAMESPACE
      *     e) destroy a range of particular elements in the buffer            *
      **************************************************************************/
     struct base_property_buffer {
-      base_property_buffer( size_t size, const std::string& name )
-        : m_sizeof_element{ size }, m_name{ name },
-          m_buffer{ nullptr }
-      {}
+      base_property_buffer( size_t size, const std::string& name );
 
-      virtual ~base_property_buffer() {}
+      virtual ~base_property_buffer();
 
       template< typename T >
-      T& get( size_t index )
-      {
-        return reinterpret_cast< T* >( m_buffer )[ index ];
-      }
+      inline T& get( size_t index );
 
-      void clear( size_t current_capacity )
-      {
-        destroy( 0, current_capacity );
-      }
+      void clear( size_t current_capacity );
 
-      virtual
-      void resize( size_t old_capacity, size_t new_capacity ) = 0;
+      virtual void resize( size_t old_capacity, size_t new_capacity ) = 0;
 
-      virtual
-      void move( size_t from, size_t to ) = 0;
+      virtual void move( size_t from, size_t to ) = 0;
 
-      virtual
-      void destroy( size_t index ) = 0;
+      virtual void destroy( size_t index ) = 0;
 
-      virtual
-      void destroy( size_t from, size_t end ) = 0;
+      virtual void destroy( size_t from, size_t end ) = 0;
 
       const size_t m_sizeof_element;
       const std::string m_name;
@@ -330,57 +242,12 @@ BEGIN_MP_NAMESPACE
          "The property is not move assignable");
 
 
-      derived_property_buffer( const std::string& name )
-        : base_property_buffer( sizeof( value_type ), name )
-      {}
-
-      void destroy( size_t index ) override
-      {
-        reinterpret_cast< pointer_type >( base_property_buffer::m_buffer )[ index ] = std::move( value_type() );
-      }
-
-      void destroy( size_t from, size_t end ) override
-      {
-        auto start = reinterpret_cast< pointer_type >( base_property_buffer::m_buffer ) + from,
-            last = reinterpret_cast< pointer_type >( base_property_buffer::m_buffer ) + end;
-        while( start < last )
-          {
-            *start = std::move( value_type() );
-            ++start;
-          }
-      }
-
-      void resize( size_t old_capacity, size_t new_capacity ) override
-      {
-        if( old_capacity )
-          {
-            auto new_buffer = new value_type[ new_capacity ];
-            for( size_t i = 0; i < old_capacity; ++ i )
-              {
-                new_buffer[ i ] = std::move( reinterpret_cast< pointer_type >( base_property_buffer::m_buffer )[ i ] );
-              }
-            delete[] reinterpret_cast< pointer_type >( base_property_buffer::m_buffer );
-            base_property_buffer::m_buffer = reinterpret_cast< unsigned char* >( new_buffer );
-          }
-        else
-          {
-            base_property_buffer::m_buffer = reinterpret_cast< unsigned char* >( new value_type[ new_capacity ] );
-          }
-      }
-
-      void move( size_t from, size_t to ) override
-      {
-        // copy to destination thanks to a move operator
-        reinterpret_cast< pointer_type >( base_property_buffer::m_buffer )[ to ] =
-            std::move( reinterpret_cast< pointer_type >( base_property_buffer::m_buffer )[ from ] );
-        // put the source into a default state thanks to the default constructor
-        reinterpret_cast< pointer_type >( base_property_buffer::m_buffer )[ from ] = std::move( value_type() );
-      }
-
-      ~derived_property_buffer()
-      {
-        delete[] reinterpret_cast<T*>( base_property_buffer::m_buffer );
-      }
+      derived_property_buffer( const std::string& name );
+      void destroy( size_t index ) override;
+      void destroy( size_t from, size_t end ) override;
+      void resize( size_t old_capacity, size_t new_capacity ) override;
+      void move( size_t from, size_t to ) override;
+      ~derived_property_buffer();
     };
 
     skeleton_datastructure( atom_handle_type nb_atoms = 0, link_handle_type nb_links = 0, face_handle_type nb_faces = 0 )
@@ -576,86 +443,33 @@ BEGIN_MP_NAMESPACE
     face_handle_type m_faces_next_free_handle_slot;
   };
 
-  template<
-    typename atom_handle_type, uint8_t atom_handle_index_bits,
-    typename link_handle_type, uint8_t link_handle_index_bits,
-    typename face_handle_type, uint8_t face_handle_index_bits >
-  constexpr uint8_t skeleton_datastructure<
-    atom_handle_type, atom_handle_index_bits,
-    link_handle_type, link_handle_index_bits,
-    face_handle_type, face_handle_index_bits>::atom_handle_bits;
+# define dts_template_parameters	                           \
+ template<                                                     \
+   typename atom_handle_type, uint8_t atom_handle_index_bits,  \
+   typename link_handle_type, uint8_t link_handle_index_bits,  \
+   typename face_handle_type, uint8_t face_handle_index_bits >
 
-  template<
-    typename atom_handle_type, uint8_t atom_handle_index_bits,
-    typename link_handle_type, uint8_t link_handle_index_bits,
-    typename face_handle_type, uint8_t face_handle_index_bits >
-  constexpr atom_handle_type skeleton_datastructure<
-    atom_handle_type, atom_handle_index_bits,
-    link_handle_type, link_handle_index_bits,
-    face_handle_type, face_handle_index_bits>::max_atom_handle_index;
+# define dts_type                                              \
+  skeleton_datastructure<                                      \
+	atom_handle_type, atom_handle_index_bits,                  \
+	link_handle_type, link_handle_index_bits,                  \
+	face_handle_type, face_handle_index_bits>
 
-  template<
-      typename atom_handle_type, uint8_t atom_handle_index_bits,
-      typename link_handle_type, uint8_t link_handle_index_bits,
-      typename face_handle_type, uint8_t face_handle_index_bits >
-  constexpr atom_handle_type skeleton_datastructure<
-    atom_handle_type, atom_handle_index_bits,
-    link_handle_type, link_handle_index_bits,
-    face_handle_type, face_handle_index_bits>::max_atom_handle_counter;
+# define dts_definition(ret_type)                              \
+	dts_template_parameters                                    \
+	ret_type dts_type
 
-  template<
-      typename atom_handle_type, uint8_t atom_handle_index_bits,
-      typename link_handle_type, uint8_t link_handle_index_bits,
-      typename face_handle_type, uint8_t face_handle_index_bits >
-  constexpr uint8_t skeleton_datastructure<
-    atom_handle_type, atom_handle_index_bits,
-    link_handle_type, link_handle_index_bits,
-    face_handle_type, face_handle_index_bits>::link_handle_bits;
+  dts_definition(constexpr uint8_t)::atom_handle_bits;
+  dts_definition(constexpr atom_handle_type)::max_atom_handle_index;
+  dts_definition(constexpr atom_handle_type)::max_atom_handle_counter;
 
-  template<
-      typename atom_handle_type, uint8_t atom_handle_index_bits,
-      typename link_handle_type, uint8_t link_handle_index_bits,
-      typename face_handle_type, uint8_t face_handle_index_bits >
-  constexpr link_handle_type skeleton_datastructure<
-    atom_handle_type, atom_handle_index_bits,
-    link_handle_type, link_handle_index_bits,
-    face_handle_type, face_handle_index_bits>::max_link_handle_index;
+  dts_definition(constexpr uint8_t)::link_handle_bits;
+  dts_definition(constexpr link_handle_type)::max_link_handle_index;
+  dts_definition(constexpr link_handle_type)::max_link_handle_counter;
 
-  template<
-      typename atom_handle_type, uint8_t atom_handle_index_bits,
-      typename link_handle_type, uint8_t link_handle_index_bits,
-      typename face_handle_type, uint8_t face_handle_index_bits >
-  constexpr link_handle_type skeleton_datastructure<
-    atom_handle_type, atom_handle_index_bits,
-    link_handle_type, link_handle_index_bits,
-    face_handle_type, face_handle_index_bits>::max_link_handle_counter;
-
-  template<
-      typename atom_handle_type, uint8_t atom_handle_index_bits,
-      typename link_handle_type, uint8_t link_handle_index_bits,
-      typename face_handle_type, uint8_t face_handle_index_bits >
-  constexpr uint8_t skeleton_datastructure<
-    atom_handle_type, atom_handle_index_bits,
-    link_handle_type, link_handle_index_bits,
-    face_handle_type, face_handle_index_bits>::face_handle_bits;
-
-  template<
-      typename atom_handle_type, uint8_t atom_handle_index_bits,
-      typename link_handle_type, uint8_t link_handle_index_bits,
-      typename face_handle_type, uint8_t face_handle_index_bits >
-  constexpr face_handle_type skeleton_datastructure<
-    atom_handle_type, atom_handle_index_bits,
-    link_handle_type, link_handle_index_bits,
-    face_handle_type, face_handle_index_bits>::max_face_handle_index;
-
-  template<
-      typename atom_handle_type, uint8_t atom_handle_index_bits,
-      typename link_handle_type, uint8_t link_handle_index_bits,
-      typename face_handle_type, uint8_t face_handle_index_bits >
-  constexpr face_handle_type skeleton_datastructure<
-    atom_handle_type, atom_handle_index_bits,
-    link_handle_type, link_handle_index_bits,
-    face_handle_type, face_handle_index_bits>::max_face_handle_counter;
+  dts_definition(constexpr uint8_t)::face_handle_bits;
+  dts_definition(constexpr face_handle_type)::max_face_handle_index;
+  dts_definition(constexpr face_handle_type)::max_face_handle_counter;
 
   template<
       typename atom_handle_type, uint8_t atom_handle_index_bits,
@@ -1867,5 +1681,15 @@ BEGIN_MP_NAMESPACE
 # endif
     return element_index;
   }
+
+
+
+
 END_MP_NAMESPACE
+
+# include "skeleton_datastructure_handle_and_entries.tcc"
+# include "skeleton_datastructure_elements_and_properties.tcc"
+# undef dts_template_parameters
+# undef dts_type
+# undef dts_definition
 # endif 
