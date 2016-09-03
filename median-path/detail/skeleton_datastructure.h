@@ -13,8 +13,13 @@
 # include <type_traits>
 # include <vector>
 
-BEGIN_MP_NAMESPACE
+# ifdef MP_SKELETON_NO_CHECK
+# define MP_SKELETON_NO_INDEX_CHECK
+# define MP_SKELETON_NO_HANDLE_CHECK
+# define MP_SKELETON_NO_POINTER_CHECK
+# endif
 
+namespace median_path {
   /**
    * Design thoughts:
    * Designing a efficient and usable skeleton data structure is not so easy. I
@@ -250,64 +255,60 @@ BEGIN_MP_NAMESPACE
       ~derived_property_buffer();
     };
 
-    skeleton_datastructure( atom_handle_type nb_atoms = 0, link_handle_type nb_links = 0, face_handle_type nb_faces = 0 )
-      : m_atoms{ nullptr }, m_atom_index_to_handle_index{ nullptr }, m_atom_handles{ nullptr },
-        m_links{ nullptr }, m_link_index_to_handle_index{ nullptr }, m_link_handles{ nullptr },
-        m_faces{ nullptr }, m_face_index_to_handle_index{ nullptr }, m_face_handles{ nullptr },
-        m_atoms_capacity{ 0 }, m_atoms_size{ 0 }, m_atoms_next_free_handle_slot{ 0 },
-        m_links_capacity{ 0 }, m_links_size{ 0 }, m_links_next_free_handle_slot{ 0 },
-        m_faces_capacity{ 0 }, m_faces_size{ 0 }, m_faces_next_free_handle_slot{ 0 }
-    {
-      if( nb_atoms )
-        grow_atoms( nb_atoms );
-      if( nb_links )
-        grow_links( nb_links );
-      if( nb_faces )
-        grow_faces( nb_faces );
-    }
+    /**************************************************************************
+     * CONSTRUCTION / COPY / DESTRUCTION:                                     *
+     * manage the life cycle of a skeleton data structure.                    *
+     **************************************************************************/
+    /** Create an empty but valid skeleton data structure.*/
+    skeleton_datastructure();
+    /** Create a skeleton data structure with enough space allocated to hold the
+     * specified number of elements. This constructor can throw an exception
+     * if one of the requested capacity is above the representation or the
+     * memory limits.
+     * @param nb_atoms Maximum number of atoms this data structure can store
+     * without any reallocation.
+     * @param nb_links Maximum number of links this data structure can store
+     * without any reallocation.
+     * @param nb_faces Maximum number of faces this data structure can store
+     * without any reallocation. */
+    skeleton_datastructure( atom_handle_type nb_atoms, link_handle_type nb_links = 0, face_handle_type nb_faces = 0 );
+    ~skeleton_datastructure();
+    skeleton_datastructure( skeleton_datastructure& other ) = delete;
+    skeleton_datastructure( skeleton_datastructure&& other ) = delete;
+    skeleton_datastructure& operator=( skeleton_datastructure&& other ) = delete;
+    skeleton_datastructure& operator=( const skeleton_datastructure& other ) = delete;
 
-    ~skeleton_datastructure()
-    {
-      delete[] m_atoms;
-      delete[] m_atom_index_to_handle_index;
-      delete[] m_atom_handles;
-      for( auto& property : m_atom_properties )
-        delete property;
-
-      delete[] m_links;
-      delete[] m_link_index_to_handle_index;
-      delete[] m_link_handles;
-      for( auto& property : m_link_properties )
-        delete property;
-
-      delete[] m_faces;
-      delete[] m_face_index_to_handle_index;
-      delete[] m_face_handles;
-      for( auto& property : m_face_properties )
-        delete property;
-    }
-
-    void clear(
-        atom_handle_type atom_capacity,
-        link_handle_type link_capacity,
-        face_handle_type face_capacity )
-    {
-      clear_atoms( atom_capacity );
-      clear_links( link_capacity );
-      clear_faces( face_capacity );
-    }
-
+    /**************************************************************************
+     * HELPER FUNCTIONS:                                                      *
+     * resize / reset buffers. Note that those functions can throw.           *
+     **************************************************************************/
+    void clear( atom_handle_type atom_capacity, link_handle_type link_capacity, face_handle_type face_capacity );
     void clear_atoms( atom_handle_type atom_capacity );
     void clear_links( link_handle_type link_capacity );
     void clear_faces( face_handle_type face_capacity );
 
-    std::pair< atom_handle, atom& > create_atom();
-    std::pair< link_handle, link& > create_link();
-    std::pair< face_handle, face& > create_face();
-
     void grow_atoms( atom_handle_type new_capacity );
     void grow_links( link_handle_type new_capacity );
     void grow_faces( face_handle_type new_capacity );
+
+    /**************************************************************************
+     * ELEMENT CREATION & REMOVAL:                                            *
+     * create new elements or delete existing ones. All creation methods may  *
+     * throw. Deletion methods could throw if index/handle/pointer checks are *
+     * activated.                                                             *
+     **************************************************************************/
+    /**Create a new atom.
+     * @return A pair with the handle of the new atom and a reference to it.
+     */
+    std::pair< atom_handle, atom& > create_atom();
+    /**Create a new link.
+     * @return A pair with the handle of the new link and a reference to it.
+     */
+    std::pair< link_handle, link& > create_link();
+    /**Create a new face.
+     * @return A pair with the handle of the new face and a reference to it.
+     */
+    std::pair< face_handle, face& > create_face();
 
     void remove( atom_handle h );
     void remove( link_handle h );
@@ -320,6 +321,9 @@ BEGIN_MP_NAMESPACE
     void remove_atom_by_index( atom_handle_type index );
     void remove_link_by_index( link_handle_type index );
     void remove_face_by_index( face_handle_type index );
+
+
+
 
     atom& get( atom_handle h );
     link& get( link_handle h );
@@ -470,436 +474,6 @@ BEGIN_MP_NAMESPACE
   dts_definition(constexpr uint8_t)::face_handle_bits;
   dts_definition(constexpr face_handle_type)::max_face_handle_index;
   dts_definition(constexpr face_handle_type)::max_face_handle_counter;
-
-  template<
-      typename atom_handle_type, uint8_t atom_handle_index_bits,
-      typename link_handle_type, uint8_t link_handle_index_bits,
-      typename face_handle_type, uint8_t face_handle_index_bits >
-  void skeleton_datastructure<
-    atom_handle_type, atom_handle_index_bits,
-    link_handle_type, link_handle_index_bits,
-    face_handle_type, face_handle_index_bits>::clear_atoms( atom_handle_type atom_capacity )
-  {
-    if( atom_capacity <= m_atoms_capacity )
-      {
-        # pragma omp parallel for
-        for( size_t i = 0; i < m_atoms_capacity; ++ i )
-          {
-            auto& entry = m_atom_handles[ i ];
-            entry.status = STATUS_FREE;
-            entry.next_free_index = i + 1;
-
-          }
-
-        for( auto& property : m_atom_properties )
-          property->clear( m_atoms_capacity );
-
-        m_atoms_size = 0;
-        m_atoms_next_free_handle_slot = 0;
-      }
-    else
-      {
-        delete[] m_atoms;
-        delete[] m_atom_handles;
-        delete[] m_atom_index_to_handle_index;
-
-        m_atoms = nullptr;
-        m_atom_handles = nullptr;
-        m_atom_index_to_handle_index = nullptr;
-
-        m_atoms_capacity = 0;
-        m_atoms_size = 0;
-        m_atoms_next_free_handle_slot = 0;
-
-        grow_atoms( atom_capacity );
-      }
-  }
-
-  template<
-      typename atom_handle_type, uint8_t atom_handle_index_bits,
-      typename link_handle_type, uint8_t link_handle_index_bits,
-      typename face_handle_type, uint8_t face_handle_index_bits >
-  void skeleton_datastructure<
-    atom_handle_type, atom_handle_index_bits,
-    link_handle_type, link_handle_index_bits,
-    face_handle_type, face_handle_index_bits>::clear_links( link_handle_type link_capacity )
-  {
-    if( link_capacity <= m_links_capacity )
-      {
-        # pragma omp parallel for
-        for( size_t i = 0; i < m_links_capacity; ++ i )
-          {
-            auto& entry = m_link_handles[ i ];
-            entry.status = STATUS_FREE;
-            entry.next_free_index = i + 1;
-
-          }
-
-        for( auto& property : m_link_properties )
-          property->clear( m_links_capacity );
-
-        m_links_size = 0;
-        m_links_next_free_handle_slot = 0;
-      }
-    else
-      {
-        delete[] m_links;
-        delete[] m_link_handles;
-        delete[] m_link_index_to_handle_index;
-
-        m_links = nullptr;
-        m_link_handles = nullptr;
-        m_link_index_to_handle_index = nullptr;
-
-        m_links_capacity = 0;
-        m_links_size = 0;
-        m_links_next_free_handle_slot = 0;
-
-        grow_links( link_capacity );
-      }
-  }
-
-  template<
-      typename atom_handle_type, uint8_t atom_handle_index_bits,
-      typename link_handle_type, uint8_t link_handle_index_bits,
-      typename face_handle_type, uint8_t face_handle_index_bits >
-  void skeleton_datastructure<
-    atom_handle_type, atom_handle_index_bits,
-    link_handle_type, link_handle_index_bits,
-    face_handle_type, face_handle_index_bits>::clear_faces( face_handle_type face_capacity )
-  {
-    if( face_capacity <= m_faces_capacity )
-      {
-        # pragma omp parallel for
-        for( size_t i = 0; i < m_faces_capacity; ++ i )
-          {
-            auto& entry = m_face_handles[ i ];
-            entry.status = STATUS_FREE;
-            entry.next_free_index = i + 1;
-
-          }
-
-        for( auto& property : m_face_properties )
-          property->clear( m_faces_capacity );
-
-        m_faces_size = 0;
-        m_faces_next_free_handle_slot = 0;
-      }
-    else
-      {
-        delete[] m_faces;
-        delete[] m_face_handles;
-        delete[] m_face_index_to_handle_index;
-
-        m_faces = nullptr;
-        m_face_handles = nullptr;
-        m_face_index_to_handle_index = nullptr;
-
-        m_faces_capacity = 0;
-        m_faces_size = 0;
-        m_faces_next_free_handle_slot = 0;
-
-        grow_faces( face_capacity );
-      }
-  }
-
-  template<
-      typename atom_handle_type, uint8_t atom_handle_index_bits,
-      typename link_handle_type, uint8_t link_handle_index_bits,
-      typename face_handle_type, uint8_t face_handle_index_bits >
-  void skeleton_datastructure<
-    atom_handle_type, atom_handle_index_bits,
-    link_handle_type, link_handle_index_bits,
-    face_handle_type, face_handle_index_bits>::grow_atoms( atom_handle_type new_capacity )
-  {
-    // check for overflow
-    if( new_capacity <= m_atoms_capacity || new_capacity > max_atom_handle_index )
-      MP_THROW_EXCEPTION( skeleton_atom_buffer_overflow );
-
-    // initialize data
-    if( !m_atoms )
-      {
-        m_atoms = new atom[ new_capacity ];
-        m_atom_index_to_handle_index = new atom_handle_type[ new_capacity ];
-        m_atom_handles = new atom_handle_entry[ new_capacity ];
-      }
-    // resize buffers
-    else
-      {
-        auto new_element_buffer = new atom[ new_capacity ];
-        auto new_element_to_handle = new atom_handle_type[ new_capacity ];
-        auto new_handle_buffer = new atom_handle_entry[ new_capacity ];
-        # pragma omp parallel for
-        for( atom_handle_type i = 0; i < m_atoms_capacity; ++ i )
-          {
-            new_element_buffer[ i ] = std::move( m_atoms[ i ] );
-            new_element_to_handle[ i ] = m_atom_index_to_handle_index[ i ];
-            new_handle_buffer[ i ] = m_atom_handles[ i ];
-          }
-        delete[] m_atoms;
-        delete[] m_atom_index_to_handle_index;
-        delete[] m_atom_handles;
-
-        m_atoms = new_element_buffer;
-        m_atom_index_to_handle_index = new_element_to_handle;
-        m_atom_handles = new_handle_buffer;
-      }
-    # pragma omp parallel for
-    for( size_t i = m_atoms_capacity; i < new_capacity; ++ i )
-      m_atom_handles[ i ].next_free_index = i + 1;
-
-    const auto nb_properties = m_atom_properties.size();
-    # pragma omp parallel for
-    for( size_t i = 0; i < nb_properties; ++ i )
-      {
-        m_atom_properties[i]->resize( m_atoms_capacity, new_capacity );
-      }
-    m_atoms_capacity = new_capacity;
-  }
-
-  template<
-      typename atom_handle_type, uint8_t atom_handle_index_bits,
-      typename link_handle_type, uint8_t link_handle_index_bits,
-      typename face_handle_type, uint8_t face_handle_index_bits >
-  void skeleton_datastructure<
-    atom_handle_type, atom_handle_index_bits,
-    link_handle_type, link_handle_index_bits,
-    face_handle_type, face_handle_index_bits>::grow_links( link_handle_type new_capacity )
-  {
-    // check for overflow
-    if( new_capacity <= m_links_capacity || new_capacity > max_link_handle_index )
-      MP_THROW_EXCEPTION( skeleton_link_buffer_overflow );
-
-    // initialize data
-    if( !m_links )
-      {
-        m_links = new link[ new_capacity ];
-        m_link_index_to_handle_index = new size_t[ new_capacity ];
-        m_link_handles = new link_handle_entry[ new_capacity ];
-      }
-    // resize buffers
-    else
-      {
-        auto new_element_buffer = new link[ new_capacity ];
-        auto new_element_to_handle = new size_t[ new_capacity ];
-        auto new_handle_buffer = new link_handle_entry[ new_capacity ];
-        # pragma omp parallel for
-        for( size_t i = 0; i < m_links_capacity; ++ i )
-          {
-            new_element_buffer[ i ] = std::move( m_links[ i ] );
-            new_element_to_handle[ i ] = m_link_index_to_handle_index[ i ];
-            new_handle_buffer[ i ] = m_link_handles[ i ];
-          }
-        delete[] m_links;
-        delete[] m_link_index_to_handle_index;
-        delete[] m_link_handles;
-
-        m_links = new_element_buffer;
-        m_link_index_to_handle_index = new_element_to_handle;
-        m_link_handles = new_handle_buffer;
-      }
-    # pragma omp parallel for
-    for( size_t i = m_links_capacity; i < new_capacity; ++ i )
-      m_link_handles[ i ].next_free_index = i + 1;
-
-    const auto nb_properties = m_link_properties.size();
-    # pragma omp parallel for
-    for( size_t i = 0; i < nb_properties; ++ i )
-      {
-        m_link_properties[i]->resize( m_links_capacity, new_capacity );
-      }
-    m_links_capacity = new_capacity;
-  }
-
-  template<
-      typename atom_handle_type, uint8_t atom_handle_index_bits,
-      typename link_handle_type, uint8_t link_handle_index_bits,
-      typename face_handle_type, uint8_t face_handle_index_bits >
-  void skeleton_datastructure<
-    atom_handle_type, atom_handle_index_bits,
-    link_handle_type, link_handle_index_bits,
-    face_handle_type, face_handle_index_bits>::grow_faces( face_handle_type new_capacity )
-  {
-    // check for overflow
-    if( new_capacity <= m_faces_capacity || new_capacity > max_face_handle_index )
-      MP_THROW_EXCEPTION( skeleton_face_buffer_overflow );
-
-    // initialize data
-    if( !m_faces )
-      {
-        m_faces = new face[ new_capacity ];
-        m_face_index_to_handle_index = new size_t[ new_capacity ];
-        m_face_handles = new face_handle_entry[ new_capacity ];
-      }
-    // resize buffers
-    else
-      {
-        auto new_element_buffer = new face[ new_capacity ];
-        auto new_element_to_handle = new size_t[ new_capacity ];
-        auto new_handle_buffer = new face_handle_entry[ new_capacity ];
-        # pragma omp parallel for
-        for( size_t i = 0; i < m_faces_capacity; ++ i )
-          {
-            new_element_buffer[ i ] = std::move( m_faces[ i ] );
-            new_element_to_handle[ i ] = m_face_index_to_handle_index[ i ];
-            new_handle_buffer[ i ] = m_face_handles[ i ];
-          }
-        delete[] m_faces;
-        delete[] m_face_index_to_handle_index;
-        delete[] m_face_handles;
-
-        m_faces = new_element_buffer;
-        m_face_index_to_handle_index = new_element_to_handle;
-        m_face_handles = new_handle_buffer;
-      }
-    # pragma omp parallel for
-    for( size_t i = m_faces_capacity; i < new_capacity; ++ i )
-      m_face_handles[ i ].next_free_index = i + 1;
-
-    const auto nb_properties = m_face_properties.size();
-    # pragma omp parallel for
-    for( size_t i = 0; i < nb_properties; ++ i )
-      {
-        m_face_properties[i]->resize( m_faces_capacity, new_capacity );
-      }
-    m_faces_capacity = new_capacity;
-  }
-
-  template<
-      typename atom_handle_type, uint8_t atom_handle_index_bits,
-      typename link_handle_type, uint8_t link_handle_index_bits,
-      typename face_handle_type, uint8_t face_handle_index_bits >
-  std::pair<
-    typename skeleton_datastructure<
-      atom_handle_type, atom_handle_index_bits,
-      link_handle_type, link_handle_index_bits,
-      face_handle_type, face_handle_index_bits>::atom_handle,
-    typename skeleton_datastructure<
-      atom_handle_type, atom_handle_index_bits,
-      link_handle_type, link_handle_index_bits,
-      face_handle_type, face_handle_index_bits>::atom& >
-  skeleton_datastructure<
-    atom_handle_type, atom_handle_index_bits,
-    link_handle_type, link_handle_index_bits,
-    face_handle_type, face_handle_index_bits>::create_atom()
-  {
-    if( m_atoms_size == m_atoms_capacity )
-        grow_atoms( std::min(
-          max_atom_handle_index,
-          m_atoms_capacity + std::max( m_atoms_capacity, atom_handle_type{10} ) ) );
-
-    /* fetch the handle entry */
-    const auto handle_index = m_atoms_next_free_handle_slot;
-    auto entry = m_atom_handles + handle_index;
-    m_atoms_next_free_handle_slot = entry->next_free_index;
-
-    /* update the entry */
-    ++entry->counter;
-    if( entry->counter > max_atom_handle_counter )
-      entry->counter = 0;
-    entry->atom_index = m_atoms_size;
-    entry->next_free_index = 0;
-    entry->status = STATUS_ALLOCATED;
-    /* map the element index to the handle entry */
-    m_atom_index_to_handle_index[ m_atoms_size ] = handle_index;
-    /* prepare the result */
-    std::pair< atom_handle, atom& > result = {
-        atom_handle( handle_index, entry->counter ),
-        m_atoms[ m_atoms_size ] };
-    /* update this */
-    ++m_atoms_size;
-    return result;
-  }
-
-  template<
-      typename atom_handle_type, uint8_t atom_handle_index_bits,
-      typename link_handle_type, uint8_t link_handle_index_bits,
-      typename face_handle_type, uint8_t face_handle_index_bits >
-  std::pair<
-    typename skeleton_datastructure<
-      atom_handle_type, atom_handle_index_bits,
-      link_handle_type, link_handle_index_bits,
-      face_handle_type, face_handle_index_bits>::link_handle,
-    typename skeleton_datastructure<
-      atom_handle_type, atom_handle_index_bits,
-      link_handle_type, link_handle_index_bits,
-      face_handle_type, face_handle_index_bits>::link& >
-  skeleton_datastructure<
-    atom_handle_type, atom_handle_index_bits,
-    link_handle_type, link_handle_index_bits,
-    face_handle_type, face_handle_index_bits>::create_link()
-  {
-    if( m_links_size == m_links_capacity )
-      grow_links( std::min(
-        max_link_handle_index,
-        m_links_capacity + std::max( m_links_capacity, link_handle_type{10} ) ) );
-    /* fetch the handle entry */
-    const auto handle_index = m_links_next_free_handle_slot;
-    auto entry = m_link_handles + handle_index;
-    m_links_next_free_handle_slot = entry->next_free_index;
-    /* update the entry */
-    ++entry->counter;
-    if( entry->counter > max_link_handle_counter )
-      entry->counter = 0;
-    entry->link_index = m_links_size;
-    entry->next_free_index = 0;
-    entry->status = STATUS_ALLOCATED;
-    /* map the element index to the handle entry */
-    m_link_index_to_handle_index[ m_links_size ] = handle_index;
-    /* prepare the result */
-    std::pair< link_handle, link& > result = {
-        link_handle( handle_index, entry->counter ),
-        m_links[ m_links_size ] };
-    /* update this */
-    ++m_links_size;
-    return result;
-  }
-
-  template<
-      typename atom_handle_type, uint8_t atom_handle_index_bits,
-      typename link_handle_type, uint8_t link_handle_index_bits,
-      typename face_handle_type, uint8_t face_handle_index_bits >
-  std::pair<
-    typename skeleton_datastructure<
-      atom_handle_type, atom_handle_index_bits,
-      link_handle_type, link_handle_index_bits,
-      face_handle_type, face_handle_index_bits>::face_handle,
-    typename skeleton_datastructure<
-      atom_handle_type, atom_handle_index_bits,
-      link_handle_type, link_handle_index_bits,
-      face_handle_type, face_handle_index_bits>::face& >
-  skeleton_datastructure<
-    atom_handle_type, atom_handle_index_bits,
-    link_handle_type, link_handle_index_bits,
-    face_handle_type, face_handle_index_bits>::create_face()
-  {
-    if( m_faces_size == m_faces_capacity )
-      grow_faces( std::min(
-        max_face_handle_index,
-        m_faces_capacity + std::max( m_faces_capacity, face_handle_type{10} ) ) );
-    /* fetch the handle entry */
-    const auto handle_index = m_faces_next_free_handle_slot;
-    auto entry = m_face_handles + handle_index;
-    m_faces_next_free_handle_slot = entry->next_free_index;
-    /* update the entry */
-    ++entry->counter;
-    if( entry->counter > max_face_handle_counter )
-      entry->counter = 0;
-    entry->face_index = m_faces_size;
-    entry->next_free_index = 0;
-    entry->status = STATUS_ALLOCATED;
-    /* map the element index to the handle entry */
-    m_face_index_to_handle_index[ m_faces_size ] = handle_index;
-    /* prepare the result */
-    std::pair< face_handle, face& > result = {
-        face_handle( handle_index, entry->counter ),
-        m_faces[ m_faces_size ] };
-    /* update this */
-
-    ++m_faces_size;
-    return result;
-  }
-
 
   template<
       typename atom_handle_type, uint8_t atom_handle_index_bits,
@@ -1685,10 +1259,13 @@ BEGIN_MP_NAMESPACE
 
 
 
-END_MP_NAMESPACE
+} //median_path
 
 # include "skeleton_datastructure_handle_and_entries.tcc"
 # include "skeleton_datastructure_elements_and_properties.tcc"
+# include "skeleton_datastructure_construction_destruction.tcc"
+# include "skeleton_datastructure_helper.tcc"
+# include "skeleton_datastructure_element_creation_and_deletion.tcc"
 # undef dts_template_parameters
 # undef dts_type
 # undef dts_definition

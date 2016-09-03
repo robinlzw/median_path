@@ -35,6 +35,21 @@ BEGIN_MP_NAMESPACE
    * invalidate references and indices. The handle of an element that was not
    * deleted is always valid.
    *
+   * By default, all handles, references and indices are checked. If one of
+   * them is invalid, an exception is thrown:
+   * - skeleton_invalid_atom_index, skeleton_invalid_link_index, or
+   * skeleton_invalid_face_index for invalid indices,
+   * - skeleton_invalid_atom_handle, skeleton_invalid_link_handle or
+   * skeleton_invalid_face_handle for invalid handles,
+   * - skeleton_invalid_atom_pointer, skeleton_invalid_link_pointer or
+   * skeleton_invalid_face_pointer for invalid pointers.
+   * You can deactivate those checks by defining the following symbols before
+   * including medial_skeleton.h:
+   * - MP_SKELETON_NO_INDEX_CHECK
+   * - MP_SKELETON_NO_HANDLE_CHECK
+   * - MP_SKELETON_NO_POINTER_CHECK
+   * - MP_SKELETON_NO_CHECK (to define the three previous symbols).
+   *
    * For each skeleton elements, you have methods to:
    * - add a new element
    * - remove an existing element
