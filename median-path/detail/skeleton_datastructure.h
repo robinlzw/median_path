@@ -266,7 +266,7 @@ namespace median_path {
      * manage the life cycle of a skeleton data structure.                    *
      **************************************************************************/
     /** Create an empty but valid skeleton data structure.*/
-    skeleton_datastructure();
+    skeleton_datastructure() noexcept;
     /** Create a skeleton data structure with enough space allocated to hold the
      * specified number of elements. This constructor can throw an exception
      * if one of the requested capacity is above the representation or the
