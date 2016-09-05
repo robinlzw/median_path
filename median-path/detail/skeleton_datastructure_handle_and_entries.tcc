@@ -1,5 +1,3 @@
-namespace median_path {
-
 dts_definition()::atom_handle_entry::atom_handle_entry()
   : next_free_index{ 0 }, counter{ 0 },
 	status{ STATUS_FREE }, atom_index{ 0 }
@@ -74,5 +72,4 @@ dts_definition(inline)::face_handle::operator face_handle_type() const noexcept
 dts_definition(inline bool)::face_handle::is_valid() const noexcept
 {
   return counter <= max_face_handle_counter;
-}
 }

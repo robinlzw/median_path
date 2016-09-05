@@ -1,4 +1,3 @@
-namespace median_path {
   dts_definition()::skeleton_datastructure()
     : m_atoms{ nullptr }, m_atom_index_to_handle_index{ nullptr }, m_atom_handles{ nullptr },
       m_links{ nullptr }, m_link_index_to_handle_index{ nullptr }, m_link_handles{ nullptr },
@@ -44,4 +43,3 @@ namespace median_path {
     for( auto& property : m_face_properties )
       delete property;
   }
-}

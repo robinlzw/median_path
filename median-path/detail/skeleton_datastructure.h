@@ -1,6 +1,3 @@
-/* Created on: Mar 1, 2016
- *     Author: T.Delame (tdelame@gmail.com)
- */
 # ifndef MEDIAN_PATH_SKELETON_DATASTRUCTURE_H_
 # define MEDIAN_PATH_SKELETON_DATASTRUCTURE_H_
 
@@ -181,6 +178,15 @@ namespace median_path {
     };
 
     /**************************************************************************
+     * INDICES:                                                               *
+     * Even if an index type is just an alias on the corresponding handle,    *
+     * having a specific type name improve the readability and the semantic.  *
+     **************************************************************************/
+    typedef atom_handle_type atom_index;
+    typedef link_handle_type link_index;
+    typedef face_handle_type face_index;
+
+    /**************************************************************************
      * ELEMENT TYPES:                                                         *
      *  - an atom is a ball                                                   *
      *  - a link is a pair of atom handles                                    *
@@ -280,7 +286,8 @@ namespace median_path {
 
     /**************************************************************************
      * HELPER FUNCTIONS:                                                      *
-     * resize / reset buffers. Note that those functions can throw.           *
+     * resize / reset buffers. Note that those functions can throw. None of   *
+     * those methods is thread safe.                                          *
      **************************************************************************/
     void clear( atom_handle_type atom_capacity, link_handle_type link_capacity, face_handle_type face_capacity );
     void clear_atoms( atom_handle_type atom_capacity );
@@ -295,7 +302,7 @@ namespace median_path {
      * ELEMENT CREATION & REMOVAL:                                            *
      * create new elements or delete existing ones. All creation methods may  *
      * throw. Deletion methods could throw if index/handle/pointer checks are *
-     * activated.                                                             *
+     * activated. None of this methods is thread safe.                        *
      **************************************************************************/
     /**Create a new atom.
      * @return A pair with the handle of the new atom and a reference to it.
@@ -310,114 +317,66 @@ namespace median_path {
      */
     std::pair< face_handle, face& > create_face();
 
+    /**For those three methods, if the handle is valid, the corresponding
+     * element is removed. When the handle is invalid, an exception is
+     * thrown. */
     void remove( atom_handle h );
     void remove( link_handle h );
     void remove( face_handle h );
 
+    /**Those three methods remove an element given a pointer to this
+     * element. If such pointer is invalid, an exception is thrown.*/
     void remove( atom& e );
     void remove( link& e );
     void remove( face& e );
 
-    void remove_atom_by_index( atom_handle_type index );
-    void remove_link_by_index( link_handle_type index );
-    void remove_face_by_index( face_handle_type index );
+    /**Those three methods
+     *
+     * @note The name is not consistent with other remove methods to
+     * avoid confusion between atom handle
+     */
+    void remove_atom_by_index( atom_index index );
+    void remove_link_by_index( link_index index );
+    void remove_face_by_index( face_index index );
 
-
-
-
+    /**************************************************************************
+     * ACCESS ELEMENTS, HANDLES AND INDICES:                                  *
+     * access to elements, get their handles and their indices. If index,     *
+     * handle or pointer checks are activated, exception can be thrown. Those *
+     * methods are thread safe.                                               *
+     **************************************************************************/
     atom& get( atom_handle h );
     link& get( link_handle h );
     face& get( face_handle h );
 
-    atom& get_atom_by_index( size_t index )
-    {
-# ifndef MP_SKELETON_NO_CHECK
-      if( index >= m_atoms_size )
-        MP_THROW_EXCEPTION( skeleton_invalid_atom_index );
-# endif
-      return m_atoms[ index ];
-    }
+    atom& get_atom_by_index( atom_index index );
+    link& get_link_by_index( link_index index );
+    face& get_face_by_index( face_index index );
 
-    link& get_link_by_index( size_t index )
-    {
-# ifndef MP_SKELETON_NO_CHECK
-      if( index >= m_links_size )
-        MP_THROW_EXCEPTION( skeleton_invalid_link_index );
-# endif
-      return m_links[ index ];
-    }
+    atom_handle get_atom_handle( atom_index index );
+    link_handle get_link_handle( link_index index );
+    face_handle get_face_handle( face_index index );
 
-    face& get_face_by_index( size_t index )
-    {
-# ifndef MP_SKELETON_NO_CHECK
-      if( index >= m_faces_size )
-        MP_THROW_EXCEPTION( skeleton_invalid_face_index );
-# endif
-      return m_faces[ index ];
-    }
+    atom_index get_index( atom_handle handle );
+    link_index get_index( link_handle handle );
+    face_index get_index( face_handle handle );
 
-    atom_handle get_atom_handle( size_t index )
-    {
-# ifndef MP_SKELETON_NO_CHECK
-      if( index >= m_atoms_size )
-        MP_THROW_EXCEPTION( skeleton_invalid_atom_index );
-# endif
-      auto handle_index = m_atom_index_to_handle_index[ index ];
-      return atom_handle( handle_index, m_atom_handles[ handle_index ].counter );
-    }
-
-    link_handle get_link_handle( size_t index )
-    {
-# ifndef MP_SKELETON_NO_CHECK
-      if( index >= m_links_size )
-        MP_THROW_EXCEPTION( skeleton_invalid_link_index );
-# endif
-      auto handle_index = m_link_index_to_handle_index[ index ];
-      return link_handle( handle_index, m_link_handles[ handle_index ].counter );
-    }
-
-    face_handle get_face_handle( size_t index )
-    {
-# ifndef MP_SKELETON_NO_CHECK
-      if( index >= m_faces_size )
-        MP_THROW_EXCEPTION( skeleton_invalid_face_index );
-# endif
-      auto handle_index = m_face_index_to_handle_index[ index ];
-      return face_handle( handle_index, m_face_handles[ handle_index ].counter );
-    }
-
-    atom_handle_type get_index( atom_handle handle );
-    link_handle_type get_index( link_handle handle );
-    face_handle_type get_index( face_handle handle );
-
-    atom_handle_type get_index( atom& e );
-    link_handle_type get_index( link& e );
-    face_handle_type get_index( face& e );
+    atom_index get_index( atom& e );
+    link_index get_index( link& e );
+    face_index get_index( face& e );
 
     atom_handle get_handle( atom& e );
     link_handle get_handle( link& e );
     face_handle get_handle( face& e );
 
     template< typename T >
-    void add_atom_property( const std::string& name )
-    {
-      m_atom_properties.push_back( new derived_property_buffer<T>( name ) );
-      m_atom_properties.back()->resize( 0, m_atoms_capacity );
-    }
+    void add_atom_property( const std::string& name );
 
     template< typename T >
-    void add_link_property( const std::string& name )
-    {
-      m_link_properties.push_back( new derived_property_buffer<T>( name ) );
-      m_link_properties.back()->resize( 0, m_links_capacity );
-    }
+    void add_link_property( const std::string& name );
 
     template< typename T >
-    void add_face_property( const std::string& name )
-    {
-      m_face_properties.push_back( new derived_property_buffer<T>( name ) );
-      m_face_properties.back()->resize( 0, m_faces_capacity );
-    }
+    void add_face_property( const std::string& name );
 
     atom* m_atoms;
     atom_handle_type* m_atom_index_to_handle_index;
@@ -447,7 +406,7 @@ namespace median_path {
     face_handle_type m_faces_next_free_handle_slot;
   };
 
-# define dts_template_parameters	                           \
+# define dts_template_parameters                               \
  template<                                                     \
    typename atom_handle_type, uint8_t atom_handle_index_bits,  \
    typename link_handle_type, uint8_t link_handle_index_bits,  \
@@ -455,13 +414,13 @@ namespace median_path {
 
 # define dts_type                                              \
   skeleton_datastructure<                                      \
-	atom_handle_type, atom_handle_index_bits,                  \
-	link_handle_type, link_handle_index_bits,                  \
-	face_handle_type, face_handle_index_bits>
+  atom_handle_type, atom_handle_index_bits,                    \
+  link_handle_type, link_handle_index_bits,                    \
+  face_handle_type, face_handle_index_bits>
 
 # define dts_definition(ret_type)                              \
-	dts_template_parameters                                    \
-	ret_type dts_type
+  dts_template_parameters                                      \
+  ret_type dts_type
 
   dts_definition(constexpr uint8_t)::atom_handle_bits;
   dts_definition(constexpr atom_handle_type)::max_atom_handle_index;
@@ -474,799 +433,15 @@ namespace median_path {
   dts_definition(constexpr uint8_t)::face_handle_bits;
   dts_definition(constexpr face_handle_type)::max_face_handle_index;
   dts_definition(constexpr face_handle_type)::max_face_handle_counter;
-
-  template<
-      typename atom_handle_type, uint8_t atom_handle_index_bits,
-      typename link_handle_type, uint8_t link_handle_index_bits,
-      typename face_handle_type, uint8_t face_handle_index_bits >
-  void skeleton_datastructure<
-    atom_handle_type, atom_handle_index_bits,
-    link_handle_type, link_handle_index_bits,
-    face_handle_type, face_handle_index_bits>::remove( atom_handle h )
-  {
-# ifndef MP_SKELETON_NO_CHECK
-    if( h.index >= m_atoms_capacity )
-      MP_THROW_EXCEPTION( skeleton_invalid_atom_handle );
-# endif
-    auto entry = m_atom_handles + h.index;
-    if( entry->status != STATUS_ALLOCATED )
-      return;
-# ifndef MP_SKELETON_NO_CHECK
-    if( entry->counter != h.counter )
-      MP_THROW_EXCEPTION( skeleton_invalid_atom_handle );
-# endif
-
-    auto index = entry->atom_index;
-
-    // update the entry
-    entry->next_free_index = m_atoms_next_free_handle_slot;
-    entry->status = STATUS_FREE;
-    m_atoms_next_free_handle_slot = h.index;
-
-    // move the last atom into this one to keep the buffer tight
-    if( --m_atoms_size && index != m_atoms_size )
-      {
-        // move the atom itself
-        m_atoms[ index ] = std::move( m_atoms[ m_atoms_size ] );
-
-        // move atom properties
-        for( auto& property : m_atom_properties )
-          {
-            property->move( m_atoms_size, index );
-          }
-
-        // update the handle --> atom mapping
-        const auto entry_index = m_atom_index_to_handle_index[ m_atoms_size ];
-        entry = m_atom_handles + entry_index;
-        entry->atom_index = index;
-        // update the atom --> handle mapping
-        m_atom_index_to_handle_index[ index ] = entry_index;
-      }
-    // just delete this atom
-    else
-      {
-        m_atoms[index].~atom(); // not even necessary
-        for( auto& property : m_atom_properties )
-          property->destroy( index );
-      }
-  }
-
-  template<
-      typename atom_handle_type, uint8_t atom_handle_index_bits,
-      typename link_handle_type, uint8_t link_handle_index_bits,
-      typename face_handle_type, uint8_t face_handle_index_bits >
-  void skeleton_datastructure<
-    atom_handle_type, atom_handle_index_bits,
-    link_handle_type, link_handle_index_bits,
-    face_handle_type, face_handle_index_bits>::remove( link_handle h )
-  {
-# ifndef MP_SKELETON_NO_CHECK
-    if( h.index >= m_links_capacity )
-      MP_THROW_EXCEPTION( skeleton_invalid_link_handle );
-# endif
-    auto entry = m_link_handles + h.index;
-    if( entry->status != STATUS_ALLOCATED )
-      return;
-# ifndef MP_SKELETON_NO_CHECK
-    if( entry->counter != h.counter )
-      MP_THROW_EXCEPTION( skeleton_invalid_link_handle );
-# endif
-
-    auto index = entry->link_index;
-
-    // update the entry
-    entry->next_free_index = m_links_next_free_handle_slot;
-    entry->status = STATUS_FREE;
-    m_links_next_free_handle_slot = h.index;
-
-    // move the last link into this one to keep the buffer tight
-    if( --m_links_size && index != m_links_size )
-      {
-        // move the link itself
-        m_links[ index ] = std::move( m_links[ m_links_size ] );
-        m_links[ m_links_size ] = std::move(link{});
-        // move link properties
-        for( auto& property : m_link_properties )
-          {
-            property->move( m_links_size, index );
-          }
-
-        // update the handle --> link mapping
-        const auto entry_index = m_link_index_to_handle_index[ m_links_size ];
-        entry = m_link_handles + entry_index;
-        entry->link_index = index;
-        // update the link --> handle mapping
-        m_link_index_to_handle_index[ index ] = entry_index;
-      }
-    // just delete this link
-    else
-      {
-        m_links[index] = std::move(link{});
-        for( auto& property : m_link_properties )
-          property->destroy( index );
-      }
-  }
-
-  template<
-      typename atom_handle_type, uint8_t atom_handle_index_bits,
-      typename link_handle_type, uint8_t link_handle_index_bits,
-      typename face_handle_type, uint8_t face_handle_index_bits >
-  void skeleton_datastructure<
-    atom_handle_type, atom_handle_index_bits,
-    link_handle_type, link_handle_index_bits,
-    face_handle_type, face_handle_index_bits>::remove( face_handle h )
-  {
-# ifndef MP_SKELETON_NO_CHECK
-    if( h.index >= m_faces_capacity )
-      MP_THROW_EXCEPTION( skeleton_invalid_face_handle );
-# endif
-    auto entry = m_face_handles + h.index;
-    if( entry->status != STATUS_ALLOCATED )
-      return;
-# ifndef MP_SKELETON_NO_CHECK
-    if( entry->counter != h.counter )
-      MP_THROW_EXCEPTION( skeleton_invalid_face_handle );
-# endif
-
-    auto index = entry->face_index;
-
-    // update the entry
-    entry->next_free_index = m_faces_next_free_handle_slot;
-    entry->status = STATUS_FREE;
-    m_faces_next_free_handle_slot = h.index;
-
-    // move the last face into this one to keep the buffer tight
-    if( --m_faces_size && index != m_faces_size )
-      {
-        // move the face itself
-        m_faces[ index ] = std::move( m_faces[ m_faces_size ] );
-        m_faces[ m_faces_size ] = std::move(face{});
-        // move face properties
-        for( auto& property : m_face_properties )
-          {
-            property->move( m_faces_size, index );
-          }
-
-        // update the handle --> face mapping
-        const auto entry_index = m_face_index_to_handle_index[ m_faces_size ];
-        entry = m_face_handles + entry_index;
-        entry->face_index = index;
-        // update the face --> handle mapping
-        m_face_index_to_handle_index[ index ] = entry_index;
-      }
-    // just delete this face
-    else
-      {
-        m_faces[ index ] = std::move(face{});
-        for( auto& property : m_face_properties )
-          property->destroy( index );
-      }
-  }
-
-  template<
-      typename atom_handle_type, uint8_t atom_handle_index_bits,
-      typename link_handle_type, uint8_t link_handle_index_bits,
-      typename face_handle_type, uint8_t face_handle_index_bits >
-  void skeleton_datastructure<
-    atom_handle_type, atom_handle_index_bits,
-    link_handle_type, link_handle_index_bits,
-    face_handle_type, face_handle_index_bits>::remove_atom_by_index( atom_handle_type index )
-  {
-# ifndef MP_SKELETON_NO_CHECK
-      if( index >= m_atoms_size )
-        MP_THROW_EXCEPTION( skeleton_invalid_atom_index );
-# endif
-      // update the entry
-      {
-        const auto entry_index = m_atom_index_to_handle_index[ index ];
-        auto entry = m_atom_handles + entry_index;
-        if( entry->status == STATUS_FREE )
-          return;
-        entry->next_free_index = m_atoms_next_free_handle_slot;
-        entry->status = STATUS_FREE;
-        m_atoms_next_free_handle_slot = entry_index;
-      }
-
-      // move the last atom into this one to keep the buffer tight
-      if( --m_atoms_size && index != m_atoms_size )
-        {
-          // move the atom itself
-          m_atoms[ index ] = std::move( m_atoms[ m_atoms_size ] );
-
-          // move atom properties
-          for( auto& property : m_atom_properties )
-            {
-              property->move( m_atoms_size, index );
-            }
-
-          // update the handle --> atom mapping
-          const auto entry_index = m_atom_index_to_handle_index[ m_atoms_size ];
-          auto entry = m_atom_handles + entry_index;
-          entry->atom_index = index;
-          // update the atom --> handle mapping
-          m_atom_index_to_handle_index[ index ] = entry_index;
-        }
-      // just delete this atom
-      else
-        {
-          for( auto& property : m_atom_properties )
-            property->destroy( index );
-        }
-  }
-
-  template<
-      typename atom_handle_type, uint8_t atom_handle_index_bits,
-      typename link_handle_type, uint8_t link_handle_index_bits,
-      typename face_handle_type, uint8_t face_handle_index_bits >
-  void skeleton_datastructure<
-    atom_handle_type, atom_handle_index_bits,
-    link_handle_type, link_handle_index_bits,
-    face_handle_type, face_handle_index_bits>::remove_link_by_index( link_handle_type index )
-  {
-# ifndef MP_SKELETON_NO_CHECK
-      if( index >= m_links_size )
-        MP_THROW_EXCEPTION( skeleton_invalid_link_index );
-# endif
-      // update the entry
-      {
-        const auto entry_index = m_link_index_to_handle_index[ index ];
-        auto entry = m_link_handles + entry_index;
-        if( entry->status == STATUS_FREE )
-          return;
-        entry->next_free_index = m_links_next_free_handle_slot;
-        entry->status = STATUS_FREE;
-        m_links_next_free_handle_slot = entry_index;
-      }
-
-      // move the last link into this one to keep the buffer tight
-      if( --m_links_size && index != m_links_size )
-        {
-          // move the link itself
-          m_links[ index ] = std::move( m_links[ m_links_size ] );
-          m_links[ m_links_size ] = std::move(link{});
-
-          // move link properties
-          for( auto& property : m_link_properties )
-            {
-              property->move( m_links_size, index );
-            }
-
-          // update the handle --> link mapping
-          const auto entry_index = m_link_index_to_handle_index[ m_links_size ];
-          auto entry = m_link_handles + entry_index;
-          entry->link_index = index;
-          // update the link --> handle mapping
-          m_link_index_to_handle_index[ index ] = entry_index;
-        }
-      // just delete this link
-      else
-        {
-          m_links[ index ] = std::move(link{});
-          for( auto& property : m_link_properties )
-            property->destroy( index );
-        }
-  }
-
-  template<
-      typename atom_handle_type, uint8_t atom_handle_index_bits,
-      typename link_handle_type, uint8_t link_handle_index_bits,
-      typename face_handle_type, uint8_t face_handle_index_bits >
-  void skeleton_datastructure<
-    atom_handle_type, atom_handle_index_bits,
-    link_handle_type, link_handle_index_bits,
-    face_handle_type, face_handle_index_bits>::remove_face_by_index( face_handle_type index )
-  {
-# ifndef MP_SKELETON_NO_CHECK
-      if( index >= m_faces_size )
-        MP_THROW_EXCEPTION( skeleton_invalid_face_index );
-# endif
-      // update the entry
-      {
-        const auto entry_index = m_face_index_to_handle_index[ index ];
-        auto entry = m_face_handles + entry_index;
-        if( entry->status == STATUS_FREE )
-          return;
-        entry->next_free_index = m_faces_next_free_handle_slot;
-        entry->status = STATUS_FREE;
-        m_faces_next_free_handle_slot = entry_index;
-      }
-
-      // move the last face into this one to keep the buffer tight
-      if( --m_faces_size && index != m_faces_size )
-        {
-          // move the face itself
-          m_faces[ index ] = std::move( m_faces[ m_faces_size ] );
-          m_faces[ m_faces_size ] = std::move(face{});
-          // move face properties
-          for( auto& property : m_face_properties )
-            {
-              property->move( m_faces_size, index );
-            }
-
-          // update the handle --> face mapping
-          const auto entry_index = m_face_index_to_handle_index[ m_faces_size ];
-          auto entry = m_face_handles + entry_index;
-          entry->face_index = index;
-          // update the face --> handle mapping
-          m_face_index_to_handle_index[ index ] = entry_index;
-        }
-      // just delete this face
-      else
-        {
-          m_faces[ index ] = std::move(face{});
-          for( auto& property : m_face_properties )
-            property->destroy( index );
-        }
-  }
-
-  template<
-      typename atom_handle_type, uint8_t atom_handle_index_bits,
-      typename link_handle_type, uint8_t link_handle_index_bits,
-      typename face_handle_type, uint8_t face_handle_index_bits >
-  void skeleton_datastructure<
-    atom_handle_type, atom_handle_index_bits,
-    link_handle_type, link_handle_index_bits,
-    face_handle_type, face_handle_index_bits>::remove( atom& e )
-  {
-# ifndef MP_SKELETON_NO_CHECK
-    if( &e < m_atoms || &e >= m_atoms + m_atoms_size )
-      MP_THROW_EXCEPTION( skeleton_invalid_atom_pointer );
-# endif
-    const atom_handle_type index = std::distance( m_atoms, &e );
-# ifndef MP_SKELETON_NO_CHECK
-    if( m_atoms + index != &e )
-      MP_THROW_EXCEPTION( skeleton_invalid_atom_pointer );
-# endif
-
-    // update the entry
-    {
-      const auto entry_index = m_atom_index_to_handle_index[ index ];
-      auto entry = m_atom_handles + entry_index;
-      if( entry->status == STATUS_FREE )
-        return;
-      entry->next_free_index = m_atoms_next_free_handle_slot;
-      entry->status = STATUS_FREE;
-      m_atoms_next_free_handle_slot = entry_index;
-    }
-
-    // move the last atom into this one to keep the buffer tight
-    if( --m_atoms_size && index != m_atoms_size )
-      {
-        // move the atom itself
-        e = std::move( m_atoms[ m_atoms_size ] );
-
-        // move atom properties
-        for( auto& property : m_atom_properties )
-          {
-            property->move( m_atoms_size, index );
-          }
-
-        // update the handle --> atom mapping
-        const auto entry_index = m_atom_index_to_handle_index[ m_atoms_size ];
-        auto entry = m_atom_handles + entry_index;
-        entry->atom_index = index;
-        // update the atom --> handle mapping
-        m_atom_index_to_handle_index[ index ] = entry_index;
-      }
-    // just delete this atom
-    else
-      {
-        for( auto& property : m_atom_properties )
-          property->destroy( index );
-      }
-  }
-
-  template<
-      typename atom_handle_type, uint8_t atom_handle_index_bits,
-      typename link_handle_type, uint8_t link_handle_index_bits,
-      typename face_handle_type, uint8_t face_handle_index_bits >
-  void skeleton_datastructure<
-    atom_handle_type, atom_handle_index_bits,
-    link_handle_type, link_handle_index_bits,
-    face_handle_type, face_handle_index_bits>::remove( link& e )
-  {
-# ifndef MP_SKELETON_NO_CHECK
-    if( &e < m_links || &e >= m_links + m_links_size )
-      MP_THROW_EXCEPTION( skeleton_invalid_link_pointer );
-# endif
-    const link_handle_type index = std::distance( m_links, &e );
-# ifndef MP_SKELETON_NO_CHECK
-    if( m_links + index != &e )
-      MP_THROW_EXCEPTION( skeleton_invalid_link_pointer );
-# endif
-
-    // update the entry
-    {
-      const auto entry_index = m_link_index_to_handle_index[ index ];
-      auto entry = m_link_handles + entry_index;
-      if( entry->status == STATUS_FREE )
-        return;
-      entry->next_free_index = m_links_next_free_handle_slot;
-      entry->status = STATUS_FREE;
-      m_links_next_free_handle_slot = entry_index;
-    }
-
-    // move the last link into this one to keep the buffer tight
-    if( --m_links_size && index != m_links_size )
-      {
-        // move the link itself
-        e = std::move( m_links[ m_links_size ] );
-        m_links[ m_links_size ] = std::move(link{});
-        // move link properties
-        for( auto& property : m_link_properties )
-          {
-            property->move( m_links_size, index );
-          }
-
-        // update the handle --> link mapping
-        const auto entry_index = m_link_index_to_handle_index[ m_links_size ];
-        auto entry = m_link_handles + entry_index;
-        entry->link_index = index;
-        // update the link --> handle mapping
-        m_link_index_to_handle_index[ index ] = entry_index;
-      }
-    // just delete this link
-    else
-      {
-        m_links[ index ] = std::move(link{});
-        for( auto& property : m_link_properties )
-          property->destroy( index );
-      }
-  }
-
-  template<
-      typename atom_handle_type, uint8_t atom_handle_index_bits,
-      typename link_handle_type, uint8_t link_handle_index_bits,
-      typename face_handle_type, uint8_t face_handle_index_bits >
-  void skeleton_datastructure<
-    atom_handle_type, atom_handle_index_bits,
-    link_handle_type, link_handle_index_bits,
-    face_handle_type, face_handle_index_bits>::remove( face& e )
-  {
-# ifndef MP_SKELETON_NO_CHECK
-    if( &e < m_faces || &e >= m_faces + m_faces_size )
-      MP_THROW_EXCEPTION( skeleton_invalid_face_pointer );
-# endif
-    const face_handle_type index = std::distance( m_faces, &e );
-# ifndef MP_SKELETON_NO_CHECK
-    if( m_faces + index != &e )
-      MP_THROW_EXCEPTION( skeleton_invalid_face_pointer );
-# endif
-
-    // update the entry
-    {
-      const auto entry_index = m_face_index_to_handle_index[ index ];
-      auto entry = m_face_handles + entry_index;
-      if( entry->status == STATUS_FREE )
-        return;
-      entry->next_free_index = m_faces_next_free_handle_slot;
-      entry->status = STATUS_FREE;
-      m_faces_next_free_handle_slot = entry_index;
-    }
-
-    // move the last face into this one to keep the buffer tight
-    if( --m_faces_size && index != m_faces_size )
-      {
-        // move the face itself
-        e = std::move( m_faces[ m_faces_size ] );
-        m_faces[ m_faces_size ] = std::move(face{});
-
-        // move face properties
-        for( auto& property : m_face_properties )
-          {
-            property->move( m_faces_size, index );
-          }
-
-        // update the handle --> face mapping
-        const auto entry_index = m_face_index_to_handle_index[ m_faces_size ];
-        auto entry = m_face_handles + entry_index;
-        entry->face_index = index;
-        // update the face --> handle mapping
-        m_face_index_to_handle_index[ index ] = entry_index;
-      }
-    // just delete this face
-    else
-      {
-        m_faces[ index ] = std::move(face{});
-        for( auto& property : m_face_properties )
-          property->destroy( index );
-      }
-  }
-
-
-  template<
-      typename atom_handle_type, uint8_t atom_handle_index_bits,
-      typename link_handle_type, uint8_t link_handle_index_bits,
-      typename face_handle_type, uint8_t face_handle_index_bits >
-  typename skeleton_datastructure<
-      atom_handle_type, atom_handle_index_bits,
-      link_handle_type, link_handle_index_bits,
-      face_handle_type, face_handle_index_bits>::atom&
-  skeleton_datastructure<
-    atom_handle_type, atom_handle_index_bits,
-    link_handle_type, link_handle_index_bits,
-    face_handle_type, face_handle_index_bits>::get( atom_handle h )
-  {
-# ifndef MP_SKELETON_NO_CHECK
-    if( h.index >= m_atoms_capacity )
-      MP_THROW_EXCEPTION( skeleton_invalid_atom_handle );
-# endif
-    const auto entry = m_atom_handles + h.index;
-# ifndef MP_SKELETON_NO_CHECK
-    if( entry->status != STATUS_ALLOCATED || entry->counter != h.counter )
-      MP_THROW_EXCEPTION( skeleton_invalid_atom_handle );
-# endif
-    return m_atoms[ entry->atom_index ];
-  }
-
-  template<
-      typename atom_handle_type, uint8_t atom_handle_index_bits,
-      typename link_handle_type, uint8_t link_handle_index_bits,
-      typename face_handle_type, uint8_t face_handle_index_bits >
-  typename skeleton_datastructure<
-      atom_handle_type, atom_handle_index_bits,
-      link_handle_type, link_handle_index_bits,
-      face_handle_type, face_handle_index_bits>::link&
-  skeleton_datastructure<
-    atom_handle_type, atom_handle_index_bits,
-    link_handle_type, link_handle_index_bits,
-    face_handle_type, face_handle_index_bits>::get( link_handle h )
-  {
-# ifndef MP_SKELETON_NO_CHECK
-    if( h.index >= m_links_capacity )
-      MP_THROW_EXCEPTION( skeleton_invalid_link_handle );
-# endif
-    const auto entry = m_link_handles + h.index;
-# ifndef MP_SKELETON_NO_CHECK
-    if( entry->status != STATUS_ALLOCATED || entry->counter != h.counter )
-      MP_THROW_EXCEPTION( skeleton_invalid_link_handle );
-# endif
-    return m_links[ entry->link_index ];
-  }
-
-  template<
-      typename atom_handle_type, uint8_t atom_handle_index_bits,
-      typename link_handle_type, uint8_t link_handle_index_bits,
-      typename face_handle_type, uint8_t face_handle_index_bits >
-  typename skeleton_datastructure<
-      atom_handle_type, atom_handle_index_bits,
-      link_handle_type, link_handle_index_bits,
-      face_handle_type, face_handle_index_bits>::face&
-  skeleton_datastructure<
-    atom_handle_type, atom_handle_index_bits,
-    link_handle_type, link_handle_index_bits,
-    face_handle_type, face_handle_index_bits>::get( face_handle h )
-  {
-# ifndef MP_SKELETON_NO_CHECK
-    if( h.index >= m_faces_capacity )
-      MP_THROW_EXCEPTION( skeleton_invalid_face_handle );
-# endif
-    const auto entry = m_face_handles + h.index;
-# ifndef MP_SKELETON_NO_CHECK
-    if( entry->status != STATUS_ALLOCATED || entry->counter != h.counter )
-      MP_THROW_EXCEPTION( skeleton_invalid_face_handle );
-# endif
-    return m_faces[ entry->face_index ];
-  }
-
-  template<
-      typename atom_handle_type, uint8_t atom_handle_index_bits,
-      typename link_handle_type, uint8_t link_handle_index_bits,
-      typename face_handle_type, uint8_t face_handle_index_bits >
-  atom_handle_type
-  skeleton_datastructure<
-      atom_handle_type, atom_handle_index_bits,
-      link_handle_type, link_handle_index_bits,
-      face_handle_type, face_handle_index_bits>::get_index( atom_handle handle )
-  {
-# ifndef MP_SKELETON_NO_CHECK
-    if( handle.index >= m_atoms_capacity )
-      MP_THROW_EXCEPTION( skeleton_invalid_atom_handle );
-# endif
-    const auto entry = m_atom_handles + handle.index;
-# ifndef MP_SKELETON_NO_CHECK
-    if( entry->status != STATUS_ALLOCATED || entry->counter != handle.counter )
-      MP_THROW_EXCEPTION( skeleton_invalid_atom_handle );
-# endif
-    return entry->atom_index;
-  }
-
-  template<
-      typename atom_handle_type, uint8_t atom_handle_index_bits,
-      typename link_handle_type, uint8_t link_handle_index_bits,
-      typename face_handle_type, uint8_t face_handle_index_bits >
-  link_handle_type
-  skeleton_datastructure<
-      atom_handle_type, atom_handle_index_bits,
-      link_handle_type, link_handle_index_bits,
-      face_handle_type, face_handle_index_bits>::get_index( link_handle handle )
-  {
-# ifndef MP_SKELETON_NO_CHECK
-    if( handle.index >= m_links_capacity )
-      MP_THROW_EXCEPTION( skeleton_invalid_link_handle );
-# endif
-    const auto entry = m_link_handles + handle.index;
-# ifndef MP_SKELETON_NO_CHECK
-    if( entry->status != STATUS_ALLOCATED || entry->counter != handle.counter )
-      MP_THROW_EXCEPTION( skeleton_invalid_link_handle );
-# endif
-    return entry->link_index;
-  }
-
-  template<
-      typename atom_handle_type, uint8_t atom_handle_index_bits,
-      typename link_handle_type, uint8_t link_handle_index_bits,
-      typename face_handle_type, uint8_t face_handle_index_bits >
-  face_handle_type
-  skeleton_datastructure<
-      atom_handle_type, atom_handle_index_bits,
-      link_handle_type, link_handle_index_bits,
-      face_handle_type, face_handle_index_bits>::get_index( face_handle handle )
-  {
-# ifndef MP_SKELETON_NO_CHECK
-    if( handle.index >= m_faces_capacity )
-      MP_THROW_EXCEPTION( skeleton_invalid_face_handle );
-# endif
-    const auto entry = m_face_handles + handle.index;
-# ifndef MP_SKELETON_NO_CHECK
-    if( entry->status != STATUS_ALLOCATED || entry->counter != handle.counter )
-      MP_THROW_EXCEPTION( skeleton_invalid_face_handle );
-# endif
-    return entry->face_index;
-  }
-
-  template<
-      typename atom_handle_type, uint8_t atom_handle_index_bits,
-      typename link_handle_type, uint8_t link_handle_index_bits,
-      typename face_handle_type, uint8_t face_handle_index_bits >
-  typename skeleton_datastructure<
-      atom_handle_type, atom_handle_index_bits,
-      link_handle_type, link_handle_index_bits,
-      face_handle_type, face_handle_index_bits>::atom_handle
-  skeleton_datastructure<
-    atom_handle_type, atom_handle_index_bits,
-    link_handle_type, link_handle_index_bits,
-    face_handle_type, face_handle_index_bits>::get_handle( atom& e )
-  {
-# ifndef MP_SKELETON_NO_CHECK
-    if( &e < m_atoms || &e >= m_atoms + m_atoms_size )
-      MP_THROW_EXCEPTION( skeleton_invalid_atom_pointer );
-# endif
-    const auto element_index = std::distance( m_atoms, &e );
-# ifndef MP_SKELETON_NO_CHECK
-    if( m_atoms + element_index != &e )
-      MP_THROW_EXCEPTION( skeleton_invalid_atom_pointer );
-# endif
-    auto idx = m_atom_index_to_handle_index[ element_index ];
-    return atom_handle( idx, m_atom_handles[ idx ].counter );
-  }
-
-  template<
-      typename atom_handle_type, uint8_t atom_handle_index_bits,
-      typename link_handle_type, uint8_t link_handle_index_bits,
-      typename face_handle_type, uint8_t face_handle_index_bits >
-  typename skeleton_datastructure<
-      atom_handle_type, atom_handle_index_bits,
-      link_handle_type, link_handle_index_bits,
-      face_handle_type, face_handle_index_bits>::link_handle
-  skeleton_datastructure<
-    atom_handle_type, atom_handle_index_bits,
-    link_handle_type, link_handle_index_bits,
-    face_handle_type, face_handle_index_bits>::get_handle( link& e )
-  {
-# ifndef MP_SKELETON_NO_CHECK
-    if( &e < m_links || &e >= m_links + m_links_size )
-      MP_THROW_EXCEPTION( skeleton_invalid_link_pointer );
-# endif
-    const auto element_index = std::distance( m_links, &e );
-# ifndef MP_SKELETON_NO_CHECK
-    if( m_links + element_index != &e )
-      MP_THROW_EXCEPTION( skeleton_invalid_link_pointer );
-# endif
-    auto idx = m_link_index_to_handle_index[ element_index ];
-    return link_handle( idx, m_link_handles[ idx ].counter );
-  }
-
-  template<
-      typename atom_handle_type, uint8_t atom_handle_index_bits,
-      typename link_handle_type, uint8_t link_handle_index_bits,
-      typename face_handle_type, uint8_t face_handle_index_bits >
-  typename skeleton_datastructure<
-      atom_handle_type, atom_handle_index_bits,
-      link_handle_type, link_handle_index_bits,
-      face_handle_type, face_handle_index_bits>::face_handle
-  skeleton_datastructure<
-    atom_handle_type, atom_handle_index_bits,
-    link_handle_type, link_handle_index_bits,
-    face_handle_type, face_handle_index_bits>::get_handle( face& e )
-  {
-# ifndef MP_SKELETON_NO_CHECK
-    if( &e < m_faces || &e >= m_faces + m_faces_size )
-      MP_THROW_EXCEPTION( skeleton_invalid_face_pointer );
-# endif
-    const auto element_index = std::distance( m_faces, &e );
-# ifndef MP_SKELETON_NO_CHECK
-    if( m_faces + element_index != &e )
-      MP_THROW_EXCEPTION( skeleton_invalid_face_pointer );
-# endif
-    auto idx = m_face_index_to_handle_index[ element_index ];
-    return face_handle( idx, m_face_handles[ idx ].counter );
-  }
-
-  template<
-      typename atom_handle_type, uint8_t atom_handle_index_bits,
-      typename link_handle_type, uint8_t link_handle_index_bits,
-      typename face_handle_type, uint8_t face_handle_index_bits >
-  atom_handle_type skeleton_datastructure<
-    atom_handle_type, atom_handle_index_bits,
-    link_handle_type, link_handle_index_bits,
-    face_handle_type, face_handle_index_bits>::get_index( atom& e )
-  {
-# ifndef MP_SKELETON_NO_CHECK
-    if( &e < m_atoms || &e >= m_atoms + m_atoms_size )
-      MP_THROW_EXCEPTION( skeleton_invalid_atom_pointer );
-# endif
-    const auto element_index = std::distance( m_atoms, &e );
-# ifndef MP_SKELETON_NO_CHECK
-    if( m_atoms + element_index != &e )
-      MP_THROW_EXCEPTION( skeleton_invalid_atom_pointer );
-# endif
-    return element_index;
-  }
-
-  template<
-      typename atom_handle_type, uint8_t atom_handle_index_bits,
-      typename link_handle_type, uint8_t link_handle_index_bits,
-      typename face_handle_type, uint8_t face_handle_index_bits >
-  link_handle_type skeleton_datastructure<
-    atom_handle_type, atom_handle_index_bits,
-    link_handle_type, link_handle_index_bits,
-    face_handle_type, face_handle_index_bits>::get_index( link& e )
-  {
-# ifndef MP_SKELETON_NO_CHECK
-    if( &e < m_links || &e >= m_links + m_links_size )
-      MP_THROW_EXCEPTION( skeleton_invalid_link_pointer );
-# endif
-    const auto element_index = std::distance( m_links, &e );
-# ifndef MP_SKELETON_NO_CHECK
-    if( m_links + element_index != &e )
-      MP_THROW_EXCEPTION( skeleton_invalid_link_pointer );
-# endif
-    return element_index;
-  }
-
-  template<
-      typename atom_handle_type, uint8_t atom_handle_index_bits,
-      typename link_handle_type, uint8_t link_handle_index_bits,
-      typename face_handle_type, uint8_t face_handle_index_bits >
-  face_handle_type skeleton_datastructure<
-    atom_handle_type, atom_handle_index_bits,
-    link_handle_type, link_handle_index_bits,
-    face_handle_type, face_handle_index_bits>::get_index( face& e )
-  {
-# ifndef MP_SKELETON_NO_CHECK
-    if( &e < m_faces || &e >= m_faces + m_faces_size )
-      MP_THROW_EXCEPTION( skeleton_invalid_face_pointer );
-# endif
-    const auto element_index = std::distance( m_faces, &e );
-# ifndef MP_SKELETON_NO_CHECK
-    if( m_faces + element_index != &e )
-      MP_THROW_EXCEPTION( skeleton_invalid_face_pointer );
-# endif
-    return element_index;
-  }
-
-
-
-
-} //median_path
-
 # include "skeleton_datastructure_handle_and_entries.tcc"
 # include "skeleton_datastructure_elements_and_properties.tcc"
 # include "skeleton_datastructure_construction_destruction.tcc"
 # include "skeleton_datastructure_helper.tcc"
 # include "skeleton_datastructure_element_creation_and_deletion.tcc"
+# include "skeleton_datastructure_elements_access.tcc"
+# include "skeleton_datastructure_property_management.tcc"
 # undef dts_template_parameters
 # undef dts_type
 # undef dts_definition
+} //median_path
 # endif 

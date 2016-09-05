@@ -1,5 +1,3 @@
-namespace median_path {
-
  dts_definition(void)::clear( atom_handle_type atom_capacity,
                               link_handle_type link_capacity,
                               face_handle_type face_capacity )
@@ -261,4 +259,3 @@ namespace median_path {
       }
     m_faces_capacity = new_capacity;
   }
-}

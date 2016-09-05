@@ -1,5 +1,3 @@
-namespace median_path {
-
   dts_definition()::link::link()
     : h1{}, h2{}
   {}
@@ -100,4 +98,3 @@ namespace median_path {
   {
     delete[] reinterpret_cast<T*>( base_property_buffer::m_buffer );
   }
-}
