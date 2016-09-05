@@ -68,6 +68,7 @@ namespace io {
     }
     bool Bool(bool b)
     {
+      (void)b;
       return true;
 
     }
@@ -268,6 +269,9 @@ namespace io {
 
     bool String(const Ch* str, rapidjson::SizeType length, bool copy)
     {
+      (void)str;
+      (void)length;
+      (void)copy;
       return true;
     }
 
@@ -288,6 +292,7 @@ namespace io {
 
     bool EndObject(rapidjson::SizeType memberCount)
     {
+      (void)memberCount;
       if( m_status.expect_name_or_object_end )
         {
           if(m_status.reading_header )
@@ -299,6 +304,7 @@ namespace io {
 
     bool Key(const Ch* str, rapidjson::SizeType length, bool copy)
     {
+      (void)copy;
       std::string s( str, length );
       if( s == "header" )
         {
@@ -516,6 +522,7 @@ namespace io {
     {
       writer.Key( "atom_properties" );
       writer.Null();
+      (void)skeleton;
     }
     void write_link_properties(
         median_skeleton& skeleton,
@@ -523,6 +530,7 @@ namespace io {
     {
       writer.Key( "link_properties" );
       writer.Null();
+      (void)skeleton;
     }
     void write_face_properties(
         median_skeleton& skeleton,
@@ -530,6 +538,7 @@ namespace io {
     {
       writer.Key( "face_properties" );
       writer.Null();
+      (void)skeleton;
     }
 
   };

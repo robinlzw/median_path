@@ -1,4 +1,4 @@
-  dts_definition()::skeleton_datastructure()
+  dts_definition()::skeleton_datastructure() noexcept
     : m_atoms{ nullptr }, m_atom_index_to_handle_index{ nullptr }, m_atom_handles{ nullptr },
       m_links{ nullptr }, m_link_index_to_handle_index{ nullptr }, m_link_handles{ nullptr },
       m_faces{ nullptr }, m_face_index_to_handle_index{ nullptr }, m_face_handles{ nullptr },
