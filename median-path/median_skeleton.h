@@ -164,6 +164,10 @@ BEGIN_MP_NAMESPACE
     operator=(
       median_skeleton&& other );
 
+    median_skeleton&
+    operator=(
+      const median_skeleton& other ) = delete;
+
     ~median_skeleton( );
     ///@}
 
