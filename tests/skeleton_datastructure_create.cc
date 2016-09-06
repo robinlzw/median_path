@@ -87,6 +87,7 @@ BEGIN_MP_NAMESPACE
       {
         auto pair = s.create_atom();
         s.m_atom_properties[0]->get<size_t>( i ) = i;
+        (void)pair;
       }
 
     for( size_t i = 0; i < 200; ++ i )

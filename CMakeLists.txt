@@ -11,16 +11,37 @@
 # Finding external libraries
 # --------------------------
 #
+# Here are some variables to tune in order to find all libraries related to Graphics Origin
+#   BOOST_ROOT            where boost has been installed
+#   BOOST_INCLUDEDIR      Preferred include directory e.g. <prefix>/include
+#   BOOST_LIBRARYDIR      Preferred library directory e.g. <prefix>/lib
+#   Boost_NO_SYSTEM_PATHS Set to ON to disable searching in locations not specified by these hint variables. Default is OFF.
+#   OPENMESH_DIR          where to find OpenMesh/Core/Mesh/PolyMeshT.hh
+#   LIBNOISE_DIR          where to find either noise/noise.h or include/noise/noise.h
+#   GLEW_DIR              where to find GL/glew.h
+#   FREEIMAGE_DIR         where to find FreeImage.h
+#
+# In case cmake cannot find the FindGraphicsOrigin.cmake, set the variable
+# GRAPHICS_ORIGIN_MODULE_PATH to its directory.
 #
 # Compilation Options
 # -------------------
 # MP_SKELETON_NO_CHECK Add this definition to perform less checks while accessing to skeleton elements.
+#
+# Build types
+# -----------
+# Valid values of CMAKE_BUILD_TYPE:
+# - Release
+# - RelWithDebInfo
+# - Debug
+ 
 
 #**********************
 # cmake configuration *
 #*******************************************************************************
 cmake_minimum_required( VERSION 3.1.0 )
-set( CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake/modules )
+list( APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake/modules" )
+list( APPEND CMAKE_MODULE_PATH "${GRAPHICS_ORIGIN_MODULE_PATH}" )
 
 # Graphics-Origin project
 project( Median-Path )
@@ -106,25 +127,20 @@ set( MP_INCLUDE_DIRS ${MP_INCLUDE_DIRS} ${GRAPHICS_ORIGIN_INCLUDE_DIRS})
 set( MP_LIBRARIES ${MP_LIBRARIES} ${GRAPHICS_ORIGIN_LIBRARIES} )
 
 # find CGAL
-set( CGAL_CORE_PACKAGE_DIR "/usr"
-  CACHE FILEPATH "Variable to try to find CGAL_CORE package i.e. the directory where include/CGAL/CORE can be found" )
-#TODO: I have done quite a mess to compile with the CGAL libraries. 
-#TODO: clean that by using the cmake files given by CGAL or write another find package file for cgal
-find_package( GMP REQUIRED QUIET )
-if( NOT GMP_FOUND )
-  message( fatal "GMP not found")
-endif()
-find_package( MPFR REQUIRED QUIET )
-if( NOT MPFR_FOUND )
-  message( fatal "MPFR not found")
-endif()
 find_package( TBB REQUIRED QUIET COMPONENTS tbbmalloc )
 if( NOT TBB_FOUND )
-  message( fatal "TBB not found")
+  message( SEND_ERROR "TBB not found")
 endif()
-include_directories( ${GMP_INCLUDE_DIR} ${MPFR_INCLUDE_DIR} ${TBB_INCLUDE_DIRS})
-set( MP_INCLUDE_DIRS "${MP_INCLUDE_DIRS} ${GMP_INCLUDE_DIR} ${MPFR_INCLUDE_DIR} ${TBB_INCLUDE_DIRS}")
-set( MP_LIBRARIES ${MP_LIBRARIES} ${GMP_LIBRARIES} ${MPFR_LIBRARIES} -lCGAL -lCGAL_Core ${TBB_LIBRARIES} ${CGAL_CORE_LIBRARY})
+
+find_package(CGAL QUIET COMPONENTS Core )
+if( NOT CGAL_FOUND )
+  message( SEND_ERROR "CGAL not found" )
+endif()
+
+include( ${CGAL_USE_FILE} )
+include_directories( ${TBB_INCLUDE_DIRS} )
+set( MP_INCLUDE_DIRS ${MP_INCLUDE_DIRS} ${TBB_INCLUDE_DIRS})
+set( MP_LIBRARIES ${MP_LIBRARIES} ${CGAL_LIBRARIES} ${CGAL_3RD_PARTY_LIBRARIES} ${TBB_LIBRARIES}) 
 
 #***************
 # global flags *
@@ -139,7 +155,7 @@ if( CMAKE_CXX_COMPILER_ID STREQUAL "GNU" )
   set( CMAKE_CXX_FLAGS_DEBUG 
     "${CMAKE_CXX_FLAGS_DEBUG} -O0 -ggdb -Wall -Wextra -DDEBUG" 
     CACHE STRING "GNU C++ compiler extra flags for debug build type" FORCE )
-  set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DTHRUST_DEVICE_SYSTEM=THRUST_DEVICE_SYSTEM_OMP" )
+  set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DTHRUST_DEVICE_SYSTEM=THRUST_DEVICE_SYSTEM_OMP -DTHRUST_HOST_SYSTEM=THRUST_HOST_SYSTEM_OMP" )
   if( MP_CGAL_EPECK_BUG )
     set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DMP_CGAL_MUST_USE_EPICK" )
   endif()
@@ -154,7 +170,7 @@ elseif( CMAKE_CXX_COMPILER_ID STREQUAL "MSVC" )
   set( CMAKE_CXX_FLAGS_DEBUG 
     "${CMAKE_CXX_FLAGS_DEBUG} /Od /Zi /DDEBUG" 
     CACHE STRING "MSVC C++ compiler extra flags for debug build type" FORCE )	
-  set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /DTHRUST_DEVICE_SYSTEM=THRUST_DEVICE_SYSTEM_OMP" )
+  set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /DTHRUST_DEVICE_SYSTEM=THRUST_DEVICE_SYSTEM_OMP /DTHRUST_HOST_SYSTEM=THRUST_HOST_SYSTEM_OMP" )
   if( MP_CGAL_EPECK_BUG )
     set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /DMP_CGAL_MUST_USE_EPICK" )
   endif()

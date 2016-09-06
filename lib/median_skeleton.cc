@@ -341,11 +341,11 @@ BEGIN_MP_NAMESPACE
 # pragma omp critical
             bball.merge( thread_bball );
           }
-        b.m_center = vec3
+        b.center = vec3
           { bball };
-        b.m_hsides.x = bball.w;
-        b.m_hsides.y = bball.w;
-        b.m_hsides.z = bball.w;
+        b.hsides.x = bball.w;
+        b.hsides.y = bball.w;
+        b.hsides.z = bball.w;
       }
   }
 

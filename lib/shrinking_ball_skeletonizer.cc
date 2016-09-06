@@ -54,7 +54,7 @@ BEGIN_MP_NAMESPACE
     const auto& bbox = input.get_bounding_box();
     const real global_initial_radius =
         real(2.0) * params.m_shrinking_ball.m_constant_radius_ratio *
-        std::min( bbox.m_hsides.x, std::min( bbox.m_hsides.y, bbox.m_hsides.z ) );
+        std::min( bbox.hsides.x, std::min( bbox.hsides.y, bbox.hsides.z ) );
 
     std::vector< std::vector< uint32_t > > vertex_to_atoms;
     bool keep_vertex_to_atoms = params.m_build_topology

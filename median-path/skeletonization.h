@@ -1,14 +1,14 @@
-/*  Created on: Mar 14, 2016
- *      Author: T. Delame (tdelame@gmail.com)
- */
-
 # ifndef MEDIAN_PATH_SKELETONIZATION_H_
 # define MEDIAN_PATH_SKELETONIZATION_H_
 
 # include "structuration.h"
 # include <graphics-origin/geometry/mesh.h>
 
-BEGIN_MP_NAMESPACE
+namespace median_path {
+
+
+
+
 
   /**@brief A class to skeletonize a shape.
    *
@@ -171,6 +171,6 @@ BEGIN_MP_NAMESPACE
     real m_execution_time;
   };
 
-END_MP_NAMESPACE
+} // median_path name space
 
 # endif

@@ -105,12 +105,12 @@ BEGIN_MP_NAMESPACE
     // Parallel DT construction requires a bounding box, to divide the
     // work into sub-regions.
     graphics_origin::geometry::aabox bbox = input.get_bounding_box( );
-    bbox.m_hsides += 1e-6;
+    bbox.hsides += 1e-6;
     dt::Lock_data_structure locking_datastructure(
-      CGAL::Bbox_3( bbox.m_center.x - bbox.m_hsides.x,
-        bbox.m_center.y - bbox.m_hsides.y, bbox.m_center.z - bbox.m_hsides.z,
-        bbox.m_center.x + bbox.m_hsides.x, bbox.m_center.y + bbox.m_hsides.y,
-        bbox.m_center.z + bbox.m_hsides.z ), params.m_dt_bounding_box_subdivisions );
+      CGAL::Bbox_3( bbox.center.x - bbox.hsides.x,
+        bbox.center.y - bbox.hsides.y, bbox.center.z - bbox.hsides.z,
+        bbox.center.x + bbox.hsides.x, bbox.center.y + bbox.hsides.y,
+        bbox.center.z + bbox.hsides.z ), params.m_dt_bounding_box_subdivisions );
     dt* delaunay_tetrahedrisation = new dt( dtpoints, dtpoints + nsamples, &locking_datastructure );
 
     // Release now the memory of DT construction input.
@@ -124,7 +124,7 @@ BEGIN_MP_NAMESPACE
     // in that order.
     if( extended_bounding_box )
       {
-        bbox.m_hsides *= real(0.5) * params.m_bounding_box_scale_factor;
+        bbox.hsides *= real(0.5) * params.m_bounding_box_scale_factor;
         auto minp = bbox.get_min( );
         auto maxp = bbox.get_max( );
         delaunay_tetrahedrisation->insert( dt::Point( minp.x, minp.y, minp.z ) )->info( ) = null_dt_vertex_info;
