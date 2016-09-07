@@ -65,7 +65,7 @@ BEGIN_MP_NAMESPACE
 
     # pragma omp parallel
     {
-      size_t indices[2];
+      graphics_origin::geometry::mesh_spatial_optimization::vertex_index indices[2];
       real sdistances[2];
 
       # pragma omp for schedule(dynamic)
