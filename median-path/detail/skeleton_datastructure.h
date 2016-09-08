@@ -11,12 +11,73 @@
 # include <vector>
 
 # ifdef MP_SKELETON_NO_CHECK
-# define MP_SKELETON_NO_INDEX_CHECK
-# define MP_SKELETON_NO_HANDLE_CHECK
-# define MP_SKELETON_NO_POINTER_CHECK
+#  define MP_SKELETON_NO_INDEX_CHECK
+#  define MP_SKELETON_NO_HANDLE_CHECK
+#  define MP_SKELETON_NO_POINTER_CHECK
 # endif
 
 namespace median_path {
+  /**************************************************************************
+   * ELEMENT DATA TYPES:                                                    *
+   *  - a common structure to be stored in a container                      *
+   *  - five virtual functions to be able to call the constructor and       *
+   *  destructors of the actual types:                                      *
+   *     a) the property buffer destructor                                  *
+   *     b) the property buffer resize                                      *
+   *     c) move an element inside the property buffer                      *
+   *     d) destroy a particular element in the buffer                      *
+   *     e) destroy a range of particular elements in the buffer            *
+   **************************************************************************/
+  struct base_property_buffer {
+    base_property_buffer( size_t size, const std::string& name ) :
+      m_sizeof_element{ size }, m_name{ name }, m_buffer{ nullptr }
+    {}
+
+    virtual ~base_property_buffer(){};
+
+    template< typename T >
+    inline T& get( size_t index );
+
+    void clear( size_t current_capacity )
+    {
+      destroy( 0, current_capacity );
+    }
+
+    virtual void resize( size_t old_capacity, size_t new_capacity ) = 0;
+
+    virtual void move( size_t from, size_t to ) = 0;
+
+    virtual void destroy( size_t index ) = 0;
+
+    virtual void destroy( size_t from, size_t end ) = 0;
+
+    const size_t m_sizeof_element;
+    const std::string m_name;
+    unsigned char* m_buffer;
+  };
+
+  template< typename T >
+  struct derived_property_buffer
+    : public base_property_buffer {
+
+    typedef T  value_type;
+    typedef T* pointer_type;
+
+    static_assert( std::is_default_constructible< value_type >::value,
+       "The property is not default constructible");
+    static_assert( std::is_move_assignable< value_type >::value,
+       "The property is not move assignable");
+
+
+    derived_property_buffer( const std::string& name );
+    void destroy( size_t index ) override;
+    void destroy( size_t from, size_t end ) override;
+    void resize( size_t old_capacity, size_t new_capacity ) override;
+    void move( size_t from, size_t to ) override;
+    ~derived_property_buffer();
+  };
+
+
   /**
    * Design thoughts:
    * Designing a efficient and usable skeleton data structure is not so easy. I
@@ -207,61 +268,6 @@ namespace median_path {
     };
 
     /**************************************************************************
-     * ELEMENT DATA TYPES:                                                    *
-     *  - a common structure to be stored in a container                      *
-     *  - five virtual functions to be able to call the constructor and       *
-     *  destructors of the actual types:                                      *
-     *     a) the property buffer destructor                                  *
-     *     b) the property buffer resize                                      *
-     *     c) move an element inside the property buffer                      *
-     *     d) destroy a particular element in the buffer                      *
-     *     e) destroy a range of particular elements in the buffer            *
-     **************************************************************************/
-    struct base_property_buffer {
-      base_property_buffer( size_t size, const std::string& name );
-
-      virtual ~base_property_buffer();
-
-      template< typename T >
-      inline T& get( size_t index );
-
-      void clear( size_t current_capacity );
-
-      virtual void resize( size_t old_capacity, size_t new_capacity ) = 0;
-
-      virtual void move( size_t from, size_t to ) = 0;
-
-      virtual void destroy( size_t index ) = 0;
-
-      virtual void destroy( size_t from, size_t end ) = 0;
-
-      const size_t m_sizeof_element;
-      const std::string m_name;
-      unsigned char* m_buffer;
-    };
-
-    template< typename T >
-    struct derived_property_buffer
-      : public base_property_buffer {
-
-      typedef T  value_type;
-      typedef T* pointer_type;
-
-      static_assert( std::is_default_constructible< value_type >::value,
-         "The property is not default constructible");
-      static_assert( std::is_move_assignable< value_type >::value,
-         "The property is not move assignable");
-
-
-      derived_property_buffer( const std::string& name );
-      void destroy( size_t index ) override;
-      void destroy( size_t from, size_t end ) override;
-      void resize( size_t old_capacity, size_t new_capacity ) override;
-      void move( size_t from, size_t to ) override;
-      ~derived_property_buffer();
-    };
-
-    /**************************************************************************
      * CONSTRUCTION / COPY / DESTRUCTION:                                     *
      * manage the life cycle of a skeleton data structure.                    *
      **************************************************************************/
@@ -369,14 +375,62 @@ namespace median_path {
     link_handle get_handle( link& e );
     face_handle get_handle( face& e );
 
+
+    /**************************************************************************
+     * PROPERTY MANAGEMENT:
+     */
+
+    /**Add a property of a specific type and name. If one property with such
+     * name already exist for the element (i.e. atoms, links or faces), and
+     * exception is thrown:
+     * - skeleton_atom_property_already_exist
+     * - skeleton_link_property_already_exist
+     * - skeleton_face_property_already_exist */
     template< typename T >
-    void add_atom_property( const std::string& name );
+    base_property_buffer* add_atom_property( const std::string& name );
 
     template< typename T >
-    void add_link_property( const std::string& name );
+    base_property_buffer* add_link_property( const std::string& name );
 
     template< typename T >
-    void add_face_property( const std::string& name );
+    base_property_buffer* add_face_property( const std::string& name );
+
+    /**Iterates over the properties to delete the one with the same name. It
+     * is thus a O(n) time complexity for n stored properties. Since the
+     * skeleton data structure is not meant to have hundreds of properties at
+     * once, the linear complexity is not an issue. Otherwise, you should
+     * design another class like median_skeleton that will manage differently
+     * properties.
+     * If no property with such name is found, an exception is thrown:
+     * - skeleton_invalid_atom_property_name
+     * - skeleton_invalid_link_property_name
+     * - skeleton_invalid_face_property_name */
+    void remove_atom_property( const std::string& name );
+    void remove_link_property( const std::string& name );
+    void remove_face_property( const std::string& name );
+
+    /**Remove a property thanks to its index in the properties vector. If the
+     * index is invalid, an exception is thrown:
+     * - skeleton_invalid_atom_property_index
+     * - skeleton_invalid_link_property_index
+     * - skeleton_invalid_face_property_index */
+    void remove_atom_property( size_t property_index );
+    void remove_link_property( size_t property_index );
+    void remove_face_property( size_t property_index );
+
+    /**Iterates over the properties to delete the one pointer by the parameter. It
+     * is thus a O(n) time complexity for n stored properties. Since the
+     * skeleton data structure is not meant to have hundreds of properties at
+     * once, the linear complexity is not an issue. Otherwise, you should
+     * design another class like median_skeleton that will manage differently
+     * properties.
+     * If no property at such address is found, an exception is thrown:
+     * - skeleton_invalid_atom_property_pointer
+     * - skeleton_invalid_link_property_pointer
+     * - skeleton_invalid_face_property_pointer */
+    void remove_atom_property( base_property_buffer& property );
+    void remove_link_property( base_property_buffer& property );
+    void remove_face_property( base_property_buffer& property );
 
     atom* m_atoms;
     atom_handle_type* m_atom_index_to_handle_index;
@@ -433,6 +487,7 @@ namespace median_path {
   dts_definition(constexpr uint8_t)::face_handle_bits;
   dts_definition(constexpr face_handle_type)::max_face_handle_index;
   dts_definition(constexpr face_handle_type)::max_face_handle_counter;
+
 # include "skeleton_datastructure_handle_and_entries.tcc"
 # include "skeleton_datastructure_elements_and_properties.tcc"
 # include "skeleton_datastructure_construction_destruction.tcc"

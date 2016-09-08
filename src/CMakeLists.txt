@@ -104,6 +104,10 @@ mp_add_application(
   LIBRARIES ${MP_LIBRARIES} median_path
 )
 
+mp_add_application(
+  NAME new_skeletonizer
+  LIBRARIES ${MP_LIBRARIES} median_path)
+
 
 #add_mp_app( sgp_benchmark_viewer
 #	simple_qml_application.cc simple_qml_application.h

@@ -1,6 +1,4 @@
-/*  Created on: Jun 3, 2016
- *      Author: T. Delame (tdelame@gmail.com) */
-BEGIN_MP_NAMESPACE
+namespace median_path {
 
 static const uint8_t atom_links_property_index = 0;
 static const uint8_t atom_faces_property_index = 1;
@@ -264,4 +262,20 @@ median_skeleton::remove_faces(
   remove_faces_indices( flags );
 }
 
-END_MP_NAMESPACE
+template< typename atom_property >
+base_property_buffer& median_skeleton::add_atom_property( const std::string& name )
+{
+  *m_impl->add_atom_property<atom_property>( name );
+}
+template< typename link_property >
+base_property_buffer& median_skeleton::add_link_property( const std::string& name )
+{
+  *m_impl->add_link_property<link_property>( name );
+}
+template< typename face_property >
+base_property_buffer& median_skeleton::add_face_property( const std::string& name )
+{
+  *m_impl->add_face_property<face_property>( name );
+}
+
+}

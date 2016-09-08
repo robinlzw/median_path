@@ -1,8 +1,8 @@
 /* Created on: Mar 4, 2016
  *     Author: T.Delame (tdelame@gmail.com)
  */
-# include <median-path/median_skeleton.h>
-# include <median-path/io.h>
+# include "../median-path/median_skeleton.h"
+# include "../median-path/io.h"
 
 # include <graphics-origin/geometry/box.h>
 # include <graphics-origin/tools/log.h>
@@ -562,6 +562,53 @@ BEGIN_MP_NAMESPACE
         atom_links_property >( index ).size( );
   }
 
+  bool median_skeleton::is_an_atom_property_name( const std::string& name ) const noexcept
+  {
+    for( auto& property : m_impl->m_atom_properties )
+      if( property->m_name == name )
+        return true;
+    return false;
+  }
+
+  base_property_buffer& median_skeleton::get_atom_property( const std::string& name )
+  {
+    for( auto& property : m_impl->m_atom_properties )
+      if( property->m_name == name )
+        return *property;
+    MP_THROW_EXCEPTION(skeleton_invalid_atom_property_name);
+  }
+
+  base_property_buffer& median_skeleton::get_atom_property( atom_property_index index )
+  {
+    if( index >= m_impl->m_atom_properties.size() )
+      MP_THROW_EXCEPTION(skeleton_invalid_atom_property_index);
+    return *m_impl->m_atom_properties[index];
+  }
+
+  median_skeleton::atom_property_index median_skeleton::get_atom_property_index( base_property_buffer& property ) const
+  {
+    const size_t n = m_impl->m_atom_properties.size();
+    for( size_t i = 0; i < n; ++ i )
+      if( m_impl->m_atom_properties[i] == &property )
+        return atom_property_index(i);
+    MP_THROW_EXCEPTION(skeleton_invalid_atom_property_pointer);
+  }
+
+  void median_skeleton::remove_atom_property( base_property_buffer& property )
+  {
+    m_impl->remove_atom_property( property );
+  }
+
+  void median_skeleton::remove_atom_property( atom_property_index index )
+  {
+    m_impl->remove_atom_property( index );
+  }
+
+  void median_skeleton::remove_atom_property( const std::string& name )
+  {
+    m_impl->remove_atom_property( name );
+  }
+
   median_skeleton::link_handle
   median_skeleton::add(
     atom_handle handle1, atom_handle handle2 )
@@ -826,6 +873,53 @@ BEGIN_MP_NAMESPACE
     auto index = m_impl->get_index( h );
     return m_impl->m_link_properties[link_faces_property_index]->get<
         link_faces_property >( index ).size( );
+  }
+
+  bool median_skeleton::is_an_link_property_name( const std::string& name ) const noexcept
+  {
+    for( auto& property : m_impl->m_link_properties )
+      if( property->m_name == name )
+        return true;
+    return false;
+  }
+
+  base_property_buffer& median_skeleton::get_link_property( const std::string& name )
+  {
+    for( auto& property : m_impl->m_link_properties )
+      if( property->m_name == name )
+        return *property;
+    MP_THROW_EXCEPTION(skeleton_invalid_link_property_name);
+  }
+
+  base_property_buffer& median_skeleton::get_link_property( link_property_index index )
+  {
+    if( index >= m_impl->m_link_properties.size() )
+      MP_THROW_EXCEPTION(skeleton_invalid_link_property_index);
+    return *m_impl->m_link_properties[index];
+  }
+
+  median_skeleton::link_property_index median_skeleton::get_link_property_index( base_property_buffer& property ) const
+  {
+    const size_t n = m_impl->m_link_properties.size();
+    for( size_t i = 0; i < n; ++ i )
+      if( m_impl->m_link_properties[i] == &property )
+        return link_property_index(i);
+    MP_THROW_EXCEPTION(skeleton_invalid_link_property_pointer);
+  }
+
+  void median_skeleton::remove_link_property( base_property_buffer& property )
+  {
+    m_impl->remove_link_property( property );
+  }
+
+  void median_skeleton::remove_link_property( link_property_index index )
+  {
+    m_impl->remove_link_property( index );
+  }
+
+  void median_skeleton::remove_link_property( const std::string& name )
+  {
+    m_impl->remove_link_property( name );
   }
 
   void
@@ -1242,6 +1336,53 @@ BEGIN_MP_NAMESPACE
             && entry->counter == handle.counter;
       }
     return false;
+  }
+
+  bool median_skeleton::is_an_face_property_name( const std::string& name ) const noexcept
+  {
+    for( auto& property : m_impl->m_face_properties )
+      if( property->m_name == name )
+        return true;
+    return false;
+  }
+
+  base_property_buffer& median_skeleton::get_face_property( const std::string& name )
+  {
+    for( auto& property : m_impl->m_face_properties )
+      if( property->m_name == name )
+        return *property;
+    MP_THROW_EXCEPTION(skeleton_invalid_face_property_name);
+  }
+
+  base_property_buffer& median_skeleton::get_face_property( face_property_index index )
+  {
+    if( index >= m_impl->m_face_properties.size() )
+      MP_THROW_EXCEPTION(skeleton_invalid_face_property_index);
+    return *m_impl->m_face_properties[index];
+  }
+
+  median_skeleton::face_property_index median_skeleton::get_face_property_index( base_property_buffer& property ) const
+  {
+    const size_t n = m_impl->m_face_properties.size();
+    for( size_t i = 0; i < n; ++ i )
+      if( m_impl->m_face_properties[i] == &property )
+        return face_property_index(i);
+    MP_THROW_EXCEPTION(skeleton_invalid_face_property_pointer);
+  }
+
+  void median_skeleton::remove_face_property( base_property_buffer& property )
+  {
+    m_impl->remove_face_property( property );
+  }
+
+  void median_skeleton::remove_face_property( face_property_index index )
+  {
+    m_impl->remove_face_property( index );
+  }
+
+  void median_skeleton::remove_face_property( const std::string& name )
+  {
+    m_impl->remove_face_property( name );
   }
 
   void

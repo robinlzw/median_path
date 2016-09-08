@@ -109,6 +109,83 @@ BEGIN_MP_NAMESPACE
     {}
   };
 
+  struct skeleton_atom_property_already_exist : public std::runtime_error {
+    skeleton_atom_property_already_exist( const std::string& file, size_t line )
+      : std::runtime_error( "an atom property with the same name already exist at line "
+      + std::to_string( line ) + " of file " + file )
+    {}
+  };
+  struct skeleton_link_property_already_exist : public std::runtime_error {
+    skeleton_link_property_already_exist( const std::string& file, size_t line )
+      : std::runtime_error( "an link property with the same name already exist at line "
+      + std::to_string( line ) + " of file " + file )
+    {}
+  };
+  struct skeleton_face_property_already_exist : public std::runtime_error {
+    skeleton_face_property_already_exist( const std::string& file, size_t line )
+      : std::runtime_error( "an face property with the same name already exist at line "
+      + std::to_string( line ) + " of file " + file )
+    {}
+  };
+
+
+  struct skeleton_invalid_atom_property_name : public std::runtime_error {
+    skeleton_invalid_atom_property_name( const std::string& file, size_t line )
+      : std::runtime_error( "invalid name of atom property at line "
+      + std::to_string( line ) + " of file " + file )
+    {}
+  };
+  struct skeleton_invalid_link_property_name : public std::runtime_error {
+    skeleton_invalid_link_property_name( const std::string& file, size_t line )
+      : std::runtime_error( "invalid name of link property at line "
+      + std::to_string( line ) + " of file " + file )
+    {}
+  };
+  struct skeleton_invalid_face_property_name : public std::runtime_error {
+    skeleton_invalid_face_property_name( const std::string& file, size_t line )
+      : std::runtime_error( "invalid name of face property at line "
+      + std::to_string( line ) + " of file " + file )
+    {}
+  };
+
+  struct skeleton_invalid_atom_property_index : public std::runtime_error {
+    skeleton_invalid_atom_property_index( const std::string& file, size_t line )
+      : std::runtime_error( "invalid index of atom property at line "
+      + std::to_string( line ) + " of file " + file )
+    {}
+  };
+  struct skeleton_invalid_link_property_index : public std::runtime_error {
+    skeleton_invalid_link_property_index( const std::string& file, size_t line )
+      : std::runtime_error( "invalid index of link property at line "
+      + std::to_string( line ) + " of file " + file )
+    {}
+  };
+  struct skeleton_invalid_face_property_index : public std::runtime_error {
+    skeleton_invalid_face_property_index( const std::string& file, size_t line )
+      : std::runtime_error( "invalid index of face property at line "
+      + std::to_string( line ) + " of file " + file )
+    {}
+  };
+
+  struct skeleton_invalid_atom_property_pointer : public std::runtime_error {
+    skeleton_invalid_atom_property_pointer( const std::string& file, size_t line )
+      : std::runtime_error( "invalid pointer of atom property at line "
+      + std::to_string( line ) + " of file " + file )
+    {}
+  };
+  struct skeleton_invalid_link_property_pointer : public std::runtime_error {
+    skeleton_invalid_link_property_pointer( const std::string& file, size_t line )
+      : std::runtime_error( "invalid pointer of link property at line "
+      + std::to_string( line ) + " of file " + file )
+    {}
+  };
+  struct skeleton_invalid_face_property_pointer : public std::runtime_error {
+    skeleton_invalid_face_property_pointer( const std::string& file, size_t line )
+      : std::runtime_error( "invalid pointer of face property at line "
+      + std::to_string( line ) + " of file " + file )
+    {}
+  };
+
 # define MP_THROW_EXCEPTION( name ) \
   throw name( __FILE__, __LINE__ )
 

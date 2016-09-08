@@ -5,14 +5,11 @@
 # define MEDIAN_PATH_MEDIAN_SKELETON_H_
 
 # include "detail/skeleton_datastructure.h"
-# include <graphics-origin/geometry/vec.h>
 
 # include <string>
 # include <stdint.h>
-BEGIN_MP_NAMESPACE
 
-  using graphics_origin::vec3;
-  using graphics_origin::vec4;
+namespace median_path {
 
   /**@brief A median skeleton class.
    *
@@ -78,6 +75,10 @@ BEGIN_MP_NAMESPACE
     typedef uint32_t atom_index;
     typedef uint64_t link_index;
     typedef uint64_t face_index;
+
+    typedef uint32_t atom_property_index;
+    typedef uint32_t link_property_index;
+    typedef uint32_t face_property_index;
 
     /**@brief Map an atom to a face passing by this atom.
      *
@@ -485,7 +486,7 @@ BEGIN_MP_NAMESPACE
 
     /**@brief Filter atoms according to a filter function.
      *
-     * This method select atoms to remove thanks to a filter function. The
+     * This method selects atoms to remove thanks to a filter function. The
      * evaluation of the filter function can be done in parallel. This method
      * guarantees that the atoms are still stored in a tight buffer after
      * removals. This function will invalidate references and indices to atoms.
@@ -496,6 +497,81 @@ BEGIN_MP_NAMESPACE
       void
       remove_atoms(
         atom_filter&& filter, bool parallel = true );
+
+    /**@brief Add an atom property to this skeleton.
+     *
+     * Add an atom property to this skeleton. The type of the data attached
+     * to every atom must be specified as template argument. The name given
+     * is used to uniquely identify an atom property in the properties buffer.
+     * If a property already exist with that name, the exception
+     * skeleton_atom_property_already_exist is thrown. You can check if a name
+     * is already given thanks to the method is_an_atom_property_name().
+     *
+     * @param name Unique name that identify the new property.
+     * @return A reference to the newly created atom property. */
+    template< typename atom_property >
+    base_property_buffer& add_atom_property( const std::string& name );
+
+    /**@brief Check if an atom property with a particular name already exist.
+     *
+     * Check if an atom property attached to this skeleton already exist with
+     * a particular name. This is useful to avoid to add two time a property
+     * with the same name, as it will throw an exception.
+     * @param name The name to check.
+     * @return True if a property with such a name already exist. */
+    bool is_an_atom_property_name( const std::string& name ) const noexcept;
+
+    /**@brief Get an atom property thanks to its name.
+     *
+     * Provided an atom property with the given name already exist, this method
+     * returns it. Otherwise, if no property with such a name exist, the exception
+     * skeleton_invalid_atom_property_name is thrown.
+     * @param name The name of the property to fetch.
+     * @return The atom property with that name. */
+    base_property_buffer& get_atom_property( const std::string& name );
+
+    /**@brief Get an atom property thanks to its index.
+     *
+     * Get the atom property with a given index. Such index can be obtained
+     * thanks to the method get_atom_property_index(). If no property is
+     * available at that index, the exception
+     * skeleton_invalid_atom_property_index is thrown.
+     * @param index The atom property index to get.
+     * @return The atom property with that index. */
+    base_property_buffer& get_atom_property( atom_property_index index );
+
+    /**@brief Get the index of an atom property.
+     *
+     * Get the index of an atom property. This index allows to fetch the
+     * property quicker than by its name. If the given property is not
+     * a valid atom property, the exception
+     * skeleton_invalid_atom_property_pointer is thrown.
+     * @param property The property we want the index of.
+     * @return The index of the property. */
+    atom_property_index get_atom_property_index( base_property_buffer& property ) const;
+
+    /**@brief Remove an atom property.
+     *
+     * Remove an atom property from this skeleton. The property must be
+     * a valid atom property, otherwise the exception
+     * skeleton_invalid_atom_property_pointer is thrown.
+     * @param property The atom property to remove. */
+    void remove_atom_property( base_property_buffer& property );
+
+    /**@brief Remove an atom property thanks to its index.
+     *
+     * Remove an atom property thanks to its index. If the index is invalid,
+     * the exception skeleton_invalid_atom_property_index is thrown.
+     * @param index The index of the property we want to remove. */
+    void remove_atom_property( atom_property_index index );
+
+    /**@brief Remove an atom property thanks to its name.
+     *
+     * Remove an atom property from this skeleton with a given name. If no atom
+     * property with such name is found, the exception
+     * skeleton_invalid_atom_property_name is thrown.
+     * @param name The name of the property to remove. */
+    void remove_atom_property( const std::string& name );
 
     /**@name Link management
      * @{ */
@@ -681,6 +757,81 @@ BEGIN_MP_NAMESPACE
     get_number_of_faces(
       link_handle h ) const;
 
+    /**@brief Add an link property to this skeleton.
+     *
+     * Add an link property to this skeleton. The type of the data attached
+     * to every link must be specified as template argument. The name given
+     * is used to uniquely identify an link property in the properties buffer.
+     * If a property already exist with that name, the exception
+     * skeleton_link_property_already_exist is thrown. You can check if a name
+     * is already given thanks to the method is_an_link_property_name().
+     *
+     * @param name Unique name that identify the new property.
+     * @return A reference to the newly created link property. */
+    template< typename link_property >
+    base_property_buffer& add_link_property( const std::string& name );
+
+    /**@brief Check if an link property with a particular name already exist.
+     *
+     * Check if an link property attached to this skeleton already exist with
+     * a particular name. This is useful to avoid to add two time a property
+     * with the same name, as it will throw an exception.
+     * @param name The name to check.
+     * @return True if a property with such a name already exist. */
+    bool is_an_link_property_name( const std::string& name ) const noexcept;
+
+    /**@brief Get an link property thanks to its name.
+     *
+     * Provided an link property with the given name already exist, this method
+     * returns it. Otherwise, if no property with such a name exist, the exception
+     * skeleton_invalid_link_property_name is thrown.
+     * @param name The name of the property to fetch.
+     * @return The link property with that name. */
+    base_property_buffer& get_link_property( const std::string& name );
+
+    /**@brief Get an link property thanks to its index.
+     *
+     * Get the link property with a given index. Such index can be obtained
+     * thanks to the method get_link_property_index(). If no property is
+     * available at that index, the exception
+     * skeleton_invalid_link_property_index is thrown.
+     * @param index The link property index to get.
+     * @return The link property with that index. */
+    base_property_buffer& get_link_property( link_property_index index );
+
+    /**@brief Get the index of an link property.
+     *
+     * Get the index of an link property. This index allows to fetch the
+     * property quicker than by its name. If the given property is not
+     * a valid link property, the exception
+     * skeleton_invalid_link_property_pointer is thrown.
+     * @param property The property we want the index of.
+     * @return The index of the property. */
+    link_property_index get_link_property_index( base_property_buffer& property ) const;
+
+    /**@brief Remove an link property.
+     *
+     * Remove an link property from this skeleton. The property must be
+     * a valid link property, otherwise the exception
+     * skeleton_invalid_link_property_pointer is thrown.
+     * @param property The link property to remove. */
+    void remove_link_property( base_property_buffer& property );
+
+    /**@brief Remove an link property thanks to its index.
+     *
+     * Remove an link property thanks to its index. If the index is invalid,
+     * the exception skeleton_invalid_link_property_index is thrown.
+     * @param index The index of the property we want to remove. */
+    void remove_link_property( link_property_index index );
+
+    /**@brief Remove an link property thanks to its name.
+     *
+     * Remove an link property from this skeleton with a given name. If no link
+     * property with such name is found, the exception
+     * skeleton_invalid_link_property_name is thrown.
+     * @param name The name of the property to remove. */
+    void remove_link_property( const std::string& name );
+
     /**@name Face management
      * @{ */
     /**@brief Add a face to the skeleton.
@@ -831,6 +982,82 @@ BEGIN_MP_NAMESPACE
       void
       remove_faces(
         face_filter&& filter, bool parallel = true );
+
+
+    /**@brief Add an face property to this skeleton.
+     *
+     * Add an face property to this skeleton. The type of the data attached
+     * to every face must be specified as template argument. The name given
+     * is used to uniquely identify an face property in the properties buffer.
+     * If a property already exist with that name, the exception
+     * skeleton_face_property_already_exist is thrown. You can check if a name
+     * is already given thanks to the method is_an_face_property_name().
+     *
+     * @param name Unique name that identify the new property.
+     * @return A reference to the newly created face property. */
+    template< typename face_property >
+    base_property_buffer& add_face_property( const std::string& name );
+
+    /**@brief Check if an face property with a particular name already exist.
+     *
+     * Check if an face property attached to this skeleton already exist with
+     * a particular name. This is useful to avoid to add two time a property
+     * with the same name, as it will throw an exception.
+     * @param name The name to check.
+     * @return True if a property with such a name already exist. */
+    bool is_an_face_property_name( const std::string& name ) const noexcept;
+
+    /**@brief Get an face property thanks to its name.
+     *
+     * Provided an face property with the given name already exist, this method
+     * returns it. Otherwise, if no property with such a name exist, the exception
+     * skeleton_invalid_face_property_name is thrown.
+     * @param name The name of the property to fetch.
+     * @return The face property with that name. */
+    base_property_buffer& get_face_property( const std::string& name );
+
+    /**@brief Get an face property thanks to its index.
+     *
+     * Get the face property with a given index. Such index can be obtained
+     * thanks to the method get_face_property_index(). If no property is
+     * available at that index, the exception
+     * skeleton_invalid_face_property_index is thrown.
+     * @param index The face property index to get.
+     * @return The face property with that index. */
+    base_property_buffer& get_face_property( face_property_index index );
+
+    /**@brief Get the index of an face property.
+     *
+     * Get the index of an face property. This index allows to fetch the
+     * property quicker than by its name. If the given property is not
+     * a valid face property, the exception
+     * skeleton_invalid_face_property_pointer is thrown.
+     * @param property The property we want the index of.
+     * @return The index of the property. */
+    face_property_index get_face_property_index( base_property_buffer& property ) const;
+
+    /**@brief Remove an face property.
+     *
+     * Remove an face property from this skeleton. The property must be
+     * a valid face property, otherwise the exception
+     * skeleton_invalid_face_property_pointer is thrown.
+     * @param property The face property to remove. */
+    void remove_face_property( base_property_buffer& property );
+
+    /**@brief Remove an face property thanks to its index.
+     *
+     * Remove an face property thanks to its index. If the index is invalid,
+     * the exception skeleton_invalid_face_property_index is thrown.
+     * @param index The index of the property we want to remove. */
+    void remove_face_property( face_property_index index );
+
+    /**@brief Remove an face property thanks to its name.
+     *
+     * Remove an face property from this skeleton with a given name. If no face
+     * property with such name is found, the exception
+     * skeleton_invalid_face_property_name is thrown.
+     * @param name The name of the property to remove. */
+    void remove_face_property( const std::string& name );
 
   private:
 
