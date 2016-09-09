@@ -32,7 +32,7 @@ namespace median_path {
      * method will define which type of sampling it uses, under the name
      * sampling_type. The samples used to compute an atom are stored inside
      * an atom property. The index of this property is stored in the atomization
-     * method in the variable atom_correspondence_property_index. The type
+     * method in the variable atom_to_sampling_property_index. The type
      * of elements of that property depends on the sampling method and of the
      * atomization method used.
      */
@@ -89,6 +89,12 @@ namespace median_path {
         const real constant_initial_radius_ratio;
         const real radius_variation_threshold_ratio;
       };
+      struct atom_to_sampling_type {
+        // first contact vertex, its normal is normal to the atom
+        uint32_t first_vertex;
+        // second contact vertex
+        uint32_t second_vertex;
+      };
 
       shrinking_ball_vertex_constant_initial_radius(
           const parameters_type& parameters,
@@ -117,7 +123,7 @@ namespace median_path {
 
 
 
-      median_skeleton::atom_property_index atom_correspondence_property_index;
+      median_skeleton::atom_property_index atom_to_sampling_property_index;
     };
   }
 
