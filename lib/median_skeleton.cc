@@ -467,12 +467,12 @@ BEGIN_MP_NAMESPACE
   {
     if( handle.index < m_impl->m_atoms_capacity )
       {
-        const auto entry = m_impl->m_atom_handles + handle.index;
-        if( entry->status == datastructure::STATUS_ALLOCATED
-            && entry->counter == handle.counter )
+        const auto& entry = m_impl->m_atom_handles[handle.index];
+        if( entry.status == datastructure::STATUS_ALLOCATED
+            && entry.counter == handle.counter )
           {
-            remove_atom_special_properties( entry->atom_index );
-            m_impl->remove_atom_by_index( entry->atom_index );
+            remove_atom_special_properties( entry.atom_index );
+            m_impl->remove_atom_by_index( entry.atom_index );
           }
       }
   }
@@ -527,9 +527,9 @@ BEGIN_MP_NAMESPACE
   {
     if( handle.index < m_impl->m_atoms_capacity )
       {
-        const auto entry = m_impl->m_atom_handles + handle.index;
-        return entry->status == datastructure::STATUS_ALLOCATED
-            && entry->counter == handle.counter;
+        const auto& entry = m_impl->m_atom_handles[handle.index];
+        return entry.status == datastructure::STATUS_ALLOCATED
+            && entry.counter == handle.counter;
       }
     return false;
   }
@@ -616,14 +616,14 @@ BEGIN_MP_NAMESPACE
     if( handle1.index < m_impl->m_atoms_capacity
         && handle2.index < m_impl->m_atoms_capacity )
       {
-        const auto entry1 = m_impl->m_atom_handles + handle1.index;
-        const auto entry2 = m_impl->m_atom_handles + handle2.index;
-        if( (entry1->status == datastructure::STATUS_ALLOCATED
-            && entry1->counter == handle1.counter)
-            && (entry2->status == datastructure::STATUS_ALLOCATED
-                && entry2->counter == handle2.counter) )
+        const auto& entry1 = m_impl->m_atom_handles[handle1.index];
+        const auto& entry2 = m_impl->m_atom_handles[handle2.index];
+        if( (entry1.status == datastructure::STATUS_ALLOCATED
+            && entry1.counter == handle1.counter)
+            && (entry2.status == datastructure::STATUS_ALLOCATED
+                && entry2.counter == handle2.counter) )
           {
-            return do_add_link( entry1->atom_index, entry2->atom_index );
+            return do_add_link( entry1.atom_index, entry2.atom_index );
           }
       }
     MP_THROW_EXCEPTION( skeleton_invalid_atom_handle );
@@ -633,14 +633,14 @@ BEGIN_MP_NAMESPACE
   median_skeleton::add(
     atom& atom1, atom& atom2 )
   {
-    if( &atom1 >= m_impl->m_atoms && &atom2 >= m_impl->m_atoms
-        && &atom1 < m_impl->m_atoms + m_impl->m_atoms_size
-        && &atom2 < m_impl->m_atoms + m_impl->m_atoms_size )
+    if( &atom1 >= m_impl->m_atoms.get() && &atom2 >= m_impl->m_atoms.get()
+        && &atom1 < m_impl->m_atoms.get() + m_impl->m_atoms_size
+        && &atom2 < m_impl->m_atoms.get() + m_impl->m_atoms_size )
       {
-        atom_index idx1 = std::distance( m_impl->m_atoms, &atom1 );
-        atom_index idx2 = std::distance( m_impl->m_atoms, &atom2 );
-        if( m_impl->m_atoms + idx1 == &atom1
-            && m_impl->m_atoms + idx2 == &atom2 )
+        atom_index idx1 = std::distance( m_impl->m_atoms.get(), &atom1 );
+        atom_index idx2 = std::distance( m_impl->m_atoms.get(), &atom2 );
+        if( m_impl->m_atoms.get() + idx1 == &atom1
+            && m_impl->m_atoms.get() + idx2 == &atom2 )
           {
             return do_add_link( idx1, idx2 );
           }
@@ -718,7 +718,7 @@ BEGIN_MP_NAMESPACE
   {
     if( handle.index < m_impl->m_links_capacity )
       {
-        const auto link_entry = m_impl->m_link_handles + handle.index;
+        const auto link_entry = m_impl->m_link_handles.get() + handle.index;
         if( link_entry->status == datastructure::STATUS_ALLOCATED
             && link_entry->counter == handle.counter )
           {
@@ -840,7 +840,7 @@ BEGIN_MP_NAMESPACE
   {
     if( handle.index < m_impl->m_links_capacity )
       {
-        const auto entry = m_impl->m_link_handles + handle.index;
+        const auto entry = m_impl->m_link_handles.get() + handle.index;
         return entry->status == datastructure::STATUS_ALLOCATED
             && entry->counter == handle.counter;
       }
@@ -997,7 +997,7 @@ BEGIN_MP_NAMESPACE
             // update the left_entry
             const auto left_entry_index =
                 m_impl->m_link_index_to_handle_index[left];
-            auto left_entry = m_impl->m_link_handles + left_entry_index;
+            auto left_entry = m_impl->m_link_handles.get() + left_entry_index;
             left_entry->next_free_index = next_free_slot;
             left_entry->status = datastructure::STATUS_FREE;
             next_free_slot = left_entry_index;
@@ -1008,7 +1008,7 @@ BEGIN_MP_NAMESPACE
               {
                 const auto entry_index =
                     m_impl->m_link_index_to_handle_index[right];
-                auto entry = m_impl->m_link_handles + entry_index;
+                auto entry = m_impl->m_link_handles.get() + entry_index;
                 entry->next_free_index = next_free_slot;
                 entry->status = datastructure::STATUS_FREE;
                 next_free_slot = entry_index;
@@ -1024,7 +1024,7 @@ BEGIN_MP_NAMESPACE
 
                 const auto right_entry_index =
                     m_impl->m_link_index_to_handle_index[right];
-                auto right_entry = m_impl->m_link_handles + right_entry_index;
+                auto right_entry = m_impl->m_link_handles.get() + right_entry_index;
                 right_entry->link_index = left;
                 m_impl->m_link_index_to_handle_index[left] = right_entry_index;
                 ++left;
@@ -1047,17 +1047,17 @@ BEGIN_MP_NAMESPACE
   median_skeleton::add(
     atom& atom1, atom& atom2, atom& atom3 )
   {
-    if( &atom1 >= m_impl->m_atoms && &atom2 >= m_impl->m_atoms
-        && &atom3 >= m_impl->m_atoms
-        && &atom1 < m_impl->m_atoms + m_impl->m_atoms_size
-        && &atom2 < m_impl->m_atoms + m_impl->m_atoms_size
-        && &atom3 < m_impl->m_atoms + m_impl->m_atoms_size )
+    if( &atom1 >= m_impl->m_atoms.get() && &atom2 >= m_impl->m_atoms.get()
+        && &atom3 >= m_impl->m_atoms.get()
+        && &atom1 < m_impl->m_atoms.get() + m_impl->m_atoms_size
+        && &atom2 < m_impl->m_atoms.get() + m_impl->m_atoms_size
+        && &atom3 < m_impl->m_atoms.get() + m_impl->m_atoms_size )
       {
-        atom_index idx1 = std::distance( m_impl->m_atoms, &atom1 );
-        atom_index idx2 = std::distance( m_impl->m_atoms, &atom2 );
-        atom_index idx3 = std::distance( m_impl->m_atoms, &atom3 );
-        if( m_impl->m_atoms + idx1 == &atom1 && m_impl->m_atoms + idx2 == &atom2
-            && m_impl->m_atoms + idx3 == &atom3 )
+        atom_index idx1 = std::distance( m_impl->m_atoms.get(), &atom1 );
+        atom_index idx2 = std::distance( m_impl->m_atoms.get(), &atom2 );
+        atom_index idx3 = std::distance( m_impl->m_atoms.get(), &atom3 );
+        if( m_impl->m_atoms.get() + idx1 == &atom1 && m_impl->m_atoms.get() + idx2 == &atom2
+            && m_impl->m_atoms.get() + idx3 == &atom3 )
           {
             return do_add_face( idx1, idx2, idx3 );
           }
@@ -1224,9 +1224,9 @@ BEGIN_MP_NAMESPACE
         && handle2.index < m_impl->m_atoms_capacity
         && handle3.index < m_impl->m_atoms_capacity )
       {
-        const auto entry1 = m_impl->m_atom_handles + handle1.index;
-        const auto entry2 = m_impl->m_atom_handles + handle2.index;
-        const auto entry3 = m_impl->m_atom_handles + handle3.index;
+        const auto entry1 = m_impl->m_atom_handles.get() + handle1.index;
+        const auto entry2 = m_impl->m_atom_handles.get() + handle2.index;
+        const auto entry3 = m_impl->m_atom_handles.get() + handle3.index;
         if( (entry1->status == datastructure::STATUS_ALLOCATED
             && entry1->counter == handle1.counter)
             && (entry2->status == datastructure::STATUS_ALLOCATED
@@ -1247,7 +1247,7 @@ BEGIN_MP_NAMESPACE
   {
     if( handle.index < m_impl->m_faces_capacity )
       {
-        const auto face_entry = m_impl->m_face_handles + handle.index;
+        const auto face_entry = m_impl->m_face_handles.get() + handle.index;
         if( face_entry->status == datastructure::STATUS_ALLOCATED
             && face_entry->counter == handle.counter )
           {
@@ -1331,7 +1331,7 @@ BEGIN_MP_NAMESPACE
   {
     if( handle.index < m_impl->m_faces_capacity )
       {
-        const auto entry = m_impl->m_face_handles + handle.index;
+        const auto entry = m_impl->m_face_handles.get() + handle.index;
         return entry->status == datastructure::STATUS_ALLOCATED
             && entry->counter == handle.counter;
       }
@@ -1416,7 +1416,7 @@ BEGIN_MP_NAMESPACE
             // update the left_entry
             const auto left_entry_index =
                 m_impl->m_face_index_to_handle_index[left];
-            auto left_entry = m_impl->m_face_handles + left_entry_index;
+            auto left_entry = m_impl->m_face_handles.get() + left_entry_index;
             remove_face_topology_properties(
                 left, face_handle( left_entry_index, left_entry->counter ) );
             left_entry->next_free_index = next_free_slot;
@@ -1429,7 +1429,7 @@ BEGIN_MP_NAMESPACE
               {
                 const auto entry_index =
                     m_impl->m_face_index_to_handle_index[right];
-                auto entry = m_impl->m_face_handles + entry_index;
+                auto entry = m_impl->m_face_handles.get() + entry_index;
                 remove_face_topology_properties(
                     right, face_handle( entry_index, entry->counter ) );
                 entry->next_free_index = next_free_slot;
@@ -1447,7 +1447,7 @@ BEGIN_MP_NAMESPACE
 
                 const auto right_entry_index =
                     m_impl->m_face_index_to_handle_index[right];
-                auto right_entry = m_impl->m_face_handles + right_entry_index;
+                auto right_entry = m_impl->m_face_handles.get() + right_entry_index;
                 right_entry->face_index = left;
                 m_impl->m_face_index_to_handle_index[left] = right_entry_index;
                 ++left;

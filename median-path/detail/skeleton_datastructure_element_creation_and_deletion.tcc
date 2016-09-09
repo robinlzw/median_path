@@ -23,7 +23,7 @@
 
     /* fetch the handle entry */
     const auto handle_index = m_atoms_next_free_handle_slot;
-    auto entry = m_atom_handles + handle_index;
+    auto entry = m_atom_handles.get() + handle_index;
     m_atoms_next_free_handle_slot = entry->next_free_index;
 
     /* update the entry */
@@ -68,7 +68,7 @@
           m_links_capacity + std::max( m_links_capacity, link_handle_type{10} ) ) );
       /* fetch the handle entry */
       const auto handle_index = m_links_next_free_handle_slot;
-      auto entry = m_link_handles + handle_index;
+      auto entry = m_link_handles.get() + handle_index;
       m_links_next_free_handle_slot = entry->next_free_index;
       /* update the entry */
       ++entry->counter;
@@ -112,7 +112,7 @@
           m_faces_capacity + std::max( m_faces_capacity, face_handle_type{10} ) ) );
       /* fetch the handle entry */
       const auto handle_index = m_faces_next_free_handle_slot;
-      auto entry = m_face_handles + handle_index;
+      auto entry = m_face_handles.get() + handle_index;
       m_faces_next_free_handle_slot = entry->next_free_index;
       /* update the entry */
       ++entry->counter;
@@ -187,7 +187,7 @@
     if( h.index >= m_links_capacity )
       MP_THROW_EXCEPTION( skeleton_invalid_link_handle );
 # endif
-    auto entry = m_link_handles + h.index;
+    auto entry = m_link_handles.get() + h.index;
 # ifndef MP_SKELETON_NO_HANDLE_CHECK
     if( entry->status != STATUS_ALLOCATED || entry->counter != h.counter )
       MP_THROW_EXCEPTION( skeleton_invalid_link_handle );
@@ -214,7 +214,7 @@
 
           // update the handle --> link mapping
           const auto entry_index = m_link_index_to_handle_index[ m_links_size ];
-          entry = m_link_handles + entry_index;
+          entry = m_link_handles.get() + entry_index;
           entry->link_index = index;
           // update the link --> handle mapping
           m_link_index_to_handle_index[ index ] = entry_index;
@@ -234,7 +234,7 @@
     if( h.index >= m_faces_capacity )
       MP_THROW_EXCEPTION( skeleton_invalid_face_handle );
 # endif
-    auto entry = m_face_handles + h.index;
+    auto entry = m_face_handles.get() + h.index;
 # ifndef MP_SKELETON_NO_HANDLE_CHECK
     if( entry->status != STATUS_ALLOCATED || entry->counter != h.counter )
       MP_THROW_EXCEPTION( skeleton_invalid_face_handle );
@@ -261,7 +261,7 @@
 
           // update the handle --> face mapping
           const auto entry_index = m_face_index_to_handle_index[ m_faces_size ];
-          entry = m_face_handles + entry_index;
+          entry = m_face_handles.get() + entry_index;
           entry->face_index = index;
           // update the face --> handle mapping
           m_face_index_to_handle_index[ index ] = entry_index;
@@ -284,7 +284,7 @@
         // update the entry
         {
           const auto entry_index = m_atom_index_to_handle_index[ index ];
-          auto entry = m_atom_handles + entry_index;
+          auto entry = m_atom_handles.get() + entry_index;
           entry->next_free_index = m_atoms_next_free_handle_slot;
           entry->status = STATUS_FREE;
           m_atoms_next_free_handle_slot = entry_index;
@@ -304,7 +304,7 @@
 
             // update the handle --> atom mapping
             const auto entry_index = m_atom_index_to_handle_index[ m_atoms_size ];
-            auto entry = m_atom_handles + entry_index;
+            auto entry = m_atom_handles.get() + entry_index;
             entry->atom_index = index;
             // update the atom --> handle mapping
             m_atom_index_to_handle_index[ index ] = entry_index;
@@ -370,7 +370,7 @@
         // update the entry
         {
           const auto entry_index = m_face_index_to_handle_index[ index ];
-          auto entry = m_face_handles + entry_index;
+          auto entry = m_face_handles.get() + entry_index;
           entry->next_free_index = m_faces_next_free_handle_slot;
           entry->status = STATUS_FREE;
           m_faces_next_free_handle_slot = entry_index;
@@ -390,7 +390,7 @@
 
             // update the handle --> face mapping
             const auto entry_index = m_face_index_to_handle_index[ m_faces_size ];
-            auto entry = m_face_handles + entry_index;
+            auto entry = m_face_handles.get() + entry_index;
             entry->face_index = index;
             // update the face --> handle mapping
             m_face_index_to_handle_index[ index ] = entry_index;
@@ -407,10 +407,10 @@
     dts_definition(void)::remove( atom& e )
     {
   # ifndef MP_SKELETON_NO_POINTER_CHECK
-      if( &e < m_atoms || &e >= m_atoms + m_atoms_size )
+      if( &e < m_atoms.get() || &e >= m_atoms.get() + m_atoms_size )
         MP_THROW_EXCEPTION( skeleton_invalid_atom_pointer );
   # endif
-      const atom_handle_type index = std::distance( m_atoms, &e );
+      const atom_handle_type index = std::distance( m_atoms.get(), &e );
   # ifndef MP_SKELETON_NO_POINTER_CHECK
       if( m_atoms + index != &e )
         MP_THROW_EXCEPTION( skeleton_invalid_atom_pointer );
@@ -455,19 +455,19 @@
     dts_definition(void)::remove( link& e )
     {
   # ifndef MP_SKELETON_NO_POINTER_CHECK
-      if( &e < m_links || &e >= m_links + m_links_size )
+      if( &e < m_links.get() || &e >= m_links.get() + m_links_size )
         MP_THROW_EXCEPTION( skeleton_invalid_link_pointer );
   # endif
-      const link_handle_type index = std::distance( m_links, &e );
+      const link_handle_type index = std::distance( m_links.get(), &e );
   # ifndef MP_SKELETON_NO_POINTER_CHECK
-      if( m_links + index != &e )
+      if( m_links.get() + index != &e )
         MP_THROW_EXCEPTION( skeleton_invalid_link_pointer );
   # endif
 
       // update the entry
       {
         const auto entry_index = m_link_index_to_handle_index[ index ];
-        auto entry = m_link_handles + entry_index;
+        auto entry = m_link_handles.get() + entry_index;
         entry->next_free_index = m_links_next_free_handle_slot;
         entry->status = STATUS_FREE;
         m_links_next_free_handle_slot = entry_index;
@@ -487,7 +487,7 @@
 
           // update the handle --> link mapping
           const auto entry_index = m_link_index_to_handle_index[ m_links_size ];
-          auto entry = m_link_handles + entry_index;
+          auto entry = m_link_handles.get() + entry_index;
           entry->link_index = index;
           // update the link --> handle mapping
           m_link_index_to_handle_index[ index ] = entry_index;
@@ -504,12 +504,12 @@
     dts_definition(void)::remove( face& e )
     {
   # ifndef MP_SKELETON_NO_POINTER_CHECK
-      if( &e < m_faces || &e >= m_faces + m_faces_size )
+      if( &e < m_faces.get() || &e >= m_faces.get() + m_faces_size )
         MP_THROW_EXCEPTION( skeleton_invalid_face_pointer );
   # endif
-      const face_handle_type index = std::distance( m_faces, &e );
+      const face_handle_type index = std::distance( m_faces.get(), &e );
   # ifndef MP_SKELETON_NO_POINTER_CHECK
-      if( m_faces + index != &e )
+      if( m_faces.get() + index != &e )
         MP_THROW_EXCEPTION( skeleton_invalid_face_pointer );
   # endif
 

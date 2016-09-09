@@ -4,7 +4,7 @@
     if( h.index >= m_atoms_capacity )
       MP_THROW_EXCEPTION( skeleton_invalid_atom_handle );
 # endif
-    const auto entry = m_atom_handles + h.index;
+    const auto entry = m_atom_handles.get() + h.index;
 # ifndef MP_SKELETON_NO_HANDLE_CHECK
     if( entry->status != STATUS_ALLOCATED || entry->counter != h.counter )
       MP_THROW_EXCEPTION( skeleton_invalid_atom_handle );
@@ -19,7 +19,7 @@
     if( h.index >= m_links_capacity )
       MP_THROW_EXCEPTION( skeleton_invalid_link_handle );
 # endif
-    const auto entry = m_link_handles + h.index;
+    const auto entry = m_link_handles.get() + h.index;
 # ifndef MP_SKELETON_NO_HANDLE_CHECK
     if( entry->status != STATUS_ALLOCATED || entry->counter != h.counter )
       MP_THROW_EXCEPTION( skeleton_invalid_link_handle );
@@ -33,7 +33,7 @@
     if( h.index >= m_faces_capacity )
       MP_THROW_EXCEPTION( skeleton_invalid_face_handle );
 # endif
-    const auto entry = m_face_handles + h.index;
+    const auto entry = m_face_handles.get() + h.index;
 # ifndef MP_SKELETON_NO_HANDLE_CHECK
     if( entry->status != STATUS_ALLOCATED || entry->counter != h.counter )
       MP_THROW_EXCEPTION( skeleton_invalid_face_handle );
@@ -47,7 +47,7 @@
     if( handle.index >= m_atoms_capacity )
       MP_THROW_EXCEPTION( skeleton_invalid_atom_handle );
 # endif
-    const auto entry = m_atom_handles + handle.index;
+    const auto entry = m_atom_handles.get() + handle.index;
 # ifndef MP_SKELETON_NO_HANDLE_CHECK
     if( entry->status != STATUS_ALLOCATED || entry->counter != handle.counter )
       MP_THROW_EXCEPTION( skeleton_invalid_atom_handle );
@@ -61,7 +61,7 @@
     if( handle.index >= m_links_capacity )
       MP_THROW_EXCEPTION( skeleton_invalid_link_handle );
 # endif
-    const auto entry = m_link_handles + handle.index;
+    const auto entry = m_link_handles.get() + handle.index;
 # ifndef MP_SKELETON_NO_HANDLE_CHECK
     if( entry->status != STATUS_ALLOCATED || entry->counter != handle.counter )
       MP_THROW_EXCEPTION( skeleton_invalid_link_handle );
@@ -75,7 +75,7 @@
     if( handle.index >= m_faces_capacity )
       MP_THROW_EXCEPTION( skeleton_invalid_face_handle );
 # endif
-    const auto entry = m_face_handles + handle.index;
+    const auto entry = m_face_handles.get() + handle.index;
 # ifndef MP_SKELETON_NO_HANDLE_CHECK
     if( entry->status != STATUS_ALLOCATED || entry->counter != handle.counter )
       MP_THROW_EXCEPTION( skeleton_invalid_face_handle );
@@ -86,12 +86,12 @@
   dts_definition(typename dts_type::atom_handle)::get_handle( atom& e )
   {
 # ifndef MP_SKELETON_NO_POINTER_CHECK
-    if( &e < m_atoms || &e >= m_atoms + m_atoms_size )
+    if( &e < m_atoms.get() || &e >= m_atoms.get() + m_atoms_size )
       MP_THROW_EXCEPTION( skeleton_invalid_atom_pointer );
 # endif
-    const auto element_index = std::distance( m_atoms, &e );
+    const auto element_index = std::distance( m_atoms.get(), &e );
 # ifndef MP_SKELETON_NO_POINTER_CHECK
-    if( m_atoms + element_index != &e )
+    if( m_atoms.get() + element_index != &e )
       MP_THROW_EXCEPTION( skeleton_invalid_atom_pointer );
 # endif
     auto idx = m_atom_index_to_handle_index[ element_index ];
@@ -101,12 +101,12 @@
   dts_definition(typename dts_type::link_handle)::get_handle( link& e )
   {
 # ifndef MP_SKELETON_NO_POINTER_CHECK
-    if( &e < m_links || &e >= m_links + m_links_size )
+    if( &e < m_links.get() || &e >= m_links.get() + m_links_size )
       MP_THROW_EXCEPTION( skeleton_invalid_link_pointer );
 # endif
-    const auto element_index = std::distance( m_links, &e );
+    const auto element_index = std::distance( m_links.get(), &e );
 # ifndef MP_SKELETON_NO_POINTER_CHECK
-    if( m_links + element_index != &e )
+    if( m_links.get() + element_index != &e )
       MP_THROW_EXCEPTION( skeleton_invalid_link_pointer );
 # endif
     auto idx = m_link_index_to_handle_index[ element_index ];
@@ -116,12 +116,12 @@
   dts_definition(typename dts_type::face_handle)::get_handle( face& e )
   {
 # ifndef MP_SKELETON_NO_POINTER_CHECK
-    if( &e < m_faces || &e >= m_faces + m_faces_size )
+    if( &e < m_faces.get() || &e >= m_faces.get() + m_faces_size )
       MP_THROW_EXCEPTION( skeleton_invalid_face_pointer );
 # endif
-    const auto element_index = std::distance( m_faces, &e );
+    const auto element_index = std::distance( m_faces.get(), &e );
 # ifndef MP_SKELETON_NO_POINTER_CHECK
-    if( m_faces + element_index != &e )
+    if( m_faces.get() + element_index != &e )
       MP_THROW_EXCEPTION( skeleton_invalid_face_pointer );
 # endif
     auto idx = m_face_index_to_handle_index[ element_index ];
@@ -131,12 +131,12 @@
   dts_definition(typename dts_type::atom_index)::get_index( atom& e )
   {
 # ifndef MP_SKELETON_NO_POINTER_CHECK
-    if( &e < m_atoms || &e >= m_atoms + m_atoms_size )
+    if( &e < m_atoms.get() || &e >= m_atoms.get() + m_atoms_size )
       MP_THROW_EXCEPTION( skeleton_invalid_atom_pointer );
 # endif
-    const auto element_index = std::distance( m_atoms, &e );
+    const auto element_index = std::distance( m_atoms.get(), &e );
 # ifndef MP_SKELETON_NO_POINTER_CHECK
-    if( m_atoms + element_index != &e )
+    if( m_atoms.get() + element_index != &e )
       MP_THROW_EXCEPTION( skeleton_invalid_atom_pointer );
 # endif
     return element_index;
@@ -145,12 +145,12 @@
   dts_definition(typename dts_type::link_index)::get_index( link& e )
   {
 # ifndef MP_SKELETON_NO_POINTER_CHECK
-    if( &e < m_links || &e >= m_links + m_links_size )
+    if( &e < m_links.get() || &e >= m_links.get() + m_links_size )
       MP_THROW_EXCEPTION( skeleton_invalid_link_pointer );
 # endif
-    const auto element_index = std::distance( m_links, &e );
+    const auto element_index = std::distance( m_links.get(), &e );
 # ifndef MP_SKELETON_NO_POINTER_CHECK
-    if( m_links + element_index != &e )
+    if( m_links.get() + element_index != &e )
       MP_THROW_EXCEPTION( skeleton_invalid_link_pointer );
 # endif
     return element_index;
@@ -159,12 +159,12 @@
   dts_definition(typename dts_type::face_index)::get_index( face& e )
   {
 # ifndef MP_SKELETON_NO_POINTER_CHECK
-    if( &e < m_faces || &e >= m_faces + m_faces_size )
+    if( &e < m_faces.get() || &e >= m_faces.get() + m_faces_size )
       MP_THROW_EXCEPTION( skeleton_invalid_face_pointer );
 # endif
-    const auto element_index = std::distance( m_faces, &e );
+    const auto element_index = std::distance( m_faces.get(), &e );
 # ifndef MP_SKELETON_NO_POINTER_CHECK
-    if( m_faces + element_index != &e )
+    if( m_faces.get() + element_index != &e )
       MP_THROW_EXCEPTION( skeleton_invalid_face_pointer );
 # endif
     return element_index;
