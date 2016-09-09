@@ -73,19 +73,36 @@ namespace median_path {
         typedef no_atomization atomizer_type;
       };
 
-
-      no_atomization( const parameters_type& parameters )
+      no_atomization( const parameters_type& parameters, const skeletonizable_shape& shape, median_skeleton& result )
       {
         (void)parameters;
-      }
-
-      void atomize( const skeletonizable_shape& shape, median_skeleton& result )
-      {
         (void)shape;
         (void)result;
       }
     };
 
+    struct shrinking_ball_vertex_constant_initial_radius {
+      typedef shrinking_ball_method method_type;
+      typedef vertex_sampling sampling_type;
+      struct parameters_type {
+        typedef shrinking_ball_vertex_constant_initial_radius atomizer_type;
+        const real constant_initial_radius_ratio;
+        const real radius_variation_threshold_ratio;
+      };
+
+      shrinking_ball_vertex_constant_initial_radius(
+          const parameters_type& parameters,
+          const skeletonizable_shape& shape,
+          median_skeleton& result )
+      : parameters{ parameters }, kdtree{ shape }
+      {
+        result.clear( shape.n_vertices() );
+      }
+
+      parameters_type parameters;
+      graphics_origin::geometry::mesh_vertices_kdtree kdtree;
+
+    };
 
     struct shrinking_ball_vertex {
       typedef shrinking_ball_method method_type;
@@ -96,6 +113,11 @@ namespace median_path {
         real constant_radius_ratio;
         real radius_variation_threshold; //fixme: should be a ratio?
       };
+
+
+
+
+      median_skeleton::atom_property_index atom_correspondence_property_index;
     };
   }
 
@@ -105,15 +127,14 @@ namespace median_path {
       struct parameters_type {
         typedef no_structuration structurer_type;
       };
-
-      no_structuration( const parameters_type& parameters )
+      template< typename atomizer_type >
+      no_structuration(
+          const parameters_type& parameters,
+          const skeletonizable_shape& shape,
+          atomizer_type& atomizer,
+          median_skeleton& result )
       {
         (void)parameters;
-      }
-
-      template< typename atomizer_type >
-      void structurize( const skeletonizable_shape& shape, atomizer_type& atomizer, median_skeleton& result )
-      {
         (void)shape;
         (void)atomizer;
         (void)result;
@@ -131,16 +152,17 @@ namespace median_path {
         typedef no_regularization regularizer_type;
       };
 
-      no_regularization( const parameters_type& parameters )
+      template<
+              typename atomizer_type,
+              typename structurer_type >
+      no_regularization(
+          const parameters_type& parameters,
+          const skeletonizable_shape& shape,
+          atomizer_type& atomizer,
+          structurer_type& structurer,
+          median_skeleton& result )
       {
         (void)parameters;
-      }
-
-      template<
-        typename atomizer_type,
-        typename structurer_type >
-      void regularize( const skeletonizable_shape& shape, atomizer_type& atomizer, structurer_type& structurer, median_skeleton& result ) const
-      {
         (void)shape;
         (void)atomizer;
         (void)structurer;
@@ -246,17 +268,9 @@ namespace median_path {
       // the regularizer could tell if the atomizer data is now useless. Only the
       // regularizer could tell if the structurer data is now useless. Thus,
       // releasing data can only be done inside the structurer and the regularizer.
-      atomizer_type atomizer( atomizer_parameters );
-      atomizer.atomize( shape, result );
-
-      structurer_type structurer( structurer_parameters );
-      structurer.structurize( shape, atomizer, result );
-
-      regularizer_type regularizer( regularizer_parameters );
-      regularizer.regularize( shape, atomizer, structurer, result );
-
-//      if( !std::is_same<atomizer_type::sampling_type,atomizer::no_sampling> )
-//        result.
+      atomizer_type atomizer( atomizer_parameters, shape, result );
+      structurer_type structurer( structurer_parameters, shape, atomizer, result );
+      regularizer_type regularizer( regularizer_parameters, shape, atomizer, structurer, result );
     }
 
     void update_atomizer( const typename atomizer_type::parameters_type& params )

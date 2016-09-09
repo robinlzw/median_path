@@ -25,21 +25,4 @@
 
   dts_definition()::~skeleton_datastructure()
   {
-    delete[] m_atoms;
-    delete[] m_atom_index_to_handle_index;
-    delete[] m_atom_handles;
-    for( auto& property : m_atom_properties )
-      delete property;
-
-    delete[] m_links;
-    delete[] m_link_index_to_handle_index;
-    delete[] m_link_handles;
-    for( auto& property : m_link_properties )
-      delete property;
-
-    delete[] m_faces;
-    delete[] m_face_index_to_handle_index;
-    delete[] m_face_handles;
-    for( auto& property : m_face_properties )
-      delete property;
   }

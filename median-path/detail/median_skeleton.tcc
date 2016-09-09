@@ -108,11 +108,10 @@ template< typename atom_filter >
         if( flags[left] )
           {
             // update the left_entry
-            const auto left_entry_index =
-                m_impl->m_atom_index_to_handle_index[left];
-            auto left_entry = m_impl->m_atom_handles + left_entry_index;
-            left_entry->next_free_index = next_free_slot;
-            left_entry->status = datastructure::STATUS_FREE;
+            const auto left_entry_index = m_impl->m_atom_index_to_handle_index[left];
+            auto& left_entry = m_impl->m_atom_handles[left_entry_index];
+            left_entry.next_free_index = next_free_slot;
+            left_entry.status = datastructure::STATUS_FREE;
             next_free_slot = left_entry_index;
 
             // look for a valid atom in the end of the buffer
@@ -121,9 +120,9 @@ template< typename atom_filter >
               {
                 const auto entry_index =
                     m_impl->m_atom_index_to_handle_index[right];
-                auto entry = m_impl->m_atom_handles + entry_index;
-                entry->next_free_index = next_free_slot;
-                entry->status = datastructure::STATUS_FREE;
+                auto& entry = m_impl->m_atom_handles[entry_index];
+                entry.next_free_index = next_free_slot;
+                entry.status = datastructure::STATUS_FREE;
                 next_free_slot = entry_index;
                 --right;
               }
@@ -137,8 +136,8 @@ template< typename atom_filter >
 
                 const auto right_entry_index =
                     m_impl->m_atom_index_to_handle_index[right];
-                auto right_entry = m_impl->m_atom_handles + right_entry_index;
-                right_entry->atom_index = left;
+                auto& right_entry = m_impl->m_atom_handles[right_entry_index];
+                right_entry.atom_index = left;
                 m_impl->m_atom_index_to_handle_index[left] = right_entry_index;
                 ++left;
               }

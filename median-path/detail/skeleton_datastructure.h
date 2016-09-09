@@ -7,6 +7,7 @@
 # include <graphics-origin/geometry/vec.h>
 # include <graphics-origin/geometry/ball.h>
 
+# include <memory>
 # include <type_traits>
 # include <vector>
 
@@ -432,20 +433,20 @@ namespace median_path {
     void remove_link_property( base_property_buffer& property );
     void remove_face_property( base_property_buffer& property );
 
-    atom* m_atoms;
-    atom_handle_type* m_atom_index_to_handle_index;
-    atom_handle_entry* m_atom_handles;
-    std::vector< base_property_buffer* > m_atom_properties;
+    std::unique_ptr<atom[]> m_atoms;
+    std::unique_ptr<atom_handle_type[]> m_atom_index_to_handle_index;
+    std::unique_ptr<atom_handle_entry[]> m_atom_handles;
+    std::vector< std::unique_ptr<base_property_buffer> > m_atom_properties;
 
-    link* m_links;
-    size_t* m_link_index_to_handle_index;
-    link_handle_entry* m_link_handles;
-    std::vector< base_property_buffer* > m_link_properties;
+    std::unique_ptr<link[]> m_links;
+    std::unique_ptr<link_handle_type[]> m_link_index_to_handle_index;
+    std::unique_ptr<link_handle_entry[]> m_link_handles;
+    std::vector< std::unique_ptr<base_property_buffer> > m_link_properties;
 
-    face* m_faces;
-    size_t* m_face_index_to_handle_index;
-    face_handle_entry* m_face_handles;
-    std::vector< base_property_buffer* > m_face_properties;
+    std::unique_ptr<face[]> m_faces;
+    std::unique_ptr<face_handle_type[]> m_face_index_to_handle_index;
+    std::unique_ptr<face_handle_entry[]> m_face_handles;
+    std::vector< std::unique_ptr<base_property_buffer> > m_face_properties;
 
     atom_handle_type m_atoms_capacity;
     atom_handle_type m_atoms_size;
