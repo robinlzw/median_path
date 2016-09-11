@@ -99,15 +99,10 @@ namespace median_path {
       shrinking_ball_vertex_constant_initial_radius(
           const parameters_type& parameters,
           const skeletonizable_shape& shape,
-          median_skeleton& result )
-      : parameters{ parameters }, kdtree{ shape }
-      {
-        result.clear( shape.n_vertices() );
-      }
+          median_skeleton& result );
 
       parameters_type parameters;
-      graphics_origin::geometry::mesh_vertices_kdtree kdtree;
-
+      median_skeleton::atom_property_index atom_to_sampling_property_index;
     };
 
     struct shrinking_ball_vertex {
