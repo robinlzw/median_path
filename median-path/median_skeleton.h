@@ -1,6 +1,3 @@
-/* Created on: Mar 1, 2016
- *     Author: T.Delame (tdelame@gmail.com)
- */
 # ifndef MEDIAN_PATH_MEDIAN_SKELETON_H_
 # define MEDIAN_PATH_MEDIAN_SKELETON_H_
 

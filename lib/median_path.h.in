@@ -34,5 +34,8 @@ namespace median_path {
   using glm::normalize;
   using glm::max;
   using glm::min;
+  
+  using graphics_origin::min;
+  using graphics_origin::max;
 }
 # endif
