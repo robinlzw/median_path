@@ -28,6 +28,8 @@
 # -------------------
 # MP_SKELETON_NO_CHECK Add this definition to perform less checks while accessing to skeleton elements.
 #
+# MP_USE_CONCEPTS Add this definition to use C++ concepts
+#
 # Build types
 # -----------
 # Valid values of CMAKE_BUILD_TYPE:
@@ -147,6 +149,7 @@ set( MP_LIBRARIES ${MP_LIBRARIES} ${CGAL_LIBRARIES} ${CGAL_3RD_PARTY_LIBRARIES} 
 #*******************************************************************************
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
 if( CMAKE_CXX_COMPILER_ID STREQUAL "GNU" )
   set( CMAKE_CXX_FLAGS 
     "${GRAPHICS_ORIGIN_CXX_FLAGS} -frounding-math -DGLM_FORCE_SSE2 -DGLM_FORCE_RADIANS -DBOOST_LOG_DYN_LINK -DBOOST_ALL_DYN_LINK"
@@ -161,6 +164,9 @@ if( CMAKE_CXX_COMPILER_ID STREQUAL "GNU" )
   if( MP_CGAL_EPECK_BUG )
     set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DMP_CGAL_MUST_USE_EPICK" )
   endif()
+  if( MP_USE_CONCEPTS )
+  	set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++1z -fconcepts")
+	endif()
   set( CMAKE_LINKER_FLAGS "${CMAKE_LINKER_FLAGS} ${GRAPHICS_ORIGIN_LINKER_FLAGS}" )
 elseif( CMAKE_CXX_COMPILER_ID STREQUAL "MSVC" )
   set( CMAKE_CXX_FLAGS

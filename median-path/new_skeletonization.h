@@ -34,7 +34,7 @@ namespace median_path {
      * an atom property. The index of this property is stored in the atomization
      * method in the variable atom_to_sampling_property_index. The type
      * of elements of that property depends on the sampling method and of the
-     * atomization method used.
+     * atomization method used and is named atom_to_sampling_type.
      */
     struct sampling_category {};
     /**@brief Tag for atomization relying on vertex sampling.
@@ -64,6 +64,41 @@ namespace median_path {
      * \sa sampling_category */
     struct no_sampling :
         public sampling_category {};
+  }
+
+# ifdef MP_USE_CONCEPTS
+
+  template< typename T >
+  concept bool Atomizer() {
+
+    return requires {
+      typename T::method_type;
+      typename T::sampling_type;
+      typename T::parameters_type;
+      typename T::atom_to_sampling_type;
+
+      requires std::is_base_of<atomizer::method_category, typename T::method_type>::value;
+      requires std::is_base_of<atomizer::sampling_category, typename T::sampling_type>::value;
+    } && requires( T t ) {
+
+      { t.atom_to_sampling_property_index } -> median_skeleton::atom_property_index;
+
+    } && requires( typename T::parameters_type const& parameters, skeletonizable_shape const& shape, median_skeleton& result ) {
+        T( parameters, shape, result);
+    };
+  }
+
+  template< typename T >
+  concept bool Atomizer_parameters() {
+    return requires {
+      typename T::atomizer_type;
+      requires std::is_default_constructible< T >::value;
+      requires Atomizer< typename T::atomizer_type >();
+    };
+  }
+# endif
+
+  namespace atomizer {
 
     struct no_atomization {
 
@@ -72,13 +107,17 @@ namespace median_path {
       struct parameters_type {
         typedef no_atomization atomizer_type;
       };
+      struct atom_to_sampling_type {};
 
       no_atomization( const parameters_type& parameters, const skeletonizable_shape& shape, median_skeleton& result )
+        : atom_to_sampling_property_index{0}
       {
         (void)parameters;
         (void)shape;
         (void)result;
       }
+
+      median_skeleton::atom_property_index atom_to_sampling_property_index;
     };
 
     struct shrinking_ball_vertex_constant_initial_radius {
@@ -88,6 +127,7 @@ namespace median_path {
         typedef shrinking_ball_vertex_constant_initial_radius atomizer_type;
         const real constant_initial_radius_ratio;
         const real radius_variation_threshold_ratio;
+        parameters_type();
       };
       struct atom_to_sampling_type {
         // first contact vertex, its normal is normal to the atom
@@ -243,6 +283,9 @@ namespace median_path {
     typename atomizer_type,
     typename structurer_type,
     typename regularizer_type >
+# ifdef MP_USE_CONCEPTS
+    requires Atomizer<atomizer_type>()
+# endif
   class skeletonizer2 {
   public:
 
@@ -299,6 +342,9 @@ namespace median_path {
     typename atomizer_parameters_type,
     typename structurer_parameters_type,
     typename regularizer_parameters_type>
+# ifdef MP_USE_CONCEPTS
+    requires Atomizer_parameters< atomizer_parameters_type >()
+# endif
   median_skeleton skeletonize(
       const atomizer_parameters_type& atomizer,
       const structurer_parameters_type& structurer,
