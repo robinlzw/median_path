@@ -1,12 +1,12 @@
-/* Created on: Mar 25, 2016
- *     Author: T.Delame (tdelame@gmail.com)
- */
 # ifndef MEDIAN_PATH_STRUCTURATION_H_
 # define MEDIAN_PATH_STRUCTURATION_H_
 
-# include "median_skeleton.h"
+# include "atomization.h"
 
-BEGIN_MP_NAMESPACE
+namespace median_path {
+
+  typedef graphics_origin::geometry::mesh skeletonizable_shape;
+
 
 /**@brief Structure a median skeleton.
  *
@@ -48,5 +48,90 @@ private:
   real m_execution_time;
 };
 
-END_MP_NAMESPACE
+  namespace structurer2 {
+
+    struct no_structuration {
+      struct parameters_type {
+        typedef no_structuration structurer_type;
+      };
+      template< typename atomizer_type >
+# ifdef MP_USE_CONCEPTS
+        requires Atomizer<atomizer_type>()
+# endif
+      no_structuration(
+          const parameters_type& parameters,
+          const skeletonizable_shape& shape,
+          atomizer_type& atomizer,
+          median_skeleton& result )
+      {
+        (void)parameters; (void)shape; (void)atomizer; (void)result;
+      }
+    };
+
+
+    struct weighted_zero_shape {
+      struct parameters_type {
+        typedef weighted_zero_shape structurer_type;
+        const unsigned int grid_subdivisions = 8;
+        const bool build_faces = true;
+      };
+
+      template< typename atomizer_type >
+# ifdef MP_USE_CONCEPTS
+        requires Atomizer<atomizer_type>()
+# endif
+      weighted_zero_shape( parameters_type const& parameters,
+                           skeletonizable_shape const & shape,
+                           atomizer_type& atomizer, median_skeleton& result )
+       : weighted_zero_shape( parameters, result )
+     {
+        (void)atomizer; (void)shape;
+     }
+
+      weighted_zero_shape( parameters_type const& parameters, median_skeleton& result );
+    };
+
+    struct delaunay_reconstruction {
+      struct parameters_type {
+        typedef delaunay_reconstruction structurer_type;
+        const bool build_faces = true;
+        const bool neighbors_must_intersect = true;
+      };
+
+      template< typename atomizer_type >
+# ifdef MP_USE_CONCEPTS
+        requires Atomizer<atomizer_type>()
+# endif
+      delaunay_reconstruction( parameters_type const& parameters,
+                               skeletonizable_shape const& shape,
+                               atomizer_type& atomizer, median_skeleton& result );
+    };
+  }
+
+# ifdef MP_USE_CONCEPTS
+  template< typename T, typename U >
+  concept bool Structurer() {
+    return
+        requires() {
+          typename T::parameters_type;
+        }
+     && requires( typename T::parameters_type const& parameters,
+                  skeletonizable_shape const& shape, U& atomizer,
+                  median_skeleton& result ) {
+          T( parameters, shape, atomizer, result );
+        };
+  }
+
+  template< typename T >
+  concept bool Structurer_parameters() {
+    return requires() {
+      typename T::structurer_type;
+      requires std::is_default_constructible< T >::value;
+      requires std::is_same< T, typename T::structurer_type::parameters_type >::value;
+    };
+  }
+# endif
+
+}
+# include "detail/delaunay_reconstruction_implementation.h"
 # endif 

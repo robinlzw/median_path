@@ -61,17 +61,23 @@ namespace median_path {
     typedef skeleton_datastructure< uint32_t, 22, uint64_t, 44, uint64_t, 54 > datastructure;
   public:
     ///
-    typedef datastructure::atom atom;
-    typedef datastructure::link link;
-    typedef datastructure::face face;
+    using atom = datastructure::atom;
+    using link = datastructure::link;
+    using face = datastructure::face;
 
-    typedef datastructure::atom_handle atom_handle;
-    typedef datastructure::link_handle link_handle;
-    typedef datastructure::face_handle face_handle;
+    using atom_handle = datastructure::atom_handle;
+    using link_handle = datastructure::link_handle;
+    using face_handle = datastructure::face_handle;
 
-    typedef uint32_t atom_index;
-    typedef uint64_t link_index;
-    typedef uint64_t face_index;
+    using atom_index = datastructure::atom_index;
+    using link_index = datastructure::link_index;
+    using face_index = datastructure::face_index;
+
+    // Those constants represent 'not-an-index' named null_atom_index,
+    // null_link_index and null_face_index.
+    static constexpr atom_index null_atom_index = datastructure::max_atom_handle_index;
+    static constexpr link_index null_link_index = datastructure::max_link_handle_index;
+    static constexpr face_index null_face_index = datastructure::max_face_handle_index;
 
     typedef uint32_t atom_property_index;
     typedef uint32_t link_property_index;
@@ -157,6 +163,8 @@ namespace median_path {
      * @param filename The path of the file describing the skeleton to build. */
     median_skeleton(
       const std::string& filename );
+
+    median_skeleton( const median_skeleton& other ) = delete;
 
     median_skeleton&
     operator=(
@@ -309,20 +317,18 @@ namespace median_path {
      *
      * This function computes the bounding box of all atoms contained in
      * this skeleton.
-     * @param b The resulting bounding box. */
-    void
-    compute_bounding_box(
-      graphics_origin::geometry::aabox& b ) const;
+     * @return The computed bounding box. */
+    graphics_origin::geometry::aabox
+    compute_bounding_box() const;
 
     /**@brief Compute the bounding box of atom centers.
      *
      * This function computes the bounding box of all atom centers in this
      * skeleton.
-     * @param b The resulting bounding box.
+     * @return The computed bounding box.
      */
-    void
-    compute_centers_bounding_box(
-      graphics_origin::geometry::aabox& b ) const;
+    graphics_origin::geometry::aabox
+    compute_centers_bounding_box() const;
 
     /**@brief Compute min and max radii.
      *

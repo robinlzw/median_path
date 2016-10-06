@@ -1,4 +1,4 @@
-# include "../median-path/new_skeletonization.h"
+# include "../median-path/atomization.h"
 
 namespace median_path {
 
@@ -17,11 +17,6 @@ namespace median_path {
   }
 
   namespace atomizer {
-
-    shrinking_ball_vertex_constant_initial_radius::parameters_type::parameters_type()
-      : constant_initial_radius_ratio{0.6},
-        radius_variation_threshold_ratio{0.0001}
-    {}
 
     shrinking_ball_vertex_constant_initial_radius::shrinking_ball_vertex_constant_initial_radius(
         const parameters_type& parameters,

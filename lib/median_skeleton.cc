@@ -1,6 +1,3 @@
-/* Created on: Mar 4, 2016
- *     Author: T.Delame (tdelame@gmail.com)
- */
 # include "../median-path/median_skeleton.h"
 # include "../median-path/io.h"
 
@@ -322,11 +319,11 @@ BEGIN_MP_NAMESPACE
     return m_impl->m_face_properties.size( );
   }
 
-  void
-  median_skeleton::compute_bounding_box(
-    graphics_origin::geometry::aabox& b ) const
+  graphics_origin::geometry::aabox
+  median_skeleton::compute_bounding_box() const
   {
     auto const size = m_impl->m_atoms_size;
+    graphics_origin::geometry::aabox result;
     if( size )
       {
         atom bball = m_impl->m_atoms[0];
@@ -341,12 +338,12 @@ BEGIN_MP_NAMESPACE
 # pragma omp critical
             bball.merge( thread_bball );
           }
-        b.center = vec3
-          { bball };
-        b.hsides.x = bball.w;
-        b.hsides.y = bball.w;
-        b.hsides.z = bball.w;
+        result.center = vec3{ bball };
+        result.hsides.x = bball.w;
+        result.hsides.y = bball.w;
+        result.hsides.z = bball.w;
       }
+    return result;
   }
 
   void
@@ -372,9 +369,8 @@ BEGIN_MP_NAMESPACE
       }
   }
 
-  void
-  median_skeleton::compute_centers_bounding_box(
-    graphics_origin::geometry::aabox& b ) const
+  graphics_origin::geometry::aabox
+  median_skeleton::compute_centers_bounding_box() const
   {
 # pragma omp declare reduction(minatomcenter: vec3: omp_out = min( omp_out, omp_in )) \
       initializer(omp_priv = vec3{REAL_MAX,REAL_MAX,REAL_MAX})
@@ -394,9 +390,9 @@ BEGIN_MP_NAMESPACE
             minp = min( minp, p );
             maxp = max( maxp, p );
           }
-        b = graphics_origin::geometry::aabox
-          { minp, maxp };
+        return graphics_origin::geometry::aabox{ minp, maxp };
       }
+    return graphics_origin::geometry::aabox{};
   }
 
   median_skeleton::atom_handle

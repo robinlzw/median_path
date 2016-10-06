@@ -77,8 +77,7 @@ BEGIN_MP_NAMESPACE
         vinfos[ i ] = i;
       }
 
-    graphics_origin::geometry::aabox bbox;
-    output.compute_centers_bounding_box( bbox );
+    graphics_origin::geometry::aabox bbox =  output.compute_centers_bounding_box();
     bbox.hsides += 1e-6;
     rt::Lock_data_structure locking_datastructure(
         CGAL::Bbox_3(
