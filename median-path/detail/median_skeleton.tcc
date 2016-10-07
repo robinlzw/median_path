@@ -264,17 +264,17 @@ median_skeleton::remove_faces(
 template< typename atom_property >
 base_property_buffer& median_skeleton::add_atom_property( const std::string& name )
 {
-  *m_impl->add_atom_property<atom_property>( name );
+  return *m_impl->add_atom_property<atom_property>( name );
 }
 template< typename link_property >
 base_property_buffer& median_skeleton::add_link_property( const std::string& name )
 {
-  *m_impl->add_link_property<link_property>( name );
+  return *m_impl->add_link_property<link_property>( name );
 }
 template< typename face_property >
 base_property_buffer& median_skeleton::add_face_property( const std::string& name )
 {
-  *m_impl->add_face_property<face_property>( name );
+  return *m_impl->add_face_property<face_property>( name );
 }
 
 }

@@ -55,6 +55,7 @@ if( CMAKE_CXX_COMPILER_ID STREQUAL "GNU" )
   if( NOT CMAKE_BUILD_TYPE )
     set( CMAKE_BUILD_TYPE "Release" 
       CACHE STRING "Choose the type of build, options are: Debug Release RelWithDebInfo." FORCE)
+    message( STATUS "Changed build type to Release because it was not set for GNU compiler" )
   endif(NOT CMAKE_BUILD_TYPE)
 endif() 
 
@@ -113,7 +114,7 @@ if( MP_BUILD_GRAPHICS_APPS AND NOT MP_BUILD_APPS )
   message( SEND_ERROR "Cannot build graphic applications if applications are not build.")
   message( SEND_ERROR "You should either set MP_BUILD_GRAPHICS_APPS to OFF or MP_BUILD_APPS to ON")
 endif()
-  
+
 #*********************
 # external libraries *
 #*******************************************************************************
@@ -139,7 +140,11 @@ if( NOT CGAL_FOUND )
   message( SEND_ERROR "CGAL not found" )
 endif()
 
+# CGAL will force you to use a release build type if it is the only version of its binaries
+set( PREVIOUS_BUILD_TYPE ${CMAKE_BUILD_TYPE} )
 include( ${CGAL_USE_FILE} )
+set( CMAKE_BUILD_TYPE ${PREVIOUS_BUILD_TYPE} )
+
 include_directories( ${TBB_INCLUDE_DIRS} )
 set( MP_INCLUDE_DIRS ${MP_INCLUDE_DIRS} ${TBB_INCLUDE_DIRS})
 set( MP_LIBRARIES ${MP_LIBRARIES} ${CGAL_LIBRARIES} ${CGAL_3RD_PARTY_LIBRARIES} ${TBB_LIBRARIES}) 

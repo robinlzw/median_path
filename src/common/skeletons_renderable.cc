@@ -3,13 +3,13 @@
  */
 # include "skeletons_renderable.h"
 
-# include <graphics-origin/application/gl_window_renderer.h>
+# include <graphics-origin/application/renderer.h>
 # include <graphics-origin/application/gl_helper.h>
 # include <graphics-origin/application/camera.h>
 # include <graphics-origin/geometry/vec.h>
 
 # include <GL/glew.h>
-BEGIN_MP_NAMESPACE
+namespace median_path {
   median_skeletons_renderable::storage&
   median_skeletons_renderable::storage::operator=( storage&& other )
   {
@@ -51,7 +51,7 @@ BEGIN_MP_NAMESPACE
       m_render_wireframe{ false }, m_use_radii_colors{ true }
   {
     model = gl_mat4(1.0);
-    program = program;
+    this->program = program;
   }
 
   median_skeletons_renderable::~median_skeletons_renderable()
@@ -236,10 +236,10 @@ BEGIN_MP_NAMESPACE
   void
   median_skeletons_renderable::do_render()
   {
-    glcheck(glUniform2fv( program->get_uniform_location( "window_dimensions"), 1, glm::value_ptr( m_renderer->get_window_dimensions())));
+    glcheck(glUniform2fv( program->get_uniform_location( "window_dimensions"), 1, glm::value_ptr( renderer_ptr->get_window_dimensions() )));
     glcheck(glUniformMatrix4fv( program->get_uniform_location( "model"), 1, GL_FALSE, glm::value_ptr( model )));
-    glcheck(glUniformMatrix4fv( program->get_uniform_location( "view"), 1, GL_FALSE, glm::value_ptr( m_renderer->get_view_matrix() )));
-    glcheck(glUniformMatrix4fv( program->get_uniform_location( "projection"), 1, GL_FALSE, glm::value_ptr( m_renderer->get_projection_matrix())));
+    glcheck(glUniformMatrix4fv( program->get_uniform_location( "view"), 1, GL_FALSE, glm::value_ptr( renderer_ptr->get_view_matrix() )));
+    glcheck(glUniformMatrix4fv( program->get_uniform_location( "projection"), 1, GL_FALSE, glm::value_ptr( renderer_ptr->get_projection_matrix())));
     glcheck(glUniform1i( program->get_uniform_location( "grayscale" ), m_render_borders_junctions ));
     glcheck(glUniform1i( program->get_uniform_location( "wireframe" ), m_render_wireframe ));
     glcheck(glUniform1i( program->get_uniform_location( "use_atom_color"), m_use_radii_colors ));
@@ -267,7 +267,7 @@ BEGIN_MP_NAMESPACE
         glcheck(glUniform4fv( m_points_and_line_program->get_uniform_location( "global_color"), 1, glm::value_ptr(m_isolated_color)));
         glcheck(glUniformMatrix4fv( m_points_and_line_program->get_uniform_location( "mvp" ),
           1, GL_FALSE,
-          glm::value_ptr( m_renderer->get_projection_matrix() * m_renderer->get_view_matrix() * model )));
+          glm::value_ptr( renderer_ptr->get_projection_matrix() * renderer_ptr->get_view_matrix() * model )));
 
         auto atom_location = m_points_and_line_program->get_attribute_location( "atom" );
         auto color_location = m_points_and_line_program->get_attribute_location( "color" );
@@ -315,8 +315,8 @@ BEGIN_MP_NAMESPACE
 
         glcheck(glUniform1i( m_ball_program->get_uniform_location( "use_atom_color"), m_use_radii_colors ));
         glcheck(glUniform4fv( m_ball_program->get_uniform_location( "global_color"), 1, glm::value_ptr(m_atom_color)));
-        glcheck(glUniformMatrix4fv( m_ball_program->get_uniform_location("projection"), 1, GL_FALSE, glm::value_ptr( m_renderer->get_projection_matrix() )));
-        glcheck(glUniformMatrix4fv( m_ball_program->get_uniform_location( "mv"), 1, GL_FALSE, glm::value_ptr(m_renderer->get_view_matrix() * model)));
+        glcheck(glUniformMatrix4fv( m_ball_program->get_uniform_location("projection"), 1, GL_FALSE, glm::value_ptr( renderer_ptr->get_projection_matrix() )));
+        glcheck(glUniformMatrix4fv( m_ball_program->get_uniform_location( "mv"), 1, GL_FALSE, glm::value_ptr(renderer_ptr->get_view_matrix() * model)));
 
         data = m_skeletons.data();
         for( decltype(size) i = 0; i < size; ++ i, ++ data )
@@ -340,7 +340,7 @@ BEGIN_MP_NAMESPACE
         m_border_junction_program->bind();
         glcheck(glUniformMatrix4fv( m_border_junction_program->get_uniform_location( "mvp" ),
           1, GL_FALSE,
-          glm::value_ptr( m_renderer->get_projection_matrix() * m_renderer->get_view_matrix() * model )));
+          glm::value_ptr( renderer_ptr->get_projection_matrix() * renderer_ptr->get_view_matrix() * model )));
 
         auto atom_location = m_border_junction_program->get_attribute_location( "atom" );
         glcheck(glLineWidth( 4.0 ));
@@ -437,4 +437,4 @@ BEGIN_MP_NAMESPACE
    {
      m_render_balls = render;
    }
-END_MP_NAMESPACE
+ }

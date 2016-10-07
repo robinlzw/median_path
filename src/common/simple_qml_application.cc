@@ -4,7 +4,7 @@
 
 # include "simple_qml_application.h"
 
-# include <graphics-origin/application/gl_window.h>
+# include <graphics-origin/application/window.h>
 
 # include <QtGui/QSurfaceFormat>
 
@@ -30,7 +30,7 @@ namespace median_path {
     // As the render threads make use of our QGuiApplication object
     // to clean up gracefully, wait for them to finish before
     // QGuiApp is taken off the heap.
-    foreach(graphics_origin::application::gl_window* w, graphics_origin::application::gl_window::g_gl_windows)
+    foreach(graphics_origin::application::window* w, graphics_origin::application::window::window_instances)
       {
         w->pause();
         delete w;

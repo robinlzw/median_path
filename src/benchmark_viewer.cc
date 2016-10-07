@@ -1,9 +1,9 @@
 /*  Created on: Mar 29, 2016
  *      Author: T. Delame (tdelame@gmail.com)
  */
-# include "simple_qml_application.h"
-# include "simple_camera.h"
-# include "sgp_benchmark_viewer_window.h"
+# include "common/simple_qml_application.h"
+# include "common/simple_camera.h"
+# include "benchmark_viewer/benchmark_viewer_window.h"
 # include "../median-path/skeletonization.h"
 
 # include <graphics-origin/tools/log.h>
@@ -20,10 +20,10 @@
 # include <QGuiApplication>
 # include <QApplication>
 static const std::string version_string =
-  "SGP 2016 Benchmark Viewer tool v1.0 ©2016 Thomas Delame";
+  "VMV 2016 Benchmark Viewer tool v1.0 ©2016 Thomas Delame";
 
 static const std::string help_string =
-  "SGP 2016 Benchmark Viewer\n"\
+  "VMV 2016 Benchmark Viewer\n"\
   "=========================\n\n"\
   "Viewer of the benchmark results.\n"
   ;
@@ -148,25 +148,42 @@ struct application_parameters {
 
 int main( int argc, char* argv[] )
 {
-  application_parameters params = application_parameters( argc, argv );
+  int return_value = EXIT_SUCCESS;
+  try {
+    application_parameters params = application_parameters( argc, argv );
 
-  int dummy_argc = 1;
-  QApplication qgui( dummy_argc, argv );
+    int dummy_argc = 1;
+    QApplication qgui( dummy_argc, argv );
 
-  qmlRegisterType<sgp_benchmark_viewer_window>("MedianPath", 1, 0, "GLWindow");
-  qmlRegisterType<median_path::simple_camera>("MedianPath", 1, 0, "GLCamera");
+    qmlRegisterType<benchmark_viewer_window>("MedianPath", 1, 0, "GLWindow");
+    qmlRegisterType<median_path::simple_camera>("MedianPath", 1, 0, "GLCamera");
 
-  median_path::simple_qml_application app;
-  app.setSource( QUrl::fromLocalFile("qml/SGPViewer.qml"));
-  app.show();
+    median_path::simple_qml_application app;
+    app.setSource( QUrl::fromLocalFile("qml/BenchmarkViewer.qml"));
+    app.show();
 
-  auto window = app.rootObject()->findChild<sgp_benchmark_viewer_window*>("glwindow");
-  window->load_benchmark(
-      params.input_stem, params.input_directory, params.extension,
-      params.geometries,
-      params.topologies
-                        );
+    auto window = app.rootObject()->findChild<benchmark_viewer_window*>("glwindow");
+    if( !window ) {
+        throw std::runtime_error("cannot find QML object named glwindow");
+    }
+    window->load_benchmark(
+        params.input_stem, params.input_directory, params.extension,
+        params.geometries,
+        params.topologies );
 
-  app.raise();
-  return qgui.exec();
+    app.raise();
+    qgui.exec();
+  }
+  catch( std::exception& e ) {
+    LOG( fatal, "exception caught: " << e.what() );
+    std::cerr << "exception caught: " << e.what() << std::endl;
+    return_value = EXIT_FAILURE;
+  }
+  catch( ... ) {
+    LOG( fatal, "unknown exception caught" );
+    std::cerr << "unknown exception caught" << std::endl;
+    return_value = EXIT_FAILURE;
+  }
+  graphics_origin::tools::flush_log();
+  return return_value;
 }

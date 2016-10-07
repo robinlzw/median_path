@@ -4,8 +4,8 @@
 
 # ifndef MEDIAN_PATH_SIMPLE_QML_APPLICATION_H_
 # define MEDIAN_PATH_SIMPLE_QML_APPLICATION_H_
-# include "../median-path/median_path.h"
-# include <graphics-origin/application/gl_window_renderer.h>
+# include "../../median-path/median_path.h"
+# include <graphics-origin/application/renderer.h>
 # include <QtQuick/QQuickView>
 
 namespace median_path {

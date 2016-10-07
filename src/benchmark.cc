@@ -15,12 +15,12 @@
 # include <iostream>
 
 static const std::string version_string =
-  "SGP 2016 Benchmark Building command line tool v0.1 ©2016 Thomas Delame";
+  "VMV 2016 Benchmark Building command line tool v0.1 ©2016 Thomas Delame";
 
 static const std::string help_string =
-  "Build SGP 2016 Benchmark\n"\
+  "Build VMV 2016 Benchmark\n"\
   "========================\n\n"\
-  "Build the necessary skeleton data for the SGP 2016 paper. "\
+  "Build the necessary skeleton data for the VMV 2016 paper. "\
   "The results are stored in the following directories, relatively to the root directory:\n"\
   "  shapes/ to store the input shapes\n"\
   "  voronoi/ for Voronoi ball skeletonization\n"\

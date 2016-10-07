@@ -4,7 +4,7 @@
 
 # ifndef MEDIAN_PATH_SIMPLE_CAMERA_H_
 # define MEDIAN_PATH_SIMPLE_CAMERA_H_
-# include "../median-path/median_path.h"
+# include "../../median-path/median_path.h"
 # include <graphics-origin/application/camera.h>
 
 namespace median_path {
@@ -38,8 +38,8 @@ namespace median_path {
       uint8_t down    : 1;
     };
     move m_move;
-    gpu_real m_mouse_dx;
-    gpu_real m_mouse_dy;
+    gl_real m_mouse_dx;
+    gl_real m_mouse_dy;
     bool m_mouse_moved;
   };
 

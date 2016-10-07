@@ -4,7 +4,7 @@
 
 # ifndef MEDIAN_PATH_SKELETON_RENDERABLE_H_
 # define MEDIAN_PATH_SKELETON_RENDERABLE_H_
-# include "../median-path/median_skeleton.h"
+# include "../../median-path/median_skeleton.h"
 
 # include <graphics-origin/application/renderable.h>
 # include <graphics-origin/tools/tight_buffer_manager.h>

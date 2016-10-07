@@ -41,6 +41,12 @@ function( mp_add_application )
       ${CMAKE_CURRENT_SOURCE_DIR}/${APP_NAME}/*.frag
       ${APP_SHADERS}
     )
+   
+    mp_add_executable( 
+      NAME ${APP_NAME}
+      SOURCES ${APP_SOURCES}
+      LIBRARIES ${APP_LIBRARIES}
+    )
 
     if( NOT "${APP_QML}" STREQUAL "" )
       set( _destination $<TARGET_FILE_DIR:${APP_NAME}>/qml )
@@ -78,15 +84,15 @@ function( mp_add_application )
       ${CMAKE_CURRENT_SOURCE_DIR}/${APP_NAME}/*.h
       ${APP_NAME}.cc
     )
-  
+    mp_add_executable( 
+      NAME ${APP_NAME}
+      SOURCES ${APP_SOURCES}
+      LIBRARIES ${APP_LIBRARIES}
+    )
   endif()
 
-  mp_add_executable( 
-    NAME ${APP_NAME}
-    SOURCES ${APP_SOURCES}
-    LIBRARIES ${APP_LIBRARIES}
-  ) 
-
+ 
+  
 endfunction( mp_add_application )
 
 mp_add_application(
@@ -104,19 +110,16 @@ mp_add_application(
   LIBRARIES ${MP_LIBRARIES} median_path
 )
 
+#mp_add_application(
+#  NAME new_skeletonizer
+#  LIBRARIES ${MP_LIBRARIES} median_path)
+
+
 mp_add_application(
-  NAME new_skeletonizer
+  NAME benchmark_viewer
+  GRAPHIC
   LIBRARIES ${MP_LIBRARIES} median_path)
 
-
-#add_mp_app( sgp_benchmark_viewer
-#	simple_qml_application.cc simple_qml_application.h
-#	sgp_benchmark_viewer_window.cc sgp_benchmark_viewer_window.h
-#	sgp_benchmark_viewer.cc
-#	simple_camera.cc simple_camera.h
-#	simple_gl_renderer.h
-#	skeletons_renderable.cc skeletons_renderable.h)
-#	
 #add_mp_app( prepare_mesh_for_benchmark prepare_mesh_for_benchmark.cc )
 
 

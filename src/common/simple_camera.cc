@@ -51,10 +51,10 @@ namespace median_path {
     m_direction.x = m_move.left    - m_move.right;
     m_direction.y = m_move.up      - m_move.down;
     m_direction.z = m_move.forward - m_move.backward;
-    gpu_real factor = dot( m_direction, m_direction );
+    gl_real factor = dot( m_direction, m_direction );
     if( factor > 0.01 )
       {
-        factor = gpu_real( (omp_get_wtime() - m_last_update_time) * 0.5 ) / std::sqrt( factor );
+        factor = gl_real( (omp_get_wtime() - m_last_update_time) * 0.5 ) / std::sqrt( factor );
         m_direction *= factor;
 
         m_view[3][0] += m_direction.x;

@@ -3,12 +3,12 @@
  */
 # ifndef MEDIAN_PATH_SIMPLE_GL_WINDOW_H_
 # define MEDIAN_PATH_SIMPLE_GL_WINDOW_H_
-# include <graphics-origin/application/gl_window.h>
-# include "skeletons_renderable.h"
-# include "../median-path/skeletonization.h"
+# include <graphics-origin/application/window.h>
+# include "../common/skeletons_renderable.h"
+# include "../../median-path/skeletonization.h"
 
-class sgp_benchmark_viewer_window
-  : public graphics_origin::application::gl_window {
+class benchmark_viewer_window
+  : public graphics_origin::application::window {
   Q_OBJECT
   Q_PROPERTY( bool has_voronoi_geometry READ get_has_voronoi_geometry NOTIFY has_voronoi_geometry_changed )
   Q_PROPERTY( bool has_polar_geometry READ get_has_polar_geometry NOTIFY has_polar_geometry_changed )
@@ -29,7 +29,7 @@ class sgp_benchmark_viewer_window
   Q_PROPERTY( bool weighted_alpha_reconstruction_active READ get_weighted_alpha_reconstruction_active NOTIFY weighted_alpha_reconstruction_active_changed )
 
 public:
-  sgp_benchmark_viewer_window( QQuickItem* parent = nullptr );
+  benchmark_viewer_window( QQuickItem* parent = nullptr );
 
   /**
    * If the geometry method is available, those methods change the active geometry method.
