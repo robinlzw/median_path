@@ -121,7 +121,7 @@ struct application_parameters {
             ->default_value(median_path::structurer::parameters::WEIGHTED_ALPHA_SHAPE),
             "method to build the skeleton topology. Possible values are:\n"
             "  * weighted_alpha_shape, to use a regular triangulation of atoms and keep only faces of the weighted alpha shape for alpha=0 (fast)\n"
-            "  * delaunay_reconstruction, to use Delaunay reconstruction method\n"
+            "  * delaunay, to use Delaunay reconstruction method\n"
             "  * powershape, to use the method of the PowerShape (long)\n"
             "  * voronoi, to use a subset of the voronoi faces/edges (fast since the Voronoi diagram is already available)")
         ("volume_factor,f", po::value<median_path::real>(&skeletonizer_parameters.m_cluster_volume_factor)->default_value(0.005, "0.005"),

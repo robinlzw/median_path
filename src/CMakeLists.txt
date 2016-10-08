@@ -110,14 +110,18 @@ mp_add_application(
   LIBRARIES ${MP_LIBRARIES} median_path
 )
 
+#work in progress
 #mp_add_application(
 #  NAME new_skeletonizer
 #  LIBRARIES ${MP_LIBRARIES} median_path)
 
-
 mp_add_application(
   NAME benchmark_viewer
   GRAPHIC
+  LIBRARIES ${MP_LIBRARIES} median_path)
+
+mp_add_application(
+  NAME benchmark
   LIBRARIES ${MP_LIBRARIES} median_path)
 
 #add_mp_app( prepare_mesh_for_benchmark prepare_mesh_for_benchmark.cc )

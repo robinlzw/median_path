@@ -2,7 +2,7 @@
  *      Author: T. Delame (tdelame@gmail.com)
  */
 # include "../median-path/skeletonization.h"
-
+# include <graphics-origin/tools/filesystem.h>
 # include <graphics-origin/tools/log.h>
 
 # include <boost/program_options.hpp>
